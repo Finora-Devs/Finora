@@ -6,6 +6,7 @@ import {
   Wallet,
 } from "lucide-react";
 import TransactionList from "./TransactionList";
+import SpendingByCategory from "./SpendingByCategory";
 
 const summaryCards = [
   {
@@ -41,7 +42,7 @@ const summaryCards = [
 export default function TransactionsPage() {
   return (
     <section className="space-y-6">
-      {/* Page heading*/}
+      {/*Heading*/}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-[#123c35]">
@@ -51,27 +52,9 @@ export default function TransactionsPage() {
             View and manage income and expenses.
           </p>
         </div>
-
-        <div className="flex flex-wrap gap-3">
-          <button
-            type="button"
-            className="inline-flex items-center gap-2 rounded-lg border border-[#3f8068] bg-white px-4 py-2.5 text-sm font-semibold text-[#28664f] transition-colors hover:bg-[#e5efeb]"
-          >
-            <Plus className="h-4 w-4" />
-            Add Income
-          </button>
-
-          <button
-            type="button"
-            className="inline-flex items-center gap-2 rounded-lg bg-[#3f8068] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#326b56]"
-          >
-            <Plus className="h-4 w-4" />
-            Add Expense
-          </button>
-        </div>
       </div>
 
-      {/* Summary cards */}
+      {/* Top cards */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {summaryCards.map((card) => {
           const Icon = card.icon;
@@ -102,7 +85,13 @@ export default function TransactionsPage() {
         })}
       </div>
 
-     <TransactionList />
+     <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(300px,1fr)]">
+  <div className="min-w-0">
+    <TransactionList />
+  </div>
+
+  <SpendingByCategory />
+</div>
     </section>
   );
 }
