@@ -1,5 +1,6 @@
+"use client";
 import Link from "next/link";
-
+import { usePathname } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
 
 import {
@@ -67,6 +68,7 @@ const navigationItems: NavigationItem[] =
     ];
 
 export default function Sidebar() {
+    const pathname = usePathname();
     return(
         <aside className="fixed left-0 top-0 flex h-screen w-[270px] flex-col border-r border-[#dce7e2] bg-[#f7faf8] px-5 py-6">
             <Link href="/dashboard" className="flex items-start gap-3 px-2">
@@ -91,7 +93,7 @@ export default function Sidebar() {
             <nav className="mt-8 flex flex-col gap-2">
                 {navigationItems.map((item) => {
                     const Icon = item.icon;
-                    const isActive = item.name === "Home";
+                    const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
 
                     return (
                         <Link
