@@ -13,7 +13,7 @@ Required tables:
 
 \-        User management: we do not need an user’s table because supabase provides an internal auth.users table to securely handle sign-ups, logins, and password.
 
- ![Finora database diagram](images/finora-database.png)
+ ![Finora database diagram](finora-database.png)
 
  
 
