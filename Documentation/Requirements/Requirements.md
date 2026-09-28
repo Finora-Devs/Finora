@@ -68,14 +68,14 @@ Finora will be developed as a responsive web application intended for use on bot
 When the website opens it will prompt the user to sign in with their email and password in two text fields.
 
 1. When the website opens it will prompt the user to sign in with their email and password.  
-   2. There will be a text field for the username.  
+   2. There will be a text field for the email.  
    3. There will be a text field for the password.  
    4. There will be a Sign-In button.  
       1. Pressing the button will authenticate the user using the information in the text fields.  
       2. Successful authentication will direct the user to the financial dashboard.  
    5. There will be a create account button.  
       1. Pressing the button will direct the user to a new page.  
-      2. The page will have a text field for the username.  
+      2. The page will have a text field for the email.  
       3. The page will have a text field for the password.  
       4. There will be a confirm button.  
          1. Pressing the button will send a one time password to the user email.  
