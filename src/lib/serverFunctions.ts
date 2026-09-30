@@ -105,3 +105,21 @@ async function getTransactions(supabase: SupabaseClient<Database>): Promise<Tran
 }
 
 
+/*transaction 
+        id,
+        name,
+        description,
+        amount,
+        transaction_date, 
+        categories!inner(
+            name, 
+            transaction_type
+            )
+
+Recurring
+        id
+        name
+        amount
+        frequency
+        next_due_date
+            */
