@@ -78,3 +78,106 @@ CREATE TABLE public.recurring_transactions (
   CONSTRAINT recurring_transactions_category_id_fkey FOREIGN KEY (category_id) REFERENCES public.categories(id),
   CONSTRAINT recurring_transactions_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
 );
+
+-- Constraints
+begin;
+
+-- Categories must be either income or expense.
+alter table public.categories
+add constraint categories_transaction_type_check
+check (transaction_type in ('income', 'expense'));
+
+-- Transaction amounts must be positive.
+alter table public.transactions
+add constraint transactions_amount_positive
+check (amount > 0);
+
+-- Only allow these frequency values.
+alter table public.transactions
+add constraint transactions_frequency_check
+check (
+  frequency in ('once', 'daily', 'weekly', 'monthly', 'yearly')
+);
+
+-- Monthly budget amount must be positive.
+alter table public.monthly_budgets
+add constraint monthly_budgets_amount_positive
+check (budget_amount > 0);
+
+-- Category budget amount must be positive.
+alter table public.category_budgets
+add constraint category_budgets_amount_positive
+check (budget_amount > 0);
+
+-- Savings goal values must be positive.
+alter table public.savings_goals
+add constraint savings_goals_target_positive
+check (target_amount > 0);
+
+-- Savings current values must be zero or greater.
+alter table public.savings_goals
+add constraint savings_goals_current_nonnegative
+check (current_amount >= 0);
+
+-- Savings priority values must be positive.
+alter table public.savings_goals
+add constraint savings_goals_priority_positive
+check (priority > 0);
+
+commit;
+
+--Row level security
+begin;
+
+-- Everyone who is logged in can view the predefined categories.
+create policy "Authenticated users can view categories"
+on public.categories
+for select
+to authenticated
+using (true);
+
+
+-- Users can only manage their own transactions.
+create policy "Users can manage their own transactions"
+on public.transactions
+for all
+to authenticated
+using ((select auth.uid()) = user_id)
+with check ((select auth.uid()) = user_id);
+
+
+-- Users can only manage their own monthly budgets.
+create policy "Users can manage their own monthly budgets"
+on public.monthly_budgets
+for all
+to authenticated
+using ((select auth.uid()) = user_id)
+with check ((select auth.uid()) = user_id);
+
+
+-- Users can only manage their own category budgets.
+create policy "Users can manage their own category budgets"
+on public.category_budgets
+for all
+to authenticated
+using ((select auth.uid()) = user_id)
+with check ((select auth.uid()) = user_id);
+
+
+-- Users can only manage their own savings goals.
+create policy "Users can manage their own savings goals"
+on public.savings_goals
+for all
+to authenticated
+using ((select auth.uid()) = user_id)
+with check ((select auth.uid()) = user_id);
+
+create policy "Users can manage their recurring transactions"
+on public.recurring_transactions
+for all
+to authenticated
+using (auth.uid() = user_id)
+with check (auth.uid() = user_id);
+
+
+commit;
