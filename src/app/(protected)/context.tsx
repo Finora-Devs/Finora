@@ -3,27 +3,41 @@ import {createContext, useContext, useState, useEffect} from "react"//probably n
 import { Transaction } from "@/lib/serverFunctions";
 import type { ReactNode, Dispatch, SetStateAction } from "react";
 
-/*
-export const TransactionContext = createContext<Transaction[] | null>(null); //default value of null. This value will onlt be used if there is no context provider above the component, which should never happen. I will be required to handle the possibility of null when trying to retrieve the context
-export const TestContext = createContext<{val: number, updateFunction: Dispatch<SetStateAction<number>>}>({val: 0, updateFunction: () => {}});   //context must start with a capital letter or the provider will break for some reason.
-
 type ProtectedLayoutProps = {
     children: ReactNode;
 };
 
-export default function TestContextProvider({children}: ProtectedLayoutProps)//Returns a component, which I can then use.
-{
-    const [val, updateFunction] = useState(0) //0 is the initial stat
+export const TransactionContext = createContext<{transactionsArr: Transaction[], setTransactionsArr: Dispatch<SetStateAction<{
+    id: number;
+    name: string;
+    description: string;
+    amount: number;
+    frequency: string;
+    transaction_date: string;
+    next_due_date: string;
+    categories: {
+        name: string;
+        transaction_type: string;
+    };
+}[]>>} | undefined>(undefined);
 
+export default function TransactionContextProvider({children}: ProtectedLayoutProps)
+{
+    const [transactionsArr, setTransactionsArr] = useState([{id: 1, name: "", description: "", amount: 0, frequency: "", transaction_date: "", next_due_date: "", categories: {name: "", transaction_type: ""}}]);
     return(
-        <TestContext value = {{val, updateFunction}}> {/*{{}} to store objects*//*}
-           {children}  {/* //children in this context seems to be any html tags that would be wraped by context normally. *//*}
-        </TestContext>
+        <TransactionContext value={{transactionsArr, setTransactionsArr}}>
+            {children}
+        </TransactionContext>
     );
 }
 
-export const TestContextNum = () => {
-    return useContext(TestContext);//an arrow function that takes no args and returns the value in TestContext
-}*/
+export function useTransactionContext() //custom version of useContext that makes sure there is a context before returning it.
+{
+    const context = useContext(TransactionContext)
 
-export const TestContext = createContext<number | undefined>(undefined);
+    if(context === undefined)
+    {
+        throw new Error("useTransactionContext must be use within a TransactionContext")
+    }
+    return context;
+}
