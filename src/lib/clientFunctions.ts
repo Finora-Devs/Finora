@@ -1,3 +1,8 @@
+/**
+ * This file will contain any functions that need to read, write, or update date in the database IN RESPONSE TO USER ACTIONS.
+ * for functions that just manipulate data already in the browsers, go to types_and_helpers.ts
+ * for functions that initialize data in the browser using the database, go to serverFunctions.ts
+ */
 import {} from "./client";
 import { createClient } from "./server";
 import { Transaction } from "./types_and_helpers";
@@ -37,3 +42,6 @@ export async function insertTransaction(amount: number, category_id: number, des
                 user_id: "0"//this should use the id of the current user. I will figure out if this is automatic or if i need to retrieve it later
          });
 }
+
+
+

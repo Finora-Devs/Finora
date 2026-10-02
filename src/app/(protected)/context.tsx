@@ -7,6 +7,13 @@ type ProtectedLayoutProps = {
     children: ReactNode;
 };
 
+//in the future this may be changed to a much more complex object that holds multiple arrays of data from different parts of the database. I'll let you know if I make any changes like that and tell you what you will need to change to compensate.
+/**
+ * This line creates a context for holding transactions. When you want to reference the list of transactions currently in the browser,
+ * use the useTransactionContext() function below.
+ * 
+ * This looks a little crazy, but all you need to know is that it is a STATE variable in a CONTEXT trenchcoat.
+ */
 export const TransactionContext = createContext<{transactionsArr: Transaction[], setTransactionsArr: Dispatch<SetStateAction<{
     id: number;
     name: string;
@@ -21,6 +28,10 @@ export const TransactionContext = createContext<{transactionsArr: Transaction[],
     };
 }[]>>} | undefined>(undefined);
 
+/**
+ * This function creates a wrapper component that can be placed around the app shell (or any other component Steven makes) which 
+ * makes the TransactionContext available to every child component. I have already wrapped the app shell, so don't worry about this.
+ */
 export default function TransactionContextProvider({children}: ProtectedLayoutProps)
 {
     const [transactionsArr, setTransactionsArr] = useState([{id: 1, name: "SomePurchase", description: "", amount: 20, frequency: "once", transaction_date: "2026-10-2", next_due_date: "", categories: {name: "food", transaction_type: "expense"}}]);
@@ -31,7 +42,40 @@ export default function TransactionContextProvider({children}: ProtectedLayoutPr
     );
 }
 
-export function useTransactionContext() //custom version of useContext that makes sure there is a context before returning it.
+/**
+ * This is a custom version of the built in useContext() hook. This checks to make sure that the context has been initialized to SOMETHING
+ * before actually calling it.
+ * 
+ * Use it like this: const {transactionsArr, setTransactionsArr} = useTransactionContext();
+ * 
+ * transactionArr is the array of transactions. 
+ * 
+ * setTransactionsArr is a function that can be called to replace transactionArr with a new array.
+ * 
+ * setTransactionsArr(prev => [
+ *       ...prev, //all the elements that were already in the array
+ *       {
+ *           id: 2,              //This is the transaction that is being added to the array.
+ *           name: "",
+ *           description: "",
+ *           amount: 0,
+ *           frequency: "",
+ *           transaction_date: "",
+ *           next_due_date: "",
+ *           categories: {
+ *               name: "",
+ *               transaction_type: ""
+ *           }
+ *       }
+ * 
+ *      We may need to do other operations like sorting. I don't know how to do that off the top of my head, but you can probably find it
+ *      online. The main thing is that you must pass a new array, you can't mutuate the original. That's why we aren't just using .push()
+ *      to add to the array.
+ * 
+ *      In the future, I will make a function that fills the array with the transactions from the database upon login. For now, it just has a 
+ *      default value of one transaction.
+ */
+export function useTransactionContext()
 {
     const context = useContext(TransactionContext)
 

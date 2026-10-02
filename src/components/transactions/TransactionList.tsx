@@ -111,7 +111,7 @@ export default function TransactionList() {
                     defaultValue="all"
                     className="min-w-[180px] rounded-lg border border-[#dce7e2] bg-white px-3 py-2.5 text-sm text-[#17324d]"
                 >
-                    <option value="all">All Categories</option>
+                    <option value="all">All Categories</option> {/*option value="all" onChange = {functionCall}>All Categories</option> */}
                     <option value="food">Food</option>
                     <option value="housing">Housing</option>
                     <option value="transportation">Transportation</option>
