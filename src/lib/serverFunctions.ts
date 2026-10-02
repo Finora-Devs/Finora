@@ -80,7 +80,7 @@ function insertRecurringTransaction(transaction: Transaction, currentDate: Date,
  * Gets all transactions for the current user.
  * 
  */
-async function getTransactions(supabase: SupabaseClient<Database>): Promise<Transaction[]>
+export async function getTransactions(supabase: SupabaseClient<Database>): Promise<Transaction[]>
 {
     const transactionsQuery = supabase
     .from("transactions")
