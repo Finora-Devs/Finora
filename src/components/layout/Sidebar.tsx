@@ -2,6 +2,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/client";
 
 import {
     ArrowLeftRight,
@@ -68,8 +70,22 @@ const navigationItems: NavigationItem[] =
     ];
 
 export default function Sidebar() {
+    const router = useRouter();
+
+    const logout = async () => {
+        const supabase = createClient();
+        const { error } = await supabase.auth.signOut();
+
+        if (error) {
+            console.error("Logout failed:", error.message);
+            return;
+        }
+
+        router.push("/auth/login");
+        router.refresh();
+    };
     const pathname = usePathname();
-    return(
+    return (
         <aside className="fixed left-0 top-0 flex h-screen w-[270px] flex-col border-r border-[#dce7e2] bg-[#f7faf8] px-5 py-6">
             <Link href="/dashboard" className="flex items-start gap-3 px-2">
                 <Leaf
@@ -100,8 +116,8 @@ export default function Sidebar() {
                             key={item.name}
                             href={item.href}
                             className={`flex items-center gap-4 rounded-xl px-4 py-3 text-sm font-medium transition-colors ${isActive
-                                    ? "bg-[#3f8068] text-white"
-                                    : "text-[#17324d] hover:bg-[#e5efeb]"
+                                ? "bg-[#3f8068] text-white"
+                                : "text-[#17324d] hover:bg-[#e5efeb]"
                                 }`}
                         >
                             <Icon className="h-5 w-5" strokeWidth={1.8} />
@@ -122,6 +138,7 @@ export default function Sidebar() {
 
                 <button
                     type="button"
+                    onClick={logout}
                     className="flex w-full items-center gap-4 rounded-xl px-4 py-3 text-left text-sm font-medium text-[#17324d] hover:bg-[#e5efeb]"
                 >
                     <LogOut className="h-5 w-5" strokeWidth={1.8} />
