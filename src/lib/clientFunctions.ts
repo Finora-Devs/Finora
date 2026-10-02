@@ -1,5 +1,6 @@
 import {} from "./client";
 import { createClient } from "./server";
+import { Transaction } from "./types_and_helpers";
 
 export async function insertTransaction(amount: number, category_id: number, description: string | null, frequency: string, name: string, transaction_date: string)
 {
@@ -33,19 +34,6 @@ export async function insertTransaction(amount: number, category_id: number, des
                 name: name,
                 next_due_date: Intl.DateTimeFormat("sv-SE").format(new Date()),//add time based on frequency
                 transaction_date: transaction_date,
-                user_id: "0"//this should use the id of the current user. I will figure out how to retieve that later.
+                user_id: "0"//this should use the id of the current user. I will figure out if this is automatic or if i need to retrieve it later
          });
 }
-
-/*
- *        amount: number
-          category_id: number
-          created_at?: string
-          description?: string | null
-          frequency?: string
-          id?: number
-          name: string
-          next_due_date?: string | null
-          transaction_date: string
-          user_id: string 
- */

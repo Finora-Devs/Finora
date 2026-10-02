@@ -1,21 +1,8 @@
 import { Database } from "@/types/database.types";
 import {createClient} from "./server"
 import { SupabaseClient } from '@supabase/supabase-js'
+import { Transaction } from "./types_and_helpers";
 
-export type Transaction =
- {
-    id: number;
-    name: string;
-    description: string | null;
-    amount: number;
-    frequency: string;
-    transaction_date: string;
-    next_due_date: string | null;
-    categories: {
-        name: string;
-        transaction_type: string;
-        };
- };
 
 /**
  * Function should run once when the when the user first signs in. It will retrieve and update all of the users data.

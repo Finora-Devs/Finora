@@ -1,7 +1,7 @@
 "use client";
 import {createContext, useContext, useState, useEffect} from "react"//probably need to remember what each of these do in case dr. nicholson asks.
-import { Transaction } from "@/lib/serverFunctions";
 import type { ReactNode, Dispatch, SetStateAction } from "react";
+import { Transaction } from "@/lib/types_and_helpers";
 
 type ProtectedLayoutProps = {
     children: ReactNode;
@@ -23,7 +23,7 @@ export const TransactionContext = createContext<{transactionsArr: Transaction[],
 
 export default function TransactionContextProvider({children}: ProtectedLayoutProps)
 {
-    const [transactionsArr, setTransactionsArr] = useState([{id: 1, name: "", description: "", amount: 0, frequency: "", transaction_date: "", next_due_date: "", categories: {name: "", transaction_type: ""}}]);
+    const [transactionsArr, setTransactionsArr] = useState([{id: 1, name: "SomePurchase", description: "", amount: 20, frequency: "once", transaction_date: "2026-10-2", next_due_date: "", categories: {name: "food", transaction_type: "expense"}}]);
     return(
         <TransactionContext value={{transactionsArr, setTransactionsArr}}>
             {children}

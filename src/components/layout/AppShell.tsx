@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 
 import Sidebar from "./Sidebar";
 import TopBar from "./TopBar";
-import TransactionContextProvider, { /*TestContext*/TransactionContext } from "../../app/(protected)/context";
+import TransactionContextProvider, {TransactionContext } from "../../app/(protected)/context";
 
 type AppShellProps = {
     children: ReactNode;

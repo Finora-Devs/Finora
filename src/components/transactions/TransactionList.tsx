@@ -7,66 +7,13 @@ import {
   Search,
   Info,
 } from "lucide-react";
+import { Transaction } from "@/lib/types_and_helpers";
+import { useTransactionContext } from "@/app/(protected)/context";
 
-type Transaction = {
-    id: string;
-    name: string;
-    category: string;
-    date: string;
-    frequency: string;
-    amount: number;
-    type: "income" | "expense";
-};
 
-const transactions: Transaction[] = [
-    {
-        id: "1",
-        name: "Paycheck",
-        category: "Employment",
-        date: "Sep 8, 2026",
-        frequency: "Biweekly",
-        amount: 612.5,
-        type: "income",
-    },
-    {
-        id: "2",
-        name: "Rent",
-        category: "Housing",
-        date: "Sep 1, 2026",
-        frequency: "Monthly",
-        amount: 400,
-        type: "expense",
-    },
-    {
-        id: "3",
-        name: "Shell",
-        category: "Transportation",
-        date: "Sep 7, 2026",
-        frequency: "Just Once",
-        amount: 38.2,
-        type: "expense",
-    },
-    {
-        id: "4",
-        name: "Amazon",
-        category: "Other",
-        date: "Sep 9, 2026",
-        frequency: "Just Once",
-        amount: 34.99,
-        type: "expense",
-    },
-    {
-        id: "5",
-        name: "Chick-fil-A",
-        category: "Food",
-        date: "Sep 10, 2026",
-        frequency: "Just Once",
-        amount: 12.45,
-        type: "expense",
-    },
-];
 
 export default function TransactionList() {
+    const {transactionsArr, setTransactionsArr} = useTransactionContext();
     return (
         <section className="overflow-hidden rounded-xl border border-[#dce7e2] bg-white">
             {/* Heading and action buttons */}
@@ -250,14 +197,14 @@ export default function TransactionList() {
                     </thead>
 
                     <tbody className="divide-y divide-[#e5ebe8]">
-                        {transactions.map((transaction) => {
-                            const isIncome = transaction.type === "income";
+                        {transactionsArr.map((transaction) => {
+                            const isIncome = transaction.categories.transaction_type === "income";
 
                             return (
                                 <tr key={transaction.id} className="hover:bg-[#f8fbf9]">
                                     {/* Date */}
                                     <td className="whitespace-nowrap px-5 py-4 text-[#7185a1]">
-                                        {transaction.date}
+                                        {transaction.transaction_date}
                                     </td>
 
                                     {/* Name */}
@@ -284,7 +231,7 @@ export default function TransactionList() {
 
                                     {/* Category */}
                                     <td className="px-5 py-4 text-[#607394]">
-                                        {transaction.category}
+                                        {transaction.categories.name}
                                     </td>
 
                                     {/* Type */}
@@ -330,7 +277,7 @@ export default function TransactionList() {
             </div>
 
             <div className="border-t border-[#e5ebe8] px-5 py-4 text-sm text-[#4e7069]">
-                Showing {transactions.length} sample transactions
+                Showing {transactionsArr.length} sample transactions
             </div>
         </section>
     );
