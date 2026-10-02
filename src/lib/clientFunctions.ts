@@ -5,19 +5,19 @@ export async function insertTransaction(amount: number, category_id: number, des
 {
     const supabase = await createClient();
 
-    const next_due_date: Date = switch(frequency)
+    let next_due_date: Date = new Date();
+    switch(frequency)
     {
         case "once":
-            new Date();
             break;
         case "weekly":
-            
+            next_due_date.setDate(next_due_date.getUTCDate() + 7)
             break;
         case "monthly":
-
+            next_due_date.setDate(next_due_date.getUTCDate() + 30)
             break;
         case "yearly":
-
+            next_due_date.setDate(next_due_date.getUTCFullYear() + 1)
             break;
 
     }
@@ -34,7 +34,7 @@ export async function insertTransaction(amount: number, category_id: number, des
                 next_due_date: Intl.DateTimeFormat("sv-SE").format(new Date()),//add time based on frequency
                 transaction_date: transaction_date,
                 user_id: "0"//this should use the id of the current user. I will figure out how to retieve that later.
-         })
+         });
 }
 
 /*
