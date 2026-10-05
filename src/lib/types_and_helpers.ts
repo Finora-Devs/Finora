@@ -20,6 +20,47 @@ export type Transaction =
         };
  };
 
+ export enum SORTING_ORDER
+ {
+    DATE,
+    NAME,
+    AMOUNT,
+    CATEGORY,
+    FREQUENCY
+ }
+ export enum CATEGORY 
+ {
+    ALL,
+    FOOD,
+    HOUSING,
+    TRANSPORTATION,
+    TUITION,
+    ENTERTAINMENT,
+    UTILITIES,
+    SUBSCRIPTIONS,
+    EMPLOYMENT,
+    SCHOLARSHIPS,
+    FINANCIAL_AID,
+    FAMILY_SUPPORT,
+    SIDE_HUSTLE,
+    REFUNDS,
+    OTHER
+ }
+
+ /**
+  * @param search a string. if not empty, only return transactions which have names that match the string
+  * @param sortingOrder what should be used to sort the array of transactions.
+  * @param descending determines if the array is sorted in ascending or descending order.
+  * @param category which category to affect with include.
+  * @param include if set to include, returned array will only have Transactions which match @param category. if false, return only transaction which do NOT match.
+  * @param arr the array to be sorted.
+  * @returns an array of Transactions identical to @param arr but sorted and filtered.
+  */
+ export function sortBy(search: string = "", sortingOrder: SORTING_ORDER = 0, descending: boolean = true, category: CATEGORY = 0, include: boolean = true, arr: Transaction[]): Transaction[]
+ {
+    return []
+ }
+
  //this function will take a category ID and return the amount of money spent in that category. This will be called to get the numbers needed for the pie chart.
 export function getCategoryAmount(category_id: number): number
 {

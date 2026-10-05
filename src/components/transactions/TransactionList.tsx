@@ -7,13 +7,29 @@ import {
   Search,
   Info,
 } from "lucide-react";
-import { Transaction } from "@/lib/types_and_helpers";
+import { Transaction, SORTING_ORDER, CATEGORY, sortBy } from "@/lib/types_and_helpers";
 import { useTransactionContext } from "@/app/(protected)/context";
+import { useContext, useState } from "react";
 
 
-
+//Sort by option box: complete
+//search bar: complete
+//Ascending/Descending toggle: incomplete
+//category option box: incomplete
+//include/exclude toggle: incomplete
+//add income button: incomplete
+//add expense button: incomplete
 export default function TransactionList() {
     const {transactionsArr, setTransactionsArr} = useTransactionContext();
+    const [searchTerm, setSearchTerm] = useState("");//not sure if most of these need to be states or not. I will change this as I expierement.
+    const [sortingOrder, setSortingOrder] = useState(SORTING_ORDER.DATE);
+    const [descending, setDescending] = useState(true);
+    const [category, setCategory] = useState(CATEGORY.ALL);
+    const [include, setInclude] = useState(true);
+    const TransactionList = sortBy(searchTerm, sortingOrder, descending, category, include, transactionsArr)
+
+    console.log(transactionsArr);
+
     return (
         <section className="overflow-hidden rounded-xl border border-[#dce7e2] bg-white">
             {/* Heading and action buttons */}
@@ -58,6 +74,7 @@ export default function TransactionList() {
                         type="search"
                         placeholder="Search transactions..."
                         className="w-full rounded-lg border border-[#dce7e2] bg-[#f7faf8] py-2.5 pl-10 pr-3 text-sm text-[#17324d] placeholder:text-[#7185a1] focus:border-[#3f8068] focus:outline-none"
+                        onChange={(val) => setSearchTerm(val.target.value)}
                     />
                 </div>
 
@@ -67,14 +84,15 @@ export default function TransactionList() {
 
                 <select
                     id="transaction-sort"
-                    defaultValue="date"
+                    defaultValue={SORTING_ORDER.DATE}
                     className="rounded-lg border border-[#dce7e2] bg-white px-3 py-2.5 text-sm text-[#17324d]"
+                    onChange={(val) => {setSortingOrder(Number(val.target.value) as SORTING_ORDER)}}//Done
                 >
-                    <option value="date">Date</option>
-                    <option value="name">Name</option>
-                    <option value="amount">Amount</option>
-                    <option value="category">Category</option>
-                    <option value="frequency">Frequency</option>
+                    <option value={SORTING_ORDER.DATE}>Date</option>
+                    <option value={SORTING_ORDER.NAME}>Name</option>
+                    <option value={SORTING_ORDER.AMOUNT}>Amount</option>
+                    <option value={SORTING_ORDER.CATEGORY}>Category</option>
+                    <option value={SORTING_ORDER.FREQUENCY}>Frequency</option>
                 </select>
 
                 <div className="flex overflow-hidden rounded-lg border border-[#dce7e2]">

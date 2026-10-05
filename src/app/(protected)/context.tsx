@@ -2,6 +2,7 @@
 import {createContext, useContext, useState, useEffect} from "react"//probably need to remember what each of these do in case dr. nicholson asks.
 import type { ReactNode, Dispatch, SetStateAction } from "react";
 import { Transaction } from "@/lib/types_and_helpers";
+import { getTransactions } from "@/lib/serverFunctions"
 
 type ProtectedLayoutProps = {
     children: ReactNode;
@@ -11,22 +12,8 @@ type ProtectedLayoutProps = {
 /**
  * This line creates a context for holding transactions. When you want to reference the list of transactions currently in the browser,
  * use the useTransactionContext() function below.
- * 
- * This looks a little crazy, but all you need to know is that it is a STATE variable in a CONTEXT trenchcoat.
  */
-export const TransactionContext = createContext<{transactionsArr: Transaction[], setTransactionsArr: Dispatch<SetStateAction<{
-    id: number;
-    name: string;
-    description: string;
-    amount: number;
-    frequency: string;
-    transaction_date: string;
-    next_due_date: string;
-    categories: {
-        name: string;
-        transaction_type: string;
-    };
-}[]>>} | undefined>(undefined);
+export const TransactionContext = createContext<{transactionsArr: Transaction[], setTransactionsArr: Dispatch<SetStateAction<Transaction[]>>} | undefined>(undefined);
 
 /**
  * This function creates a wrapper component that can be placed around the app shell (or any other component Steven makes) which 
@@ -34,13 +21,36 @@ export const TransactionContext = createContext<{transactionsArr: Transaction[],
  */
 export default function TransactionContextProvider({children}: ProtectedLayoutProps)
 {
-    const [transactionsArr, setTransactionsArr] = useState([{id: 1, name: "SomePurchase", description: "", amount: 20, frequency: "once", transaction_date: "2026-10-2", next_due_date: "", categories: {name: "food", transaction_type: "expense"}}]);
+    const [transactionsArr, setTransactionsArr] = useState<Transaction[]>([]);
+
+    // useEffect(() => 
+    // { 
+    //     const loadTransactions = async () => 
+    //     {
+    //         try 
+    //         {
+    //             const transactions = await getTransactions();
+    //             setTransactionsArr(transactions);
+    //         }
+    //         catch(error)
+    //         {
+    //             console.log(error)
+    //         }
+    //         finally
+    //         {
+                
+    //         }
+    //     }
+    //     loadTransactions();
+    // }, []) //runs only once.
+
     return(
         <TransactionContext value={{transactionsArr, setTransactionsArr}}>
             {children}
         </TransactionContext>
     );
 }
+
 
 /**
  * This is a custom version of the built in useContext() hook. This checks to make sure that the context has been initialized to SOMETHING

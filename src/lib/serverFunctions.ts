@@ -1,3 +1,4 @@
+'use server';
 /**
  * This file will contain any functions that need to read, write, or update date in the database NOT IN RESPONSE TO USER ACTIONS.
  * for functions that just manipulate data already in the browsers, go to types_and_helpers.ts
@@ -10,71 +11,74 @@ import { SupabaseClient } from '@supabase/supabase-js'
 import { Transaction } from "./types_and_helpers";
 
 
-/**
- * Function should run once when the when the user first signs in. It will retrieve and update all of the users data.
- * Maybe use just the database to manipulate data here, than use get Tranasctions after manipulation in done?
- */
-export async function start()
-{
-    const supabase = await createClient();
+//probably going to redo or delete all the commented stuff, but for now I am keeping it around as a reference.
 
-    const transactions: Transaction[] = await getTransactions(supabase) as Transaction[];
-    const currentDate = new Date();
-    let transactionDate: Date = new Date(transactions[0].transaction_date); //will need to test this and confirm that the string is formatted correctly for this use.
-    let i = 1;
+// /**
+//  * Function should run once when the when the user first signs in. It will retrieve and update all of the users data.
+//  * Maybe use just the database to manipulate data here, than use get Tranasctions after manipulation in done?
+//  */
+// export async function start()
+// {
+//     const supabase = await createClient();
 
-    while(transactionDate.getUTCDate() >= currentDate.getUTCDate() - 365)//check everything from now down to one year ago.
-    {
-        if(!(transactions[i].frequency === "once"))
-        {
-            insertRecurringTransaction(transactions[i], currentDate, transactions, supabase); //if the transaction repeats, insert appropriate transactions.
-        }
-        transactionDate = new Date(transactions[i].transaction_date);
-        i++;
-    }
+//     const transactions: Transaction[] = await getTransactions(supabase) as Transaction[];
+//     const currentDate = new Date();
+//     let transactionDate: Date = new Date(transactions[0].transaction_date); //will need to test this and confirm that the string is formatted correctly for this use.
+//     let i = 1;
 
-    //use UTC dates to maintain consistency when users travel across time zones.
-    //find the most recent unique transaction names that recurr. compare to current date. add necessary transactions.
-    //does the data base store the last time a user logged in? Really only need to check a year before the user's last sign-in to make sure I have accounted for all frequencies.
-    //will use let transactionDate: Date = new Date(transactions[0].transaction_date); as a stand in for last user sign in for now.
-}
+//     while(transactionDate.getUTCDate() >= currentDate.getUTCDate() - 365)//check everything from now down to one year ago.
+//     {
+//         if(!(transactions[i].frequency === "once"))
+//         {
+//             insertRecurringTransaction(transactions[i], currentDate, transactions, supabase); //if the transaction repeats, insert appropriate transactions.
+//         }
+//         transactionDate = new Date(transactions[i].transaction_date);
+//         i++;
+//     }
 
-function insertRecurringTransaction(transaction: Transaction, currentDate: Date, transactions: Transaction[], supabase: SupabaseClient<Database>)
-{
-    //??If the transaction has already been placed at the date specified, return. This transaction has already been handled.???
-    if(!transaction.next_due_date || new Date(transaction.next_due_date) > currentDate) //if the next_due_date does NOT exist OR is in the future.
-    {
-        return; //just return. There is no further action needed.
-    }
+//     //use UTC dates to maintain consistency when users travel across time zones.
+//     //find the most recent unique transaction names that recurr. compare to current date. add necessary transactions.
+//     //does the data base store the last time a user logged in? Really only need to check a year before the user's last sign-in to make sure I have accounted for all frequencies.
+//     //will use let transactionDate: Date = new Date(transactions[0].transaction_date); as a stand in for last user sign in for now.
+// }
 
-    let newTransaction: Transaction = structuredClone(transaction);
-    switch(newTransaction.frequency)
-    {//return record when inserted to get additional information like the id.
-        case "daily":
-            newTransaction.next_due_date = new Intl.DateTimeFormat("sv-SE").format(new Date(newTransaction.next_due_date!).getUTCDate() + 1)//need to make sure this provides the proper format. sets next_due_date one day in the future
-            break;
-        case "weekly":
-            newTransaction.next_due_date = new Intl.DateTimeFormat("sv-SE").format(new Date(newTransaction.next_due_date!).getUTCDay() + 7)//sets next_due_date one week in the future
-            break;
-        case "monthly":
-            newTransaction.next_due_date = new Intl.DateTimeFormat("sv-SE").format(new Date(newTransaction.next_due_date!).getUTCMonth() + 1)//sets next_due_date one month in the future
-            break;
-        case "yearly":
-            newTransaction.next_due_date = new Intl.DateTimeFormat("sv-SE").format(new Date(newTransaction.next_due_date!).getUTCFullYear() + 1)//sets next_due_date one year in the future
-            break;
-    }
+// function insertRecurringTransaction(transaction: Transaction, currentDate: Date, transactions: Transaction[], supabase: SupabaseClient<Database>)
+// {
+//     //??If the transaction has already been placed at the date specified, return. This transaction has already been handled.???
+//     if(!transaction.next_due_date || new Date(transaction.next_due_date) > currentDate) //if the next_due_date does NOT exist OR is in the future.
+//     {
+//         return; //just return. There is no further action needed.
+//     }
 
-    transactions.push()
-    //add transaction at due date.
-    //call insertRecurringTransaction() on the newly created transaction
-}
+//     let newTransaction: Transaction = structuredClone(transaction);
+//     switch(newTransaction.frequency)
+//     {//return record when inserted to get additional information like the id.
+//         case "daily":
+//             newTransaction.next_due_date = new Intl.DateTimeFormat("sv-SE").format(new Date(newTransaction.next_due_date!).getUTCDate() + 1)//need to make sure this provides the proper format. sets next_due_date one day in the future
+//             break;
+//         case "weekly":
+//             newTransaction.next_due_date = new Intl.DateTimeFormat("sv-SE").format(new Date(newTransaction.next_due_date!).getUTCDay() + 7)//sets next_due_date one week in the future
+//             break;
+//         case "monthly":
+//             newTransaction.next_due_date = new Intl.DateTimeFormat("sv-SE").format(new Date(newTransaction.next_due_date!).getUTCMonth() + 1)//sets next_due_date one month in the future
+//             break;
+//         case "yearly":
+//             newTransaction.next_due_date = new Intl.DateTimeFormat("sv-SE").format(new Date(newTransaction.next_due_date!).getUTCFullYear() + 1)//sets next_due_date one year in the future
+//             break;
+//     }
+
+//     transactions.push()
+//     //add transaction at due date.
+//     //call insertRecurringTransaction() on the newly created transaction
+// }
 
 /**
  * Gets all transactions for the current user.
- * 
  */
-export async function getTransactions(supabase: SupabaseClient<Database>): Promise<Transaction[]>
+export async function getTransactions(): Promise<Transaction[]>
 {
+    const supabase = await createClient();
+
     const transactionsQuery = supabase
     .from("transactions")
     .select(`
@@ -84,35 +88,16 @@ export async function getTransactions(supabase: SupabaseClient<Database>): Promi
         amount,
         frequency, 
         transaction_date, 
-        next_due_date,
+        
         categories!inner(
             name, 
             transaction_type
             )`
-        ).order("transaction_date", {ascending: false});
+        ).order("id", {ascending: true});
+        //next_due_date,
 
 
     const { data, error } = await transactionsQuery;
     if (error) throw error;
     return data as Transaction[];
 }
-
-
-/*transaction 
-        id,
-        name,
-        description,
-        amount,
-        transaction_date, 
-        categories!inner(
-            name, 
-            transaction_type
-            )
-
-Recurring
-        id
-        name
-        amount
-        frequency
-        next_due_date
-            */
