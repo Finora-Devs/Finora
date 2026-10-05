@@ -31,20 +31,20 @@ export type Transaction =
  export enum CATEGORY 
  {
     ALL,
-    FOOD,
-    HOUSING,
-    TRANSPORTATION,
-    TUITION,
-    ENTERTAINMENT,
-    UTILITIES,
-    SUBSCRIPTIONS,
-    EMPLOYMENT,
-    SCHOLARSHIPS,
-    FINANCIAL_AID,
-    FAMILY_SUPPORT,
-    SIDE_HUSTLE,
-    REFUNDS,
-    OTHER
+    FOOD = "Food",
+    HOUSING = "Housing",
+    TRANSPORTATION = "Transportation",
+    TUITION = "Tuition",
+    ENTERTAINMENT = "Entertainment",
+    UTILITIES = "Utilities",
+    SUBSCRIPTIONS = "Subscriptions",
+    EMPLOYMENT = "Employment",
+    SCHOLARSHIPS = "Scholarships",
+    FINANCIAL_AID = "Financial Aid",
+    FAMILY_SUPPORT = "Family Support",
+    SIDE_HUSTLE = "Side Hustle",
+    REFUNDS = "Refunds",
+    OTHER = "Other"
  }
 
  /**
@@ -58,7 +58,52 @@ export type Transaction =
   */
  export function sortBy(search: string = "", sortingOrder: SORTING_ORDER = 0, descending: boolean = true, category: CATEGORY = 0, include: boolean = true, arr: Transaction[]): Transaction[]
  {
-    return []
+   const newArr = arr.filter((transaction) => 
+      {
+         if(include)
+         {
+            return (transaction.categories.name === category) && (transaction.name.toLowerCase().includes(search.toLowerCase()));
+         }
+         else
+         {
+            return (transaction.categories.name !== category) && (transaction.name.toLowerCase().includes(search.toLowerCase()));
+         }
+      })
+
+      switch(sortingOrder)
+      {
+         case SORTING_ORDER.DATE:
+            arr.sort((a, b) => //return -1 if a is smaller than b, 0 if a = b, and 1 if a is bigger than b
+               {               //need to test this. been ages since I wrote a sorting function. still need to add in ascending and descending.
+                  if(new Date(a.transaction_date) < new Date(b.transaction_date))
+                  {
+                     return -1;
+                  }
+                  else if(new Date(a.transaction_date) > new Date(b.transaction_date))
+                  {
+                     return 1;
+                  }
+                  else 
+                  {
+                     return 0;
+                  }
+               })
+            break;
+         case SORTING_ORDER.NAME:
+            arr.sort((a, b) => a.name.localeCompare(b.name));
+            break;
+         case SORTING_ORDER.AMOUNT:
+            arr.sort((a, b) => a.amount-b.amount);
+            break;
+         case SORTING_ORDER.CATEGORY:
+            arr.sort((a, b) => a.categories.name.localeCompare(b.categories.name));
+            break;
+         case SORTING_ORDER.FREQUENCY:
+            arr.sort((a, b) => a.frequency.localeCompare(b.frequency));//this one will not work.
+            break;
+      }
+
+    return arr;
  }
 
  //this function will take a category ID and return the amount of money spent in that category. This will be called to get the numbers needed for the pie chart.
@@ -71,4 +116,13 @@ export function getCategoryAmount(category_id: number): number
 export function categoryOnChange()
 {
 
+}
+
+//prints the transaction ids of all transaction in an array. This is for testing, it should not be used in the final version of the website.
+export function logAllTransactions(transactionsArr: Transaction[])
+{
+    transactionsArr.forEach((transaction) => 
+    {
+        console.log(transaction.id);
+    });
 }

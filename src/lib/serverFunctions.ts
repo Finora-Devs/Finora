@@ -99,5 +99,5 @@ export async function getTransactions(): Promise<Transaction[]>
 
     const { data, error } = await transactionsQuery;
     if (error) throw error;
-    return data as Transaction[];
+    return data as Transaction[];//may use map to convert everything to enums
 }

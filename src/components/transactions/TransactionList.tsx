@@ -7,15 +7,15 @@ import {
   Search,
   Info,
 } from "lucide-react";
-import { Transaction, SORTING_ORDER, CATEGORY, sortBy } from "@/lib/types_and_helpers";
+import { Transaction, SORTING_ORDER, CATEGORY, sortBy, logAllTransactions } from "@/lib/types_and_helpers";
 import { useTransactionContext } from "@/app/(protected)/context";
 import { useContext, useState } from "react";
 
 
 //Sort by option box: complete
 //search bar: complete
-//Ascending/Descending toggle: incomplete
-//category option box: incomplete
+//Ascending/Descending toggle: incomplete. need to figure out how to make some kind of button group.
+//category option box: complete
 //include/exclude toggle: incomplete
 //add income button: incomplete
 //add expense button: incomplete
@@ -28,7 +28,7 @@ export default function TransactionList() {
     const [include, setInclude] = useState(true);
     const TransactionList = sortBy(searchTerm, sortingOrder, descending, category, include, transactionsArr)
 
-    console.log(transactionsArr);
+    logAllTransactions(transactionsArr);
 
     return (
         <section className="overflow-hidden rounded-xl border border-[#dce7e2] bg-white">
@@ -128,17 +128,18 @@ export default function TransactionList() {
                     id="transaction-category"
                     defaultValue="all"
                     className="min-w-[180px] rounded-lg border border-[#dce7e2] bg-white px-3 py-2.5 text-sm text-[#17324d]"
+                    onChange = {(val) => {setCategory(val.target.value as CATEGORY)}}//done
                 >
-                    <option value="all">All Categories</option> {/*option value="all" onChange = {functionCall}>All Categories</option> */}
-                    <option value="food">Food</option>
-                    <option value="housing">Housing</option>
-                    <option value="transportation">Transportation</option>
-                    <option value="tuition">Tuition</option>
-                    <option value="entertainment">Entertainment</option>
-                    <option value="utilities">Utilities</option>
-                    <option value="subscriptions">Subscriptions</option>
-                    <option value="employment">Employment</option>
-                    <option value="other">Other</option>
+                    <option value={CATEGORY.ALL}>All Categories</option> {/*option value="all" onChange = {functionCall}>All Categories</option> */}
+                    <option value={CATEGORY.FOOD}>Food</option>
+                    <option value={CATEGORY.HOUSING}>Housing</option>
+                    <option value={CATEGORY.TRANSPORTATION}>Transportation</option>
+                    <option value={CATEGORY.TUITION}>Tuition</option>
+                    <option value={CATEGORY.ENTERTAINMENT}>Entertainment</option>
+                    <option value={CATEGORY.UTILITIES}>Utilities</option>
+                    <option value={CATEGORY.SUBSCRIPTIONS}>Subscriptions</option>
+                    <option value={CATEGORY.EMPLOYMENT}>Employment</option>
+                    <option value={CATEGORY.OTHER}>Other</option>
                 </select>
 
                 <div className="flex items-center gap-2 text-sm text-[#7185a1]">
@@ -215,7 +216,7 @@ export default function TransactionList() {
                     </thead>
 
                     <tbody className="divide-y divide-[#e5ebe8]">
-                        {transactionsArr.map((transaction) => {
+                        {TransactionList.map((transaction) => {
                             const isIncome = transaction.categories.transaction_type === "income";
 
                             return (
