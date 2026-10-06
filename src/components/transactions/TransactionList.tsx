@@ -9,7 +9,8 @@ import {
 } from "lucide-react";
 import { Transaction, SORTING_ORDER, CATEGORY, sortBy, logAllTransactions } from "@/lib/types_and_helpers";
 import { useTransactionContext } from "@/app/(protected)/context";
-import { useContext, useState } from "react";
+import { useContext, useEffect, useState } from "react";
+import { insertTransaction } from "@/lib/clientFunctions";
 
 
 //Sort by option box: complete
@@ -28,7 +29,23 @@ export default function TransactionList() {
     const [include, setInclude] = useState(true);
     const TransactionList = sortBy(searchTerm, sortingOrder, descending, category, include, transactionsArr)
 
-    logAllTransactions(transactionsArr);
+    //logAllTransactions(transactionsArr);
+    // useEffect(() => testing stuff. ignore this
+    //     { 
+    //         const insert = async () => 
+    //         {
+    //             try
+    //             {
+    //                 await insertTransaction(20.05, 1, "", "once", "chicken", "2026-10-06");
+    //             }
+    //             catch (error)
+    //             {
+    //                 console.error("Something went wrong", error);
+    //                 throw error;
+    //             }
+    //         }
+    //         insert();
+    //     }, []) //runs only once.
 
     return (
         <section className="overflow-hidden rounded-xl border border-[#dce7e2] bg-white">

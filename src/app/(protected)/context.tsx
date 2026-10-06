@@ -30,7 +30,7 @@ export default function TransactionContextProvider({children}: ProtectedLayoutPr
             transaction_date: "2026-03-01",
             next_due_date: "",
             categories: {
-                name: "Transportation",
+                name: "Food",
                 transaction_type: "Expense"
             }
         }, {
@@ -60,26 +60,21 @@ export default function TransactionContextProvider({children}: ProtectedLayoutPr
         },]
     );
 
-    // useEffect(() => 
-    // { 
-    //     const loadTransactions = async () => 
-    //     {
-    //         try 
-    //         {
-    //             const transactions = await getTransactions();
-    //             setTransactionsArr(transactions);
-    //         }
-    //         catch(error)
-    //         {
-    //             console.log(error)
-    //         }
-    //         finally
-    //         {
-                
-    //         }
-    //     }
-    //     loadTransactions();
-    // }, []) //runs only once.
+    useEffect(() => 
+    { 
+        const loadTransactions = async () => 
+        {
+            try
+            {
+                setTransactionsArr(await getTransactions());
+            }
+            catch (error)
+            {
+                console.error("Something went wrong", error);
+            }
+        }
+        loadTransactions();
+    }, []) //runs only once.
 
     return(
         <TransactionContext value={{transactionsArr, setTransactionsArr}}>

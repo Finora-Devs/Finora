@@ -79,7 +79,7 @@ export async function getTransactions(): Promise<Transaction[]>
 {
     const supabase = await createClient();
 
-    const transactionsQuery = supabase
+    const transactionsQuery = await supabase
     .from("transactions")
     .select(`
         id,
@@ -97,7 +97,7 @@ export async function getTransactions(): Promise<Transaction[]>
         //next_due_date,
 
 
-    const { data, error } = await transactionsQuery;
+    const { data, error } = transactionsQuery;
     if (error) throw error;
     return data as Transaction[];//may use map to convert everything to enums
 }

@@ -30,7 +30,7 @@ export type Transaction =
  }
  export enum CATEGORY 
  {
-    ALL,
+    ALL = "All",
     FOOD = "Food",
     HOUSING = "Housing",
     TRANSPORTATION = "Transportation",
@@ -46,6 +46,14 @@ export type Transaction =
     REFUNDS = "Refunds",
     OTHER = "Other"
  }
+ export enum FREQUENCY //When I have time, I am going to see if I can replace the frequency value in transactions with these.
+ {
+   ONCE,
+   DAILY,
+   WEEKLY,
+   MONTHLY,
+   YEARLY
+ }
 
  /**
   * @param search a string. if not empty, only return transactions which have names that match the string
@@ -56,30 +64,37 @@ export type Transaction =
   * @param arr the array to be sorted.
   * @returns an array of Transactions identical to @param arr but sorted and filtered.
   */
- export function sortBy(search: string = "", sortingOrder: SORTING_ORDER = 0, descending: boolean = true, category: CATEGORY = 0, include: boolean = true, arr: Transaction[]): Transaction[]
+ export function sortBy(search: string = "", sortingOrder: SORTING_ORDER = SORTING_ORDER.DATE, descending: boolean = true, category: CATEGORY = CATEGORY.ALL, include: boolean = true, arr: Transaction[]): Transaction[]
  {
    const newArr = arr.filter((transaction) => 
       {
+         const matchSearch: boolean = transaction.name.toLowerCase().includes(search.toLowerCase());
+         let matchCategory: boolean = transaction.categories.name.toLowerCase() === category.toLowerCase();
+         if(category === CATEGORY.ALL)
+         {
+            matchCategory = true;
+         }
+         
          if(include)
          {
-            return (transaction.categories.name === category) && (transaction.name.toLowerCase().includes(search.toLowerCase()));
+            return matchCategory && matchSearch;
          }
          else
          {
-            return (transaction.categories.name !== category) && (transaction.name.toLowerCase().includes(search.toLowerCase()));
+            return !matchCategory && matchSearch;
          }
       })
 
       switch(sortingOrder)
       {
          case SORTING_ORDER.DATE:
-            arr.sort((a, b) => //return -1 if a is smaller than b, 0 if a = b, and 1 if a is bigger than b
+            newArr.sort((a, b) => //return -1 if a is smaller than b, 0 if a = b, and 1 if a is bigger than b
                {               //need to test this. been ages since I wrote a sorting function. still need to add in ascending and descending.
-                  if(new Date(a.transaction_date) < new Date(b.transaction_date))
+                  if(new Date(a.transaction_date) > new Date(b.transaction_date))
                   {
                      return -1;
                   }
-                  else if(new Date(a.transaction_date) > new Date(b.transaction_date))
+                  else if(new Date(a.transaction_date) < new Date(b.transaction_date))
                   {
                      return 1;
                   }
@@ -90,20 +105,20 @@ export type Transaction =
                })
             break;
          case SORTING_ORDER.NAME:
-            arr.sort((a, b) => a.name.localeCompare(b.name));
+            newArr.sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
             break;
          case SORTING_ORDER.AMOUNT:
-            arr.sort((a, b) => a.amount-b.amount);
+            newArr.sort((a, b) => b.amount - a.amount);
             break;
          case SORTING_ORDER.CATEGORY:
-            arr.sort((a, b) => a.categories.name.localeCompare(b.categories.name));
+            newArr.sort((a, b) => a.categories.name.toLowerCase().localeCompare(b.categories.name.toLowerCase()));
             break;
          case SORTING_ORDER.FREQUENCY:
-            arr.sort((a, b) => a.frequency.localeCompare(b.frequency));//this one will not work.
+            newArr.sort((a, b) => a.frequency.localeCompare(b.frequency));//this one will not work.
             break;
       }
 
-    return arr;
+    return newArr;
  }
 
  //this function will take a category ID and return the amount of money spent in that category. This will be called to get the numbers needed for the pie chart.
