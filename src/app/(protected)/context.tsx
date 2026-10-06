@@ -21,46 +21,9 @@ export const TransactionContext = createContext<{transactionsArr: Transaction[],
  */
 export default function TransactionContextProvider({children}: ProtectedLayoutProps)
 {
-    const [transactionsArr, setTransactionsArr] = useState<Transaction[]>([{ //dummy values to test sorting method.
-        id: 1,
-           name: "Chick-fil-a",
-           description: "some nonsense",
-           frequency: "once",
-           amount: 20.10,
-            transaction_date: "2026-03-01",
-            next_due_date: "",
-            categories: {
-                name: "Food",
-                transaction_type: "Expense"
-            }
-        }, {
-        id: 2,
-           name: "Gas",
-           description: "some nonsense",
-           frequency: "once",
-           amount: 15.48,
-            transaction_date: "2026-10-5",
-            next_due_date: "",
-            categories: {
-                name: "Transportation",
-                transaction_type: "Expense"
-            }
-        }, {
-        id: 3,
-           name: "Lunch",
-           description: "some nonsense",
-           frequency: "once",
-           amount: 10.19,
-            transaction_date: "2026-09-25",
-            next_due_date: "",
-            categories: {
-                name: "Food",
-                transaction_type: "Expense"
-            }
-        },]
-    );
+    const [transactionsArr, setTransactionsArr] = useState<Transaction[]>([]);
 
-    useEffect(() => 
+    useEffect(() => //this seems to be working, but I need to check supabase to see if its ignoring any columns.
     { 
         const loadTransactions = async () => 
         {

@@ -27,6 +27,9 @@ export async function insertTransaction(amount: number, category_id: number, des
 
     }
 
+    const {
+    data: { user }, error: userError} = await supabase.auth.getUser();
+
     const { error } = await supabase
         .from('transactions')
         .insert(
@@ -36,10 +39,20 @@ export async function insertTransaction(amount: number, category_id: number, des
                 description: description,
                 frequency: frequency,
                 name: name,
-                next_due_date: Intl.DateTimeFormat("sv-SE").format(new Date()),//add time based on frequency
+                //next_due_date: Intl.DateTimeFormat("sv-SE").format(new Date()),//add time based on frequency
                 transaction_date: transaction_date,
-                user_id: "0"//this should use the id of the current user. I will figure out if this is automatic or if i need to retrieve it later
+                user_id: user!.id //THIS WILL NEED TO BE CHANGED TO BE ABLE TO HANDLE NULL USER.
          });
+
+         if(error)
+         {
+            console.error("Supabase insert error: ", error);
+            throw error;
+         }
+         else
+         {
+            console.log("Insert Success");
+         }
 }
 
 

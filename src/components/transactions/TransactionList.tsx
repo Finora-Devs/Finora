@@ -30,22 +30,28 @@ export default function TransactionList() {
     const TransactionList = sortBy(searchTerm, sortingOrder, descending, category, include, transactionsArr)
 
     //logAllTransactions(transactionsArr);
-    // useEffect(() => testing stuff. ignore this
-    //     { 
-    //         const insert = async () => 
-    //         {
-    //             try
-    //             {
-    //                 await insertTransaction(20.05, 1, "", "once", "chicken", "2026-10-06");
-    //             }
-    //             catch (error)
-    //             {
-    //                 console.error("Something went wrong", error);
-    //                 throw error;
-    //             }
-    //         }
-    //         insert();
-    //     }, []) //runs only once.
+/**
+ * This code can insert a row into the database.
+ * for some reason it inserts two things instead of just one though.
+ * 
+ *  useEffect(() => 
+ *      { 
+ *          const insert = async () => 
+ *          {
+ *              try
+ *              {
+ *                  await insertTransaction(20.05, 1, "", "once", "chicken", "2026-10-06");
+ *              }
+ *              catch (error)
+ *              {
+ *                  console.error("Something went wrong", error);
+ *                  throw error;
+ *              }
+ *          }
+ *          insert();
+ *      }, []) //runs only once.
+ */
+   
 
     return (
         <section className="overflow-hidden rounded-xl border border-[#dce7e2] bg-white">
