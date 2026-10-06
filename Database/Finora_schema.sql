@@ -62,3 +62,61 @@ CREATE TABLE public.savings_goals (
   CONSTRAINT savings_goals_pkey PRIMARY KEY (id),
   CONSTRAINT savings_goals_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
 );
+
+
+-- After created run Row Level Security
+
+begin;
+
+-- Everyone who is logged in can view the predefined categories.
+create policy "Authenticated users can view categories"
+on public.categories
+for select
+to authenticated
+using (true);
+
+
+-- Users can only manage their own transactions.
+create policy "Users can manage their own transactions"
+on public.transactions
+for all
+to authenticated
+using ((select auth.uid()) = user_id)
+with check ((select auth.uid()) = user_id);
+
+
+-- Users can only manage their own monthly budgets.
+create policy "Users can manage their own monthly budgets"
+on public.monthly_budgets
+for all
+to authenticated
+using ((select auth.uid()) = user_id)
+with check ((select auth.uid()) = user_id);
+
+
+-- Users can only manage their own category budgets.
+create policy "Users can manage their own category budgets"
+on public.category_budgets
+for all
+to authenticated
+using ((select auth.uid()) = user_id)
+with check ((select auth.uid()) = user_id);
+
+
+-- Users can only manage their own savings goals.
+create policy "Users can manage their own savings goals"
+on public.savings_goals
+for all
+to authenticated
+using ((select auth.uid()) = user_id)
+with check ((select auth.uid()) = user_id);
+
+create policy "Users can manage their recurring transactions"
+on public.recurring_transactions
+for all
+to authenticated
+using (auth.uid() = user_id)
+with check (auth.uid() = user_id);
+
+
+commit;
