@@ -118,7 +118,14 @@ export type Transaction =
             break;
       }
 
-    return newArr;
+      if(descending)
+      {
+         return newArr;
+      }
+      else
+      {
+         return newArr.reverse();
+      }
  }
 
  //this function will take a category ID and return the amount of money spent in that category. This will be called to get the numbers needed for the pie chart.

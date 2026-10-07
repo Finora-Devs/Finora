@@ -15,13 +15,13 @@ import { insertTransaction } from "@/lib/clientFunctions";
 
 //Sort by option box: complete
 //search bar: complete
-//Ascending/Descending toggle: incomplete. need to figure out how to make some kind of button group.
+//Ascending/Descending toggle: complete.
 //category option box: complete
-//include/exclude toggle: incomplete
+//include/exclude toggle: complete
 //add income button: incomplete
 //add expense button: incomplete
-//pie chart: incomplete
-//summary cards: incomplete.
+
+//still need summary cards and chart
 export default function TransactionList() {
     const {transactionsArr, setTransactionsArr} = useTransactionContext();
     const [searchTerm, setSearchTerm] = useState("");//not sure if most of these need to be states or not. I will change this as I expierement.
@@ -30,6 +30,19 @@ export default function TransactionList() {
     const [category, setCategory] = useState(CATEGORY.ALL);
     const [include, setInclude] = useState(true);
     const TransactionList = sortBy(searchTerm, sortingOrder, descending, category, include, transactionsArr)
+
+    const [newTransactionAmount, setnewTransactionAmount] = useState(1.00);//will need input validation to prevent inputs like 1.001
+    const [newTransactionCategory, setnewTransactionCategory] = useState(1);
+    const [newTransactionFrequency, setnewTransactionFrequency/*string for now, would like to change to a number through enums*/] = useState("once");
+    const [newTransactionName, setnewTransactionName] = useState("placeHolder");
+    const [newTransactionDate, setnewTransactionDate] = useState(new Date().toDateString());
+
+    //amount: number, textfield. allow only numbers
+    //category_id: number, dropdown, select category
+    //description: string | null, ignore this one, dont need it.
+    //frequency: string, dropdown. if its anything other than once, insert a transaction into the recurring Transaction table
+    //name: string, textfield
+    //transaction_date: string, date picker of some kind?
 
     //logAllTransactions(transactionsArr);
 /**
@@ -124,14 +137,16 @@ export default function TransactionList() {
                     <button
                         type="button"
                         aria-label="Sort descending"
-                        className="bg-[#e5f3ec] px-3 py-2.5 text-[#28664f]"
+                        className={`px-3 py-2.5  hover:bg-[#f7faf8] ${descending ? 'bg-[#e5f3ec] text-[#28664f]' : 'text-[#7185a1]'}`}
+                        onClick={() => setDescending(true)}
                     >
                         <ArrowDown className="h-4 w-4" />
                     </button>
                     <button
                         type="button"
                         aria-label="Sort ascending"
-                        className="border-l border-[#dce7e2] px-3 py-2.5 text-[#7185a1] hover:bg-[#f7faf8]"
+                        className={`border-l border-[#dce7e2] px-3 py-2.5  hover:bg-[#f7faf8] ${!descending ? 'bg-[#e5f3ec] text-[#28664f]' : 'text-[#7185a1]'}`}
+                        onClick={() => setDescending(false)}
                     >
                         <ArrowUp className="h-4 w-4" />
                     </button>
@@ -199,13 +214,15 @@ export default function TransactionList() {
                 <div className="flex overflow-hidden rounded-lg border border-[#dce7e2]">
                     <button
                         type="button"
-                        className="bg-[#e5f3ec] px-4 py-2.5 text-sm font-medium text-[#28664f]"
+                        className={` px-4 py-2.5 text-sm font-medium hover:bg-[#f7faf8] ${include ? 'bg-[#e5f3ec] text-[#28664f]' : 'text-[#607394] bg-white'}`}
+                        onClick={() => setInclude(true)}
                     >
                         Include
                     </button>
                     <button
                         type="button"
-                        className="border-l border-[#dce7e2] bg-white px-4 py-2.5 text-sm font-medium text-[#607394] hover:bg-[#f7faf8]"
+                        className={`border-l border-[#dce7e2] px-4 py-2.5 text-sm font-medium hover:bg-[#f7faf8] ${!include ? 'bg-[#e5f3ec] text-[#28664f]' : 'text-[#607394] bg-white'}`}
+                        onClick={() => setInclude(false)}
                     >
                         Exclude
                     </button>
@@ -321,7 +338,7 @@ export default function TransactionList() {
             </div>
 
             <div className="border-t border-[#e5ebe8] px-5 py-4 text-sm text-[#4e7069]">
-                Showing {transactionsArr.length} sample transactions
+                Showing {TransactionList.length} sample transactions
             </div>
         </section>
     );
