@@ -11,7 +11,7 @@ export type Transaction =
     name: string;
     description: string | null;
     amount: number;
-    frequency: string;
+    frequency: FREQUENCY;
     transaction_date: string;
     next_due_date: string | null;
     categories: {
@@ -46,13 +46,37 @@ export type Transaction =
     REFUNDS = "Refunds",
     OTHER = "Other"
  }
- export enum FREQUENCY //When I have time, I am going to see if I can replace the frequency value in transactions with these.
+ export enum FREQUENCY
  {
    ONCE,
    DAILY,
    WEEKLY,
    MONTHLY,
    YEARLY
+ }
+
+ export function getFrequencyAsString(frequency: FREQUENCY): string
+ {
+   switch(frequency)
+   {
+      case FREQUENCY.ONCE:
+         return "Once";
+         break;
+      case FREQUENCY.DAILY:
+         return "Daily";
+         break;
+      case FREQUENCY.WEEKLY:
+         return "Weekly";
+         break;
+      case FREQUENCY.MONTHLY:
+         return "Monthly";
+         break;
+      case FREQUENCY.YEARLY:
+         return "Yearly";
+         break;
+      default:
+         return "ERROR";
+   }
  }
 
  /**
@@ -114,7 +138,7 @@ export type Transaction =
             newArr.sort((a, b) => a.categories.name.toLowerCase().localeCompare(b.categories.name.toLowerCase()));
             break;
          case SORTING_ORDER.FREQUENCY:
-            newArr.sort((a, b) => a.frequency.localeCompare(b.frequency));//this one will not work.
+            newArr.sort((a, b) => a.frequency - b.frequency);
             break;
       }
 

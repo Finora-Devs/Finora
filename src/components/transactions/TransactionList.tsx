@@ -7,7 +7,7 @@ import {
   Search,
   Info,
 } from "lucide-react";
-import { Transaction, SORTING_ORDER, CATEGORY, sortBy, logAllTransactions } from "@/lib/types_and_helpers";
+import { Transaction, SORTING_ORDER, CATEGORY, sortBy, logAllTransactions, getFrequencyAsString, FREQUENCY } from "@/lib/types_and_helpers";
 import { useTransactionContext } from "@/app/(protected)/context";
 import { useContext, useEffect, useState } from "react";
 import { insertTransaction } from "@/lib/clientFunctions";
@@ -20,6 +20,7 @@ import { insertTransaction } from "@/lib/clientFunctions";
 //include/exclude toggle: complete
 //add income button: incomplete
 //add expense button: incomplete
+//remove transaction: incomplete.
 
 //still need summary cards and chart
 export default function TransactionList() {
@@ -32,14 +33,13 @@ export default function TransactionList() {
     const TransactionList = sortBy(searchTerm, sortingOrder, descending, category, include, transactionsArr)
 
     const [newTransactionAmount, setnewTransactionAmount] = useState(1.00);//will need input validation to prevent inputs like 1.001
-    const [newTransactionCategory, setnewTransactionCategory] = useState(1);
-    const [newTransactionFrequency, setnewTransactionFrequency/*string for now, would like to change to a number through enums*/] = useState("once");
+    const [newTransactionCategory, setnewTransactionCategory] = useState(7);//may make this an enum for readability
+    const [newTransactionFrequency, setnewTransactionFrequency] = useState(FREQUENCY.DAILY);
     const [newTransactionName, setnewTransactionName] = useState("placeHolder");
     const [newTransactionDate, setnewTransactionDate] = useState(new Date().toDateString());
 
     //amount: number, textfield. allow only numbers
     //category_id: number, dropdown, select category
-    //description: string | null, ignore this one, dont need it.
     //frequency: string, dropdown. if its anything other than once, insert a transaction into the recurring Transaction table
     //name: string, textfield
     //transaction_date: string, date picker of some kind?
@@ -80,6 +80,7 @@ export default function TransactionList() {
                     <button
                         type="button"
                         className="inline-flex items-center gap-2 rounded-lg bg-[#008f73] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#00765f]"
+                        onClick={() => insertTransaction(newTransactionAmount, newTransactionCategory, newTransactionFrequency, newTransactionName, newTransactionDate)}
                     >
                         <Plus className="h-4 w-4" />
                         Add Income
@@ -88,6 +89,14 @@ export default function TransactionList() {
                     <button
                         type="button"
                         className="inline-flex items-center gap-2 rounded-lg bg-[#3f8068] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#326b56]"
+                        onClick={() => 
+                            {
+                                insertTransaction(newTransactionAmount, newTransactionCategory, newTransactionFrequency, newTransactionName, newTransactionDate)
+                                setTransactionsArr(prev => [
+                                    ...prev, /*need to get the newly inserted item. should be able to chain select into the insert*/
+                                ]);
+                            }
+                        }
                     >
                         <Plus className="h-4 w-4" />
                         Add Expense
@@ -305,7 +314,7 @@ export default function TransactionList() {
 
                                     {/* Frequency */}
                                     <td className="whitespace-nowrap px-5 py-4 text-[#7185a1]">
-                                        {transaction.frequency}
+                                        {getFrequencyAsString(transaction.frequency)}
                                     </td>
 
                                     {/* Amount */}
