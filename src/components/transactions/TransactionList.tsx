@@ -7,10 +7,10 @@ import {
   Search,
   Info,
 } from "lucide-react";
-import { Transaction, SORTING_ORDER, CATEGORY, sortBy, logAllTransactions, getFrequencyAsString, FREQUENCY } from "@/lib/types_and_helpers";
+import { Transaction, SORTING_ORDER, CATEGORY, sortBy, logAllTransactions, FREQUENCY } from "@/lib/types_and_helpers";
 import { useTransactionContext } from "@/app/(protected)/context";
 import { useContext, useEffect, useState } from "react";
-import { insertTransaction } from "@/lib/clientFunctions";
+import { deleteTransaction, insertTransaction } from "@/lib/clientFunctions";
 
 
 //Sort by option box: complete
@@ -34,39 +34,9 @@ export default function TransactionList() {
 
     const [newTransactionAmount, setnewTransactionAmount] = useState(1.00);//will need input validation to prevent inputs like 1.001
     const [newTransactionCategory, setnewTransactionCategory] = useState(7);//may make this an enum for readability
-    const [newTransactionFrequency, setnewTransactionFrequency] = useState(FREQUENCY.DAILY);
+    const [newTransactionFrequency, setnewTransactionFrequency] = useState("once");
     const [newTransactionName, setnewTransactionName] = useState("placeHolder");
     const [newTransactionDate, setnewTransactionDate] = useState(new Date().toDateString());
-
-    //amount: number, textfield. allow only numbers
-    //category_id: number, dropdown, select category
-    //frequency: string, dropdown. if its anything other than once, insert a transaction into the recurring Transaction table
-    //name: string, textfield
-    //transaction_date: string, date picker of some kind?
-
-    //logAllTransactions(transactionsArr);
-/**
- * This code can insert a row into the database.
- * for some reason it inserts two things instead of just one though.
- * 
- *  useEffect(() => 
- *      { 
- *          const insert = async () => 
- *          {
- *              try
- *              {
- *                  await insertTransaction(20.05, 1, "once", "chicken", "2026-10-06");
- *              }
- *              catch (error)
- *              {
- *                  console.error("Something went wrong", error);
- *                  throw error;
- *              }
- *          }
- *          insert();
- *      }, []) //executes twice for some reason, but does not continuously execute.
- */
-   
 
     return (
         <section className="overflow-hidden rounded-xl border border-[#dce7e2] bg-white">
@@ -80,7 +50,7 @@ export default function TransactionList() {
                     <button
                         type="button"
                         className="inline-flex items-center gap-2 rounded-lg bg-[#008f73] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#00765f]"
-                        onClick={() => insertTransaction(newTransactionAmount, newTransactionCategory, newTransactionFrequency, newTransactionName, newTransactionDate)}
+                        onClick={() => insertTransaction(newTransactionAmount, newTransactionCategory, newTransactionFrequency, newTransactionName, newTransactionDate, setTransactionsArr)}
                     >
                         <Plus className="h-4 w-4" />
                         Add Income
@@ -91,10 +61,7 @@ export default function TransactionList() {
                         className="inline-flex items-center gap-2 rounded-lg bg-[#3f8068] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#326b56]"
                         onClick={() => 
                             {
-                                insertTransaction(newTransactionAmount, newTransactionCategory, newTransactionFrequency, newTransactionName, newTransactionDate)
-                                setTransactionsArr(prev => [
-                                    ...prev, /*need to get the newly inserted item. should be able to chain select into the insert*/
-                                ]);
+
                             }
                         }
                     >
@@ -314,7 +281,7 @@ export default function TransactionList() {
 
                                     {/* Frequency */}
                                     <td className="whitespace-nowrap px-5 py-4 text-[#7185a1]">
-                                        {getFrequencyAsString(transaction.frequency)}
+                                        {transaction.frequency}
                                     </td>
 
                                     {/* Amount */}
@@ -335,6 +302,7 @@ export default function TransactionList() {
                                             type="button"
                                             aria-label={`More options for ${transaction.name}`}
                                             className="rounded-lg p-2 text-[#4e7069] hover:bg-[#e5efeb]"
+                                            onClick={() => deleteTransaction(transaction.id, setTransactionsArr)}
                                         >
                                             <Ellipsis className="h-5 w-5" />
                                         </button>

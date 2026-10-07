@@ -8,7 +8,7 @@
 import { Database } from "@/types/database.types";
 import {createClient} from "./server"
 import { SupabaseClient } from '@supabase/supabase-js'
-import { FREQUENCY, Transaction } from "./types_and_helpers";
+import {Transaction } from "./types_and_helpers";
 
 
 //probably going to redo or delete all the commented stuff, but for now I am keeping it around as a reference.
@@ -88,49 +88,14 @@ export async function getTransactions(): Promise<Transaction[]>
         amount,
         frequency, 
         transaction_date, 
-        
         categories!inner(
             name, 
             transaction_type
             )`
         ).order("id", {ascending: true});
-        //next_due_date,
 
 
     const { data, error } = transactionsQuery;
     if (error) throw error;
-    return data.map(transaction => 
-        {
-            let newFrequency: FREQUENCY = FREQUENCY.DAILY;
-            switch(transaction.frequency)
-            {
-                case "daily":
-                    newFrequency = FREQUENCY.DAILY;
-                    break;
-                case "weekly":
-                    newFrequency = FREQUENCY.WEEKLY;
-                    break;
-                case "monthly":
-                    newFrequency = FREQUENCY.MONTHLY;
-                    break;
-                case "yearly":
-                    newFrequency = FREQUENCY.YEARLY;
-                    break;
-                default: newFrequency = FREQUENCY.ONCE;
-                    break;
-            }
-
-            return{
-                id: transaction.id,
-                name: transaction.name,
-                description: "",
-                amount: transaction.amount,
-                frequency: newFrequency,
-                transaction_date: transaction.transaction_date,
-                categories: {
-                    name: transaction.categories.name,
-                    transaction_type: transaction.categories.transaction_type
-                }
-            };
-        }) as Transaction[];
+    return data as Transaction[];
 }
