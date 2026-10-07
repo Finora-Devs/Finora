@@ -76,9 +76,6 @@ export default function TransactionContextProvider({children}: ProtectedLayoutPr
  *      We may need to do other operations like sorting. I don't know how to do that off the top of my head, but you can probably find it
  *      online. The main thing is that you must pass a new array, you can't mutuate the original. That's why we aren't just using .push()
  *      to add to the array.
- * 
- *      In the future, I will make a function that fills the array with the transactions from the database upon login. For now, it just has a 
- *      default value of one transaction.
  */
 export function useTransactionContext()
 {

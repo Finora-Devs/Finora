@@ -20,6 +20,8 @@ import { insertTransaction } from "@/lib/clientFunctions";
 //include/exclude toggle: incomplete
 //add income button: incomplete
 //add expense button: incomplete
+//pie chart: incomplete
+//summary cards: incomplete.
 export default function TransactionList() {
     const {transactionsArr, setTransactionsArr} = useTransactionContext();
     const [searchTerm, setSearchTerm] = useState("");//not sure if most of these need to be states or not. I will change this as I expierement.
@@ -40,7 +42,7 @@ export default function TransactionList() {
  *          {
  *              try
  *              {
- *                  await insertTransaction(20.05, 1, "", "once", "chicken", "2026-10-06");
+ *                  await insertTransaction(20.05, 1, "once", "chicken", "2026-10-06");
  *              }
  *              catch (error)
  *              {
@@ -49,7 +51,7 @@ export default function TransactionList() {
  *              }
  *          }
  *          insert();
- *      }, []) //runs only once.
+ *      }, []) //executes twice for some reason, but does not continuously execute.
  */
    
 

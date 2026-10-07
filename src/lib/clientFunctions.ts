@@ -6,7 +6,7 @@
 import {createClient} from "./client";
 import { Transaction } from "./types_and_helpers";
 
-export async function insertTransaction(amount: number, category_id: number, description: string | null, frequency: string, name: string, transaction_date: string)
+export async function insertTransaction(amount: number, category_id: number, frequency: string, name: string, transaction_date: string)
 {
     const supabase = await createClient();
 
@@ -27,21 +27,24 @@ export async function insertTransaction(amount: number, category_id: number, des
 
     }
 
-    const {
-    data: { user }, error: userError} = await supabase.auth.getUser();
-
-    const { error } = await supabase
+    const {data: { user }, error: userError} = await supabase.auth.getUser();
+    if(userError || user === null)
+    {
+        console.error("user authentication failed", userError);
+        throw userError;
+    }
+    else
+    {
+        const { error } = await supabase
         .from('transactions')
         .insert(
             { 
                 amount: amount,
                 category_id: category_id,
-                description: description,
                 frequency: frequency,
                 name: name,
-                //next_due_date: Intl.DateTimeFormat("sv-SE").format(new Date()),//add time based on frequency
                 transaction_date: transaction_date,
-                user_id: user!.id //THIS WILL NEED TO BE CHANGED TO BE ABLE TO HANDLE NULL USER.
+                user_id: user.id
          });
 
          if(error)
@@ -53,6 +56,9 @@ export async function insertTransaction(amount: number, category_id: number, des
          {
             console.log("Insert Success");
          }
+    }
+
+    
 }
 
 

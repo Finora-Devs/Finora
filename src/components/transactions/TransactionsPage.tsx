@@ -8,6 +8,8 @@ import {
 import TransactionList from "./TransactionList";
 import SpendingByCategory from "./SpendingByCategory";
 
+//should just need to pull information from the transaction list and stick it in these cards. May need to pull the state 
+//of the display list up here and pass it down to transaction list as a property.
 const summaryCards = [
   {
     label: "Total Transactions",

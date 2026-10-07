@@ -127,12 +127,6 @@ export function getCategoryAmount(category_id: number): number
     return 0;
 }
 
-//this function will need to filter the transactionsArr based on the category selected in the dropdown menu. The transactionPage will need to display the newly filtered array.
-export function categoryOnChange()
-{
-
-}
-
 //prints the transaction ids of all transaction in an array. This is for testing, it should not be used in the final version of the website.
 export function logAllTransactions(transactionsArr: Transaction[])
 {
