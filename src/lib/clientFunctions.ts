@@ -50,7 +50,7 @@ export async function insertTransaction(amount: number, category_id: number, fre
     }
     else
     {
-        const {data,  error } = await supabase
+        const {data,  error} = await supabase
         .from('transactions')
         .insert(
             { 
@@ -115,10 +115,61 @@ export async function deleteTransaction(transactionID: number, setTransactionsAr
 
 
 //changes an existing transaction with new information
-export async function updateTransaction()
+export async function updateTransaction(transactionID: number, amount: number, category_id: number, frequency: string, name: string, transaction_date: string, setTransactionArr: Dispatch<SetStateAction<Transaction[]>>)
 {
+    const supabase = await createClient();
 
+    const {data: { user }, error: userError} = await supabase.auth.getUser();
+    if(userError || user === null)
+    {
+        console.error("user authentication failed", userError);
+        throw userError;
+    }
+    else
+    {
+        const {data, error} = await supabase
+            .from("transactions")
+            .update(
+                {
+                    amount: amount, 
+                    category_id: category_id, 
+                    frequency: frequency, 
+                    name: name, 
+                    transaction_date: transaction_date,
+                })
+            .eq("id", transactionID)
+            .select(`
+                    id,
+                    name,
+                    description,
+                    amount,
+                    frequency, 
+                    transaction_date, 
+                    categories!inner(
+                        name, 
+                        transaction_type
+                        )`);
+        if(error)
+        {
+            console.error("supabase update error", error)
+            throw error;
+        }
+        else
+        {
+            setTransactionArr(arr => //will (hopefully) update the transaction array to reflect the new state of the database.
+                {
+                    return arr.map(prev => 
+                        {
+                            if(prev.id === transactionID)
+                            {
+                                return data[0] as Transaction;
+                            }
+                            else
+                            {
+                                return prev;
+                            }
+                        });
+                })
+        }
+    }
 }
-
-
-
