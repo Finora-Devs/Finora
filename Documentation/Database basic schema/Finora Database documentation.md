@@ -5,7 +5,8 @@ Required tables:
 | Table | Purpose |
 | :---- | :---- |
 | categories | Predefined income and expense categories |
-| transactions | Completed income and expense entries and recurring information |
+| transactions | Completed income and expense entries|
+| Recurring  | recurring transactions  |
 | monthly\_budgets | Overall monthly spending limits |
 | category\_budgets | Monthly limits for individual categories |
 | savings\_goals | Goal name, description, target, progress, and priority |

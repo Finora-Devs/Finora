@@ -112,6 +112,53 @@ export type Database = {
         }
         Relationships: []
       }
+      recurring_transactions: {
+        Row: {
+          amount: number
+          category_id: number
+          created_at: string
+          description: string | null
+          frequency: string
+          id: number
+          is_active: boolean
+          name: string
+          next_due_date: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          category_id: number
+          created_at?: string
+          description?: string | null
+          frequency: string
+          id?: never
+          is_active?: boolean
+          name: string
+          next_due_date: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          category_id?: number
+          created_at?: string
+          description?: string | null
+          frequency?: string
+          id?: never
+          is_active?: boolean
+          name?: string
+          next_due_date?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recurring_transactions_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       savings_goals: {
         Row: {
           created_at: string
@@ -157,7 +204,7 @@ export type Database = {
           frequency: string
           id: number
           name: string
-          next_due_date: string | null
+          recurring_transaction_id: number | null
           transaction_date: string
           user_id: string
         }
@@ -169,7 +216,7 @@ export type Database = {
           frequency?: string
           id?: number
           name: string
-          next_due_date?: string | null
+          recurring_transaction_id?: number | null
           transaction_date: string
           user_id: string
         }
@@ -181,7 +228,7 @@ export type Database = {
           frequency?: string
           id?: number
           name?: string
-          next_due_date?: string | null
+          recurring_transaction_id?: number | null
           transaction_date?: string
           user_id?: string
         }
@@ -191,6 +238,13 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_recurring_transaction_id_fkey"
+            columns: ["recurring_transaction_id"]
+            isOneToOne: false
+            referencedRelation: "recurring_transactions"
             referencedColumns: ["id"]
           },
         ]
