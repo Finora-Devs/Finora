@@ -37,6 +37,15 @@ export default function TransactionList() {
     const [newTransactionName, setnewTransactionName] = useState("placeHolder");
     const [newTransactionDate, setnewTransactionDate] = useState(new Date().toDateString());
 
+    const totalTransactions = transactionsArr.length;
+    const totalIncome = transactionsArr
+        .filter(t => t.categories.transaction_type === "income")
+        .reduce((sum, t) => sum + t.amount, 0);
+    const totalExpenses = transactionsArr
+        .filter(t => t.categories.transaction_type === "expense")
+        .reduce((sum, t) => sum + t.amount, 0);
+    const totalAmount = totalIncome - totalExpenses;
+
     //amount: number, textfield. allow only numbers
     //category_id: number, dropdown, select category
     //description: string | null, ignore this one, dont need it.
@@ -66,7 +75,6 @@ export default function TransactionList() {
  *          insert();
  *      }, []) //executes twice for some reason, but does not continuously execute.
  */
-   
 
     return (
         <section className="overflow-hidden rounded-xl border border-[#dce7e2] bg-white">
