@@ -7,16 +7,17 @@
 
 export type Transaction =
  {
-    id: number;
-    name: string;
-    description: string | null;
-    amount: number;
-    frequency: string;
-    transaction_date: string;
-    next_due_date: string | null;
+    id: number,
+    name: string,
+    description: string | null,
+    amount: number,
+    category_id: number,
+    frequency: string,
+    transaction_date: string,
+    next_due_date: string | null,
     categories: {
-        name: string;
-        transaction_type: string;
+        name: string,
+        transaction_type: string,
         };
  };
 
@@ -91,10 +92,20 @@ export type Transaction =
       {
          const matchSearch: boolean = transaction.name.toLowerCase().includes(search.toLowerCase());
          let matchCategory: boolean = transaction.categories.name.toLowerCase() === category.toLowerCase();
-         if(category === CATEGORY_NAME.ALL)
-         {
-            matchCategory = true;
+         if(category === CATEGORY_NAME.ALL)//if set to all, display all expense and income.
+         {                                 //if set to income, display categories that are income.
+            matchCategory = true;          //if set to expense, display categories that are expense.
          }
+         /*
+         if(category === CATEGORY_NAME.INCOME)
+         {
+
+         }
+         if(category === CATEGORY_NAME.EXPENSE)
+         {
+
+         }
+         */
          
          if(include)
          {

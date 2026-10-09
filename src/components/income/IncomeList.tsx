@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 
 import { formatMoney, incomeCategories, incomeEntries } from "./incomeData";
-import { Transaction, SORTING_ORDER, CATEGORY, sortBy, logAllTransactions, FREQUENCY } from "@/lib/types_and_helpers";
+import { Transaction, SORTING_ORDER, CATEGORY_NAME, sortBy, logAllTransactions, FREQUENCY } from "@/lib/types_and_helpers";
 import { useTransactionContext } from "@/app/(protected)/context";
 import { useContext, useEffect, useState } from "react";
 import { deleteTransaction, insertTransaction } from "@/lib/clientFunctions";
@@ -21,7 +21,7 @@ export default function IncomeList() {
     const [searchTerm, setSearchTerm] = useState("");//not sure if most of these need to be states or not. I will change this as I expierement.
     const [sortingOrder, setSortingOrder] = useState(SORTING_ORDER.DATE);
     const [descending, setDescending] = useState(true);
-    const [category, setCategory] = useState(CATEGORY.ALL);
+    const [category, setCategory] = useState(CATEGORY_NAME.ALL);
     const [include, setInclude] = useState(true);
     const incomeList = sortBy(searchTerm, sortingOrder, descending, category, include, transactionsArr)
 
@@ -125,8 +125,9 @@ export default function IncomeList() {
                     id="income-category"
                     defaultValue="all"
                     className="min-w-[180px] rounded-lg border border-[#dce7e2] bg-white px-3 py-2.5 text-sm text-[#17324d]"
+                    onChange = {(val) => {setCategory(val.target.value as CATEGORY_NAME)}}
                 >
-                    <option value="all">All Sources</option>
+                    <option value="All">All Sources</option>
                     {incomeCategories.map((category) => (
                         <option key={category.name} value={category.name}>{category.name}</option>
                     ))}

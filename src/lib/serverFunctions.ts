@@ -86,6 +86,7 @@ export async function getTransactions(): Promise<Transaction[]>
         name,
         description,
         amount,
+        category_id,
         frequency, 
         transaction_date, 
         categories!inner(
