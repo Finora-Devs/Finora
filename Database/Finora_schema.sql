@@ -16,11 +16,10 @@ CREATE TABLE public.transactions (
   category_id bigint NOT NULL,
   frequency text NOT NULL DEFAULT 'once'::text CHECK (frequency = ANY (ARRAY['once'::text, 'daily'::text, 'weekly'::text, 'monthly'::text, 'yearly'::text])),
   transaction_date date NOT NULL,
+  next_due_date date,
   description text,
   created_at timestamp with time zone NOT NULL DEFAULT now(),
-  recurring_transaction_id bigint,
   CONSTRAINT transactions_pkey PRIMARY KEY (id),
-  CONSTRAINT transactions_recurring_transaction_id_fkey FOREIGN KEY (recurring_transaction_id) REFERENCES public.recurring_transactions(id),
   CONSTRAINT transactions_category_id_fkey FOREIGN KEY (category_id) REFERENCES public.categories(id),
   CONSTRAINT transactions_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
 );
@@ -63,70 +62,10 @@ CREATE TABLE public.savings_goals (
   CONSTRAINT savings_goals_pkey PRIMARY KEY (id),
   CONSTRAINT savings_goals_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
 );
-CREATE TABLE public.recurring_transactions (
-  id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
-  user_id uuid NOT NULL,
-  name text NOT NULL,
-  amount numeric NOT NULL CHECK (amount > 0::numeric),
-  category_id bigint NOT NULL,
-  frequency text NOT NULL CHECK (frequency = ANY (ARRAY['daily'::text, 'weekly'::text, 'monthly'::text, 'yearly'::text])),
-  next_due_date date NOT NULL,
-  description text,
-  is_active boolean NOT NULL DEFAULT true,
-  created_at timestamp with time zone NOT NULL DEFAULT now(),
-  CONSTRAINT recurring_transactions_pkey PRIMARY KEY (id),
-  CONSTRAINT recurring_transactions_category_id_fkey FOREIGN KEY (category_id) REFERENCES public.categories(id),
-  CONSTRAINT recurring_transactions_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
-);
 
--- Constraints
-begin;
 
--- Categories must be either income or expense.
-alter table public.categories
-add constraint categories_transaction_type_check
-check (transaction_type in ('income', 'expense'));
+-- After created run Row Level Security
 
--- Transaction amounts must be positive.
-alter table public.transactions
-add constraint transactions_amount_positive
-check (amount > 0);
-
--- Only allow these frequency values.
-alter table public.transactions
-add constraint transactions_frequency_check
-check (
-  frequency in ('once', 'daily', 'weekly', 'monthly', 'yearly')
-);
-
--- Monthly budget amount must be positive.
-alter table public.monthly_budgets
-add constraint monthly_budgets_amount_positive
-check (budget_amount > 0);
-
--- Category budget amount must be positive.
-alter table public.category_budgets
-add constraint category_budgets_amount_positive
-check (budget_amount > 0);
-
--- Savings goal values must be positive.
-alter table public.savings_goals
-add constraint savings_goals_target_positive
-check (target_amount > 0);
-
--- Savings current values must be zero or greater.
-alter table public.savings_goals
-add constraint savings_goals_current_nonnegative
-check (current_amount >= 0);
-
--- Savings priority values must be positive.
-alter table public.savings_goals
-add constraint savings_goals_priority_positive
-check (priority > 0);
-
-commit;
-
---Row level security
 begin;
 
 -- Everyone who is logged in can view the predefined categories.
