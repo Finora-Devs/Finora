@@ -1,3 +1,4 @@
+"use client"
 import {
   ArrowDown,
   ArrowUp,
@@ -9,8 +10,26 @@ import {
 } from "lucide-react";
 
 import { formatMoney, incomeCategories, incomeEntries } from "./incomeData";
+import { Transaction, SORTING_ORDER, CATEGORY, sortBy, logAllTransactions, FREQUENCY } from "@/lib/types_and_helpers";
+import { useTransactionContext } from "@/app/(protected)/context";
+import { useContext, useEffect, useState } from "react";
+import { deleteTransaction, insertTransaction } from "@/lib/clientFunctions";
 
+//going to need to make something to make this differetiate between income and expenses even when category is set to all.
 export default function IncomeList() {
+    const {transactionsArr, setTransactionsArr} = useTransactionContext();
+    const [searchTerm, setSearchTerm] = useState("");//not sure if most of these need to be states or not. I will change this as I expierement.
+    const [sortingOrder, setSortingOrder] = useState(SORTING_ORDER.DATE);
+    const [descending, setDescending] = useState(true);
+    const [category, setCategory] = useState(CATEGORY.ALL);
+    const [include, setInclude] = useState(true);
+    const incomeList = sortBy(searchTerm, sortingOrder, descending, category, include, transactionsArr)
+
+    const [newTransactionAmount, setnewTransactionAmount] = useState(1.00);//will need input validation to prevent inputs like 1.001
+    const [newTransactionCategory, setnewTransactionCategory] = useState(7);//may make this an enum for readability
+    const [newTransactionFrequency, setnewTransactionFrequency] = useState("once");
+    const [newTransactionName, setnewTransactionName] = useState("placeHolder");
+    const [newTransactionDate, setnewTransactionDate] = useState(new Date().toDateString());
     return (
         <section className="overflow-hidden rounded-xl border border-[#dce7e2] bg-white">
             {/* Heading and action buttons */}
@@ -23,6 +42,7 @@ export default function IncomeList() {
                     <button
                         type="button"
                         className="inline-flex items-center gap-2 rounded-lg bg-[#008f73] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#00765f]"
+                        onClick={() => insertTransaction(newTransactionAmount, newTransactionCategory, newTransactionFrequency, newTransactionName, newTransactionDate, setTransactionsArr)}
                     >
                         <Plus className="h-4 w-4" />
                         Add Income
@@ -49,6 +69,7 @@ export default function IncomeList() {
                         type="search"
                         placeholder="Search income sources..."
                         className="w-full rounded-lg border border-[#dce7e2] bg-[#f7faf8] py-2.5 pl-10 pr-3 text-sm text-[#17324d] placeholder:text-[#7185a1] focus:border-[#3f8068] focus:outline-none"
+                        onChange={(val) => setSearchTerm(val.target.value)}
                     />
                 </div>
 
@@ -60,26 +81,29 @@ export default function IncomeList() {
                     id="income-sort"
                     defaultValue="date"
                     className="rounded-lg border border-[#dce7e2] bg-white px-3 py-2.5 text-sm text-[#17324d]"
+                    onChange={(val) => {setSortingOrder(Number(val.target.value) as SORTING_ORDER)}}
                 >
-                    <option value="date">Date</option>
-                    <option value="name">Source</option>
-                    <option value="amount">Amount</option>
-                    <option value="category">Category</option>
-                    <option value="frequency">Frequency</option>
+                    <option value={SORTING_ORDER.DATE}>Date</option>
+                    <option value={SORTING_ORDER.NAME}>Source</option>
+                    <option value={SORTING_ORDER.AMOUNT}>Amount</option>
+                    <option value={SORTING_ORDER.CATEGORY}>Category</option>
+                    <option value={SORTING_ORDER.FREQUENCY}>Frequency</option>
                 </select>
 
                 <div className="flex overflow-hidden rounded-lg border border-[#dce7e2]">
                     <button
                         type="button"
                         aria-label="Sort descending"
-                        className="bg-[#e5f3ec] px-3 py-2.5 text-[#28664f]"
+                        className={`px-3 py-2.5  hover:bg-[#f7faf8] ${descending ? 'bg-[#e5f3ec] text-[#28664f]' : 'text-[#7185a1]'}`}
+                        onClick={() => setDescending(true)}
                     >
                         <ArrowDown className="h-4 w-4" />
                     </button>
                     <button
                         type="button"
                         aria-label="Sort ascending"
-                        className="border-l border-[#dce7e2] px-3 py-2.5 text-[#7185a1] hover:bg-[#f7faf8]"
+                        className={`border-l border-[#dce7e2] px-3 py-2.5  hover:bg-[#f7faf8] ${!descending ? 'bg-[#e5f3ec] text-[#28664f]' : 'text-[#7185a1]'}`}
+                        onClick={() => setDescending(false)}
                     >
                         <ArrowUp className="h-4 w-4" />
                     </button>
@@ -140,13 +164,15 @@ export default function IncomeList() {
                 <div className="flex overflow-hidden rounded-lg border border-[#dce7e2]">
                     <button
                         type="button"
-                        className="bg-[#e5f3ec] px-4 py-2.5 text-sm font-medium text-[#28664f]"
+                        className={` px-4 py-2.5 text-sm font-medium hover:bg-[#f7faf8] ${include ? 'bg-[#e5f3ec] text-[#28664f]' : 'text-[#607394] bg-white'}`}
+                        onClick={() => setInclude(true)}
                     >
                         Include
                     </button>
                     <button
                         type="button"
-                        className="border-l border-[#dce7e2] bg-white px-4 py-2.5 text-sm font-medium text-[#607394] hover:bg-[#f7faf8]"
+                        className={`border-l border-[#dce7e2] px-4 py-2.5 text-sm font-medium hover:bg-[#f7faf8] ${!include ? 'bg-[#e5f3ec] text-[#28664f]' : 'text-[#607394] bg-white'}`}
+                        onClick={() => setInclude(false)}
                     >
                         Exclude
                     </button>
@@ -180,13 +206,13 @@ export default function IncomeList() {
                     </thead>
 
                     <tbody className="divide-y divide-[#e5ebe8]">
-                        {incomeEntries.map((transaction) => {
+                        {incomeList.map((transaction) => {
 
                             return (
                                 <tr key={transaction.id} className="hover:bg-[#f8fbf9]">
                                     {/* Date */}
                                     <td className="whitespace-nowrap px-5 py-4 text-[#7185a1]">
-                                        {transaction.date}
+                                        {transaction.transaction_date}
                                     </td>
 
                                     {/* Name */}
@@ -206,7 +232,7 @@ export default function IncomeList() {
 
                                     {/* Category */}
                                     <td className="px-5 py-4 text-[#607394]">
-                                        {transaction.category}
+                                        {transaction.categories.name}
                                     </td>
 
                                     {/* Frequency */}

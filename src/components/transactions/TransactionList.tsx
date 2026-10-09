@@ -7,7 +7,7 @@ import {
   Search,
   Info,
 } from "lucide-react";
-import { Transaction, SORTING_ORDER, CATEGORY, sortBy, logAllTransactions, FREQUENCY } from "@/lib/types_and_helpers";
+import { Transaction, SORTING_ORDER, CATEGORY_NAME, sortBy, logAllTransactions, FREQUENCY } from "@/lib/types_and_helpers";
 import { useTransactionContext } from "@/app/(protected)/context";
 import { useContext, useEffect, useState } from "react";
 import { deleteTransaction, insertTransaction } from "@/lib/clientFunctions";
@@ -28,7 +28,7 @@ export default function TransactionList() {
     const [searchTerm, setSearchTerm] = useState("");//not sure if most of these need to be states or not. I will change this as I expierement.
     const [sortingOrder, setSortingOrder] = useState(SORTING_ORDER.DATE);
     const [descending, setDescending] = useState(true);
-    const [category, setCategory] = useState(CATEGORY.ALL);
+    const [category, setCategory] = useState(CATEGORY_NAME.ALL);
     const [include, setInclude] = useState(true);
     const TransactionList = sortBy(searchTerm, sortingOrder, descending, category, include, transactionsArr)
 
@@ -183,18 +183,18 @@ export default function TransactionList() {
                     id="transaction-category"
                     defaultValue="all"
                     className="min-w-[180px] rounded-lg border border-[#dce7e2] bg-white px-3 py-2.5 text-sm text-[#17324d]"
-                    onChange = {(val) => {setCategory(val.target.value as CATEGORY)}}//done
+                    onChange = {(val) => {setCategory(val.target.value as CATEGORY_NAME)}}//done
                 >
-                    <option value={CATEGORY.ALL}>All Categories</option> {/*option value="all" onChange = {functionCall}>All Categories</option> */}
-                    <option value={CATEGORY.FOOD}>Food</option>
-                    <option value={CATEGORY.HOUSING}>Housing</option>
-                    <option value={CATEGORY.TRANSPORTATION}>Transportation</option>
-                    <option value={CATEGORY.TUITION}>Tuition</option>
-                    <option value={CATEGORY.ENTERTAINMENT}>Entertainment</option>
-                    <option value={CATEGORY.UTILITIES}>Utilities</option>
-                    <option value={CATEGORY.SUBSCRIPTIONS}>Subscriptions</option>
-                    <option value={CATEGORY.EMPLOYMENT}>Employment</option>
-                    <option value={CATEGORY.OTHER}>Other</option>
+                    <option value={CATEGORY_NAME.ALL}>All Categories</option> {/*option value="all" onChange = {functionCall}>All Categories</option> */}
+                    <option value={CATEGORY_NAME.FOOD}>Food</option>
+                    <option value={CATEGORY_NAME.HOUSING}>Housing</option>
+                    <option value={CATEGORY_NAME.TRANSPORTATION}>Transportation</option>
+                    <option value={CATEGORY_NAME.TUITION}>Tuition</option>
+                    <option value={CATEGORY_NAME.ENTERTAINMENT}>Entertainment</option>
+                    <option value={CATEGORY_NAME.UTILITIES}>Utilities</option>
+                    <option value={CATEGORY_NAME.SUBSCRIPTIONS}>Subscriptions</option>
+                    <option value={CATEGORY_NAME.EMPLOYMENT}>Employment</option>
+                    <option value={CATEGORY_NAME.OTHER}>Other</option>
                 </select>
 
                 <div className="flex items-center gap-2 text-sm text-[#7185a1]">

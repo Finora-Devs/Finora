@@ -28,7 +28,7 @@ export type Transaction =
     CATEGORY,
     FREQUENCY
  }
- export enum CATEGORY 
+ export enum CATEGORY_NAME
  {
     ALL = "All",
     FOOD = "Food",
@@ -45,6 +45,26 @@ export type Transaction =
     SIDE_HUSTLE = "Side Hustle",
     REFUNDS = "Refunds",
     OTHER = "Other"
+ }
+ export enum Category_ID
+ {
+    ALL,
+    INCOME,
+    EXPENSE,
+    FOOD,
+    HOUSING,
+    TRANSPORTATION,
+    TUITION,
+    ENTERTAINMENT,
+    UTILITIES,
+    SUBSCRIPTIONS,
+    EMPLOYMENT,
+    SCHOLARSHIPS,
+    FINANCIAL_AID,
+    FAMILY_SUPPORT,
+    SIDE_HUSTLE,
+    REFUNDS,
+    OTHER
  }
  //enum to be used when sorting transactions by frequency.
  export enum FREQUENCY
@@ -65,13 +85,13 @@ export type Transaction =
   * @param arr the array to be sorted.
   * @returns an array of Transactions identical to @param arr but sorted and filtered.
   */
- export function sortBy(search: string = "", sortingOrder: SORTING_ORDER = SORTING_ORDER.DATE, descending: boolean = true, category: CATEGORY = CATEGORY.ALL, include: boolean = true, arr: Transaction[]): Transaction[]
+ export function sortBy(search: string = "", sortingOrder: SORTING_ORDER = SORTING_ORDER.DATE, descending: boolean = true, category: CATEGORY_NAME = CATEGORY_NAME.ALL, include: boolean = true, arr: Transaction[]): Transaction[]
  {
    const newArr = arr.filter((transaction) => 
       {
          const matchSearch: boolean = transaction.name.toLowerCase().includes(search.toLowerCase());
          let matchCategory: boolean = transaction.categories.name.toLowerCase() === category.toLowerCase();
-         if(category === CATEGORY.ALL)
+         if(category === CATEGORY_NAME.ALL)
          {
             matchCategory = true;
          }
