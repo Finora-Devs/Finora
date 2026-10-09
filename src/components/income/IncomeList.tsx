@@ -21,7 +21,7 @@ export default function IncomeList() {
     const [searchTerm, setSearchTerm] = useState("");//not sure if most of these need to be states or not. I will change this as I expierement.
     const [sortingOrder, setSortingOrder] = useState(SORTING_ORDER.DATE);
     const [descending, setDescending] = useState(true);
-    const [category, setCategory] = useState(CATEGORY_NAME.ALL);
+    const [category, setCategory] = useState(CATEGORY_NAME.INCOME);
     const [include, setInclude] = useState(true);
     const incomeList = sortBy(searchTerm, sortingOrder, descending, category, include, transactionsArr)
 
@@ -127,10 +127,17 @@ export default function IncomeList() {
                     className="min-w-[180px] rounded-lg border border-[#dce7e2] bg-white px-3 py-2.5 text-sm text-[#17324d]"
                     onChange = {(val) => {setCategory(val.target.value as CATEGORY_NAME)}}
                 >
-                    <option value="All">All Sources</option>
-                    {incomeCategories.map((category) => (
+                    <option value={CATEGORY_NAME.INCOME}>All Sources</option>
+                    <option value={CATEGORY_NAME.EMPLOYMENT}>Employment</option>
+                    <option value={CATEGORY_NAME.SCHOLARSHIPS}>Scholarships</option>
+                    <option value={CATEGORY_NAME.FINANCIAL_AID}>Financial Aid</option>
+                    <option value={CATEGORY_NAME.ALLOWANCE}>Allowance</option>
+                    <option value={CATEGORY_NAME.SELF_EMPLOYMENT}>Self Employment</option>
+                    <option value={CATEGORY_NAME.OTHER_INCOME}>Other Income</option>
+
+                    {/* {incomeCategories.map((category) => (
                         <option key={category.name} value={category.name}>{category.name}</option>
-                    ))}
+                    ))} */}
                 </select>
 
                 <div className="flex items-center gap-2 text-sm text-[#7185a1]">

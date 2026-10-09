@@ -7,9 +7,9 @@ import {
   Search,
   Info,
 } from "lucide-react";
-import { Transaction, SORTING_ORDER, CATEGORY_NAME, sortBy, logAllTransactions, FREQUENCY } from "@/lib/types_and_helpers";
+import { Transaction, SORTING_ORDER, CATEGORY_NAME, sortBy, FREQUENCY } from "@/lib/types_and_helpers";
 import { useTransactionContext } from "@/app/(protected)/context";
-import { useContext, useEffect, useState } from "react";
+import { useState } from "react";
 import { deleteTransaction, insertTransaction } from "@/lib/clientFunctions";
 
 
@@ -193,8 +193,15 @@ export default function TransactionList() {
                     <option value={CATEGORY_NAME.ENTERTAINMENT}>Entertainment</option>
                     <option value={CATEGORY_NAME.UTILITIES}>Utilities</option>
                     <option value={CATEGORY_NAME.SUBSCRIPTIONS}>Subscriptions</option>
-                    <option value={CATEGORY_NAME.EMPLOYMENT}>Employment</option>
                     <option value={CATEGORY_NAME.OTHER}>Other</option>
+
+                    <option value={CATEGORY_NAME.EMPLOYMENT}>Employment</option>
+                    <option value={CATEGORY_NAME.SCHOLARSHIPS}>Scholarships</option>
+                    <option value={CATEGORY_NAME.FINANCIAL_AID}>Financial Aid</option>
+                    <option value={CATEGORY_NAME.ALLOWANCE}>Allowance</option>
+                    <option value={CATEGORY_NAME.SELF_EMPLOYMENT}>Self Employment</option>
+                    <option value={CATEGORY_NAME.OTHER_INCOME}>Other Income</option>
+
                 </select>
 
                 <div className="flex items-center gap-2 text-sm text-[#7185a1]">

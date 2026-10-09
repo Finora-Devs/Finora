@@ -31,41 +31,25 @@ export type Transaction =
  }
  export enum CATEGORY_NAME
  {
-    ALL = "All",
-    FOOD = "Food",
-    HOUSING = "Housing",
-    TRANSPORTATION = "Transportation",
-    TUITION = "Tuition",
-    ENTERTAINMENT = "Entertainment",
-    UTILITIES = "Utilities",
-    SUBSCRIPTIONS = "Subscriptions",
-    EMPLOYMENT = "Employment",
-    SCHOLARSHIPS = "Scholarships",
-    FINANCIAL_AID = "Financial Aid",
-    FAMILY_SUPPORT = "Family Support",
-    SIDE_HUSTLE = "Side Hustle",
-    REFUNDS = "Refunds",
-    OTHER = "Other"
- }
- export enum Category_ID
- {
-    ALL,
-    INCOME,
-    EXPENSE,
-    FOOD,
-    HOUSING,
-    TRANSPORTATION,
-    TUITION,
-    ENTERTAINMENT,
-    UTILITIES,
-    SUBSCRIPTIONS,
-    EMPLOYMENT,
-    SCHOLARSHIPS,
-    FINANCIAL_AID,
-    FAMILY_SUPPORT,
-    SIDE_HUSTLE,
-    REFUNDS,
-    OTHER
+   ALL = "All",
+   EXPENSE = "Expense",
+   INCOME = "Income",
+
+   FOOD = "Food",
+   HOUSING = "Housing",
+   TRANSPORTATION = "Transportation",
+   TUITION = "Tuition",
+   ENTERTAINMENT = "Entertainment",
+   UTILITIES = "Utilities",
+   SUBSCRIPTIONS = "Subscriptions",
+   OTHER = "Other",
+
+   EMPLOYMENT = "Employment",
+   SCHOLARSHIPS = "Scholarships",
+   FINANCIAL_AID = "Financial Aid",
+   ALLOWANCE = "Allowance",
+   SELF_EMPLOYMENT = "Self Employment",
+   OTHER_INCOME = "Other Income"
  }
  //enum to be used when sorting transactions by frequency.
  export enum FREQUENCY
@@ -92,20 +76,18 @@ export type Transaction =
       {
          const matchSearch: boolean = transaction.name.toLowerCase().includes(search.toLowerCase());
          let matchCategory: boolean = transaction.categories.name.toLowerCase() === category.toLowerCase();
-         if(category === CATEGORY_NAME.ALL)//if set to all, display all expense and income.
-         {                                 //if set to income, display categories that are income.
-            matchCategory = true;          //if set to expense, display categories that are expense.
+         if(category === CATEGORY_NAME.ALL)
+         {
+            matchCategory = true;
          }
-         /*
          if(category === CATEGORY_NAME.INCOME)
          {
-
+            matchCategory = transaction.category_id < 7 //if transaction is from an expense category
          }
          if(category === CATEGORY_NAME.EXPENSE)
          {
-
+             matchCategory = transaction.category_id > 6 //if transaction is from an income category
          }
-         */
          
          if(include)
          {
