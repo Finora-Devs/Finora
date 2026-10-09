@@ -7,10 +7,10 @@ import {
   Search,
   Info,
 } from "lucide-react";
-import { Transaction, SORTING_ORDER, CATEGORY, sortBy, logAllTransactions } from "@/lib/types_and_helpers";
+import { Transaction, SORTING_ORDER, CATEGORY, sortBy, logAllTransactions, FREQUENCY } from "@/lib/types_and_helpers";
 import { useTransactionContext } from "@/app/(protected)/context";
 import { useContext, useEffect, useState } from "react";
-import { insertTransaction } from "@/lib/clientFunctions";
+import { deleteTransaction, insertTransaction } from "@/lib/clientFunctions";
 
 
 //Sort by option box: complete
@@ -20,6 +20,7 @@ import { insertTransaction } from "@/lib/clientFunctions";
 //include/exclude toggle: complete
 //add income button: incomplete
 //add expense button: incomplete
+//remove transaction: incomplete.
 
 //still need summary cards and chart
 export default function TransactionList() {
@@ -32,8 +33,8 @@ export default function TransactionList() {
     const TransactionList = sortBy(searchTerm, sortingOrder, descending, category, include, transactionsArr)
 
     const [newTransactionAmount, setnewTransactionAmount] = useState(1.00);//will need input validation to prevent inputs like 1.001
-    const [newTransactionCategory, setnewTransactionCategory] = useState(1);
-    const [newTransactionFrequency, setnewTransactionFrequency/*string for now, would like to change to a number through enums*/] = useState("once");
+    const [newTransactionCategory, setnewTransactionCategory] = useState(7);//may make this an enum for readability
+    const [newTransactionFrequency, setnewTransactionFrequency] = useState("once");
     const [newTransactionName, setnewTransactionName] = useState("placeHolder");
     const [newTransactionDate, setnewTransactionDate] = useState(new Date().toDateString());
 
@@ -88,6 +89,7 @@ export default function TransactionList() {
                     <button
                         type="button"
                         className="inline-flex items-center gap-2 rounded-lg bg-[#008f73] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#00765f]"
+                        onClick={() => insertTransaction(newTransactionAmount, newTransactionCategory, newTransactionFrequency, newTransactionName, newTransactionDate, setTransactionsArr)}
                     >
                         <Plus className="h-4 w-4" />
                         Add Income
@@ -96,6 +98,11 @@ export default function TransactionList() {
                     <button
                         type="button"
                         className="inline-flex items-center gap-2 rounded-lg bg-[#3f8068] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#326b56]"
+                        onClick={() => 
+                            {
+
+                            }
+                        }
                     >
                         <Plus className="h-4 w-4" />
                         Add Expense
@@ -334,6 +341,7 @@ export default function TransactionList() {
                                             type="button"
                                             aria-label={`More options for ${transaction.name}`}
                                             className="rounded-lg p-2 text-[#4e7069] hover:bg-[#e5efeb]"
+                                            onClick={() => deleteTransaction(transaction.id, setTransactionsArr)}
                                         >
                                             <Ellipsis className="h-5 w-5" />
                                         </button>

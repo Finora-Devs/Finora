@@ -46,7 +46,8 @@ export type Transaction =
     REFUNDS = "Refunds",
     OTHER = "Other"
  }
- export enum FREQUENCY //When I have time, I am going to see if I can replace the frequency value in transactions with these.
+ //enum to be used when sorting transactions by frequency.
+ export enum FREQUENCY
  {
    ONCE,
    DAILY,
@@ -114,7 +115,55 @@ export type Transaction =
             newArr.sort((a, b) => a.categories.name.toLowerCase().localeCompare(b.categories.name.toLowerCase()));
             break;
          case SORTING_ORDER.FREQUENCY:
-            newArr.sort((a, b) => a.frequency.localeCompare(b.frequency));//this one will not work.
+            newArr.sort((a, b) => 
+               {
+                  let aSortVal;
+                  let bSortVal;
+                  switch(a.frequency)
+                  {
+                     case "once":
+                        aSortVal = FREQUENCY.ONCE;
+                        break;
+                     case "daily":
+                        aSortVal = FREQUENCY.DAILY;
+                        break;
+                     case "weekly":
+                        aSortVal = FREQUENCY.WEEKLY;
+                        break;
+                     case "monthly":
+                        aSortVal = FREQUENCY.MONTHLY;
+                        break;
+                     case "yearly":
+                        aSortVal = FREQUENCY.YEARLY;
+                        break;
+                     default:
+                        aSortVal = 5; //error.
+                        break;
+                  }
+                  switch(b.frequency)
+                  {
+                     case "once":
+                        bSortVal = FREQUENCY.ONCE;
+                        break;
+                     case "daily":
+                        bSortVal = FREQUENCY.DAILY;
+                        break;
+                     case "weekly":
+                        bSortVal = FREQUENCY.WEEKLY;
+                        break;
+                     case "monthly":
+                        bSortVal = FREQUENCY.MONTHLY;
+                        break;
+                     case "yearly":
+                        bSortVal = FREQUENCY.YEARLY;
+                        break;
+                     default:
+                        bSortVal = 5; //error.
+                        break;
+                  }
+
+                  return aSortVal - bSortVal;
+               })
             break;
       }
 

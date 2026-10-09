@@ -8,7 +8,7 @@
 import { Database } from "@/types/database.types";
 import {createClient} from "./server"
 import { SupabaseClient } from '@supabase/supabase-js'
-import { Transaction } from "./types_and_helpers";
+import {Transaction } from "./types_and_helpers";
 
 
 //probably going to redo or delete all the commented stuff, but for now I am keeping it around as a reference.
@@ -88,16 +88,14 @@ export async function getTransactions(): Promise<Transaction[]>
         amount,
         frequency, 
         transaction_date, 
-        
         categories!inner(
             name, 
             transaction_type
             )`
         ).order("id", {ascending: true});
-        //next_due_date,
 
 
     const { data, error } = transactionsQuery;
     if (error) throw error;
-    return data as Transaction[];//may use map to convert everything to enums
+    return data as Transaction[];
 }
