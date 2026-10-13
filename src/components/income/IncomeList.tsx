@@ -17,45 +17,24 @@ import {
   SORTING_ORDER,
   CATEGORY_NAME,
   sortBy,
+  incomeCategories,
+  fieldClass,
+  frequencies
 } from "@/lib/types_and_helpers";
 
 import { useTransactionContext } from "@/app/(protected)/context";
 import { useEffect, useId, useRef, useState } from "react";
+import { insertTransaction } from "@/lib/clientFunctions";
 
-//going to need to make something to make this differetiate between income and expenses even when category is set to all.
-
-const formCategories = [
-  "Employment",
-  "Scholarships",
-  "Financial Aid",
-  "Allowance",
-  "Self Employment",
-  "Other Income",
-];
-
-const frequencies = [
-  "Just Once",
-  "Weekly",
-  "Biweekly",
-  "Monthly",
-  "Semesterly",
-  "Yearly",
-];
-
-const fieldClass =
-  "mt-2 w-full rounded-lg border border-[#dce7e2] " +
-  "bg-[#f7faf8] px-3 py-2.5 text-sm text-[#17324d] " +
-  "placeholder:text-[#7185a1] focus:border-[#3f8068] " +
-  "focus:outline-none focus:ring-2 focus:ring-[#3f8068]/20";
+//include/exclude currently shows expenses when toggled to exclude;
 
 export default function IncomeList() {
-  const { transactionsArr } = useTransactionContext();
+  const { transactionsArr, setTransactionsArr } = useTransactionContext();
 
-  const [searchTerm, setSearchTerm] = useState(""); //not sure if most of these need to be states or not. I will change this as I expierement.
-  const [sortingOrder, setSortingOrder] =
-    useState(SORTING_ORDER.DATE);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortingOrder, setSortingOrder] = useState(SORTING_ORDER.DATE);
   const [descending, setDescending] = useState(true);
-  const [category, setCategory] = useState(CATEGORY_NAME.INCOME);
+  const [category, setCategory] = useState(CATEGORY_NAME.ALL);
   const [include, setInclude] = useState(true);
 
   const incomeList = sortBy(
@@ -64,14 +43,9 @@ export default function IncomeList() {
     descending,
     category,
     include,
-    transactionsArr,
+    "Income",
+    transactionsArr
   );
-
-  // const [newTransactionAmount, setnewTransactionAmount] = useState(1.00);//will need input validation to prevent inputs like 1.001
-  // const [newTransactionCategory, setnewTransactionCategory] = useState(7);//may make this an enum for readability
-  // const [newTransactionFrequency, setnewTransactionFrequency] = useState("once");
-  // const [newTransactionName, setnewTransactionName] = useState("placeHolder");
-  // const [newTransactionDate, setnewTransactionDate] = useState(new Date().toDateString());
 
   const [isIncomeFormOpen, setIsIncomeFormOpen] = useState(false);
 
@@ -222,21 +196,13 @@ export default function IncomeList() {
             setCategory(val.target.value as CATEGORY_NAME);
           }}
         >
-          <option value={CATEGORY_NAME.INCOME}>All Sources</option>
+          <option value={CATEGORY_NAME.ALL}>All Sources</option>
           <option value={CATEGORY_NAME.EMPLOYMENT}>Employment</option>
-          <option value={CATEGORY_NAME.SCHOLARSHIPS}>
-            Scholarships
-          </option>
-          <option value={CATEGORY_NAME.FINANCIAL_AID}>
-            Financial Aid
-          </option>
+          <option value={CATEGORY_NAME.SCHOLARSHIPS}>Scholarships</option>
+          <option value={CATEGORY_NAME.FINANCIAL_AID}>Financial Aid</option>
           <option value={CATEGORY_NAME.ALLOWANCE}>Allowance</option>
-          <option value={CATEGORY_NAME.SELF_EMPLOYMENT}>
-            Self Employment
-          </option>
-          <option value={CATEGORY_NAME.OTHER_INCOME}>
-            Other Income
-          </option>
+          <option value={CATEGORY_NAME.SELF_EMPLOYMENT}>Self Employment</option>
+          <option value={CATEGORY_NAME.OTHER_INCOME}>Other Income</option>
 
           {/* {incomeCategories.map((category) => (
               <option key={category.name} value={category.name}>{category.name}</option>
@@ -434,7 +400,17 @@ export default function IncomeList() {
 
         <form
           ref={formRef}
-          onSubmit={(event) => event.preventDefault()}
+          onSubmit={async (event) => 
+            {
+              event.preventDefault();
+              const formData = new FormData(event.currentTarget);
+
+              console.log("inserting...")
+              await insertTransaction(formData, setTransactionsArr);
+              console.log("insert complete!");
+
+              setIsIncomeFormOpen(false);
+            }}
         >
           <div className="space-y-4 p-5">
             <p className="text-xs text-[#7185a1]">
@@ -521,7 +497,7 @@ export default function IncomeList() {
                     Select category
                   </option>
 
-                  {formCategories.map((category) => (
+                  {incomeCategories.map((category) => (
                     <option key={category} value={category}>
                       {category}
                     </option>
@@ -549,7 +525,7 @@ export default function IncomeList() {
                   </option>
 
                   {frequencies.map((frequency) => (
-                    <option key={frequency} value={frequency}>
+                    <option key={frequency} value={frequency.toLowerCase()}>
                       {frequency}
                     </option>
                   ))}

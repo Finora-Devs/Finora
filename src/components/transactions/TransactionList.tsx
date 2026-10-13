@@ -15,11 +15,15 @@ import {
   SORTING_ORDER,
   CATEGORY_NAME,
   sortBy,
+  incomeCategories,
+  expenseCategories,
+  fieldClass,
+  frequencies
 } from "@/lib/types_and_helpers";
 
 import { useTransactionContext } from "@/app/(protected)/context";
 import { useEffect, useId, useRef, useState } from "react";
-import { deleteTransaction } from "@/lib/clientFunctions";
+import { deleteTransaction, insertTransaction } from "@/lib/clientFunctions";
 
 //Sort by option box: complete
 //search bar: complete
@@ -34,48 +38,13 @@ import { deleteTransaction } from "@/lib/clientFunctions";
 
 type TransactionType = "income" | "expense";
 
-const incomeCategories = [
-  "Employment",
-  "Scholarships",
-  "Financial Aid",
-  "Allowance",
-  "Self Employment",
-  "Other Income",
-];
 
-const expenseCategories = [
-  "Food",
-  "Housing",
-  "Transportation",
-  "Tuition",
-  "Entertainment",
-  "Utilities",
-  "Subscriptions",
-  "Other",
-];
-
-const frequencies = [
-  "Just Once",
-  "Weekly",
-  "Biweekly",
-  "Monthly",
-  "Semesterly",
-  "Yearly",
-];
-
-const fieldClass =
-  "mt-2 w-full rounded-lg border border-[#dce7e2] " +
-  "bg-[#f7faf8] px-3 py-2.5 text-sm text-[#17324d] " +
-  "placeholder:text-[#7185a1] focus:border-[#3f8068] " +
-  "focus:outline-none focus:ring-2 focus:ring-[#3f8068]/20";
 
 export default function TransactionList() {
-  const { transactionsArr, setTransactionsArr } =
-    useTransactionContext();
+  const { transactionsArr, setTransactionsArr } = useTransactionContext();
 
-  const [searchTerm, setSearchTerm] = useState(""); //not sure if most of these need to be states or not. I will change this as I expierement.
-  const [sortingOrder, setSortingOrder] =
-    useState(SORTING_ORDER.DATE);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortingOrder, setSortingOrder] = useState(SORTING_ORDER.DATE);
   const [descending, setDescending] = useState(true);
   const [category, setCategory] = useState(CATEGORY_NAME.ALL);
   const [include, setInclude] = useState(true);
@@ -86,14 +55,9 @@ export default function TransactionList() {
     descending,
     category,
     include,
-    transactionsArr,
+    "All",
+    transactionsArr
   );
-
-  // const [newTransactionAmount, setnewTransactionAmount] = useState(1.00);//will need input validation to prevent inputs like 1.001
-  // const [newTransactionCategory, setnewTransactionCategory] = useState(7);//may make this an enum for readability
-  // const [newTransactionFrequency, setnewTransactionFrequency] = useState("once");
-  // const [newTransactionName, setnewTransactionName] = useState("placeHolder");
-  // const [newTransactionDate, setnewTransactionDate] = useState(new Date().toDateString());
 
   const totalTransactions = transactionsArr.length;
 
@@ -106,37 +70,6 @@ export default function TransactionList() {
     .reduce((sum, t) => sum + t.amount, 0);
 
   const totalAmount = totalIncome - totalExpenses;
-
-  //amount: number, textfield. allow only numbers
-  //category_id: number, dropdown, select category
-  //description: string | null, ignore this one, dont need it.
-  //frequency: string, dropdown. if its anything other than once, insert a transaction into the recurring Transaction table
-  //name: string, textfield
-  //transaction_date: string, date picker of some kind?
-
-  //logAllTransactions(transactionsArr);
-
-  /**
-   * This code can insert a row into the database.
-   * for some reason it inserts two things instead of just one though.
-   *
-   *  useEffect(() =>
-   *      {
-   *          const insert = async () =>
-   *          {
-   *              try
-   *              {
-   *                  await insertTransaction(20.05, 1, "once", "chicken", "2026-10-06");
-   *              }
-   *              catch (error)
-   *              {
-   *                  console.error("Something went wrong", error);
-   *                  throw error;
-   *              }
-   *          }
-   *          insert();
-   *      }, []) //executes twice for some reason, but does not continuously execute.
-   */
 
   const [formType, setFormType] =
     useState<TransactionType | null>(null);
@@ -527,7 +460,7 @@ export default function TransactionList() {
       </div>
 
       <div className="border-t border-[#e5ebe8] px-5 py-4 text-sm text-[#4e7069]">
-        Showing {TransactionList.length} sample transactions
+        Showing {TransactionList.length} transactions
       </div>
 
       {/* Add Income / Add Expense popup: UI only */}
@@ -569,7 +502,14 @@ export default function TransactionList() {
 
         <form
           ref={formRef}
-          onSubmit={(event) => event.preventDefault()}
+          onSubmit={(event) => 
+            {
+              event.preventDefault();
+              const formData = new FormData(event.currentTarget);
+
+              insertTransaction(formData, setTransactionsArr);
+              setFormType(null);
+            }}
         >
           <div className="space-y-4 p-5">
             <p className="text-xs text-[#7185a1]">
@@ -692,7 +632,7 @@ export default function TransactionList() {
                   </option>
 
                   {frequencies.map((frequency) => (
-                    <option key={frequency} value={frequency}>
+                    <option key={frequency} value={frequency.toLowerCase()}>
                       {frequency}
                     </option>
                   ))}

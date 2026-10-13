@@ -61,6 +61,39 @@ export type Transaction =
    YEARLY
  }
 
+ export const incomeCategories = [
+   "Employment",
+   "Scholarships",
+   "Financial Aid",
+   "Allowance",
+   "Self Employment",
+   "Other Income",
+ ];
+ 
+ export const expenseCategories = [
+   "Food",
+   "Housing",
+   "Transportation",
+   "Tuition",
+   "Entertainment",
+   "Utilities",
+   "Subscriptions",
+   "Other",
+ ];
+ 
+ export const frequencies = [
+   "Once",
+   "Weekly",
+   "Monthly",
+   "Yearly",
+ ];
+ 
+ export const fieldClass =
+   "mt-2 w-full rounded-lg border border-[#dce7e2] " +
+   "bg-[#f7faf8] px-3 py-2.5 text-sm text-[#17324d] " +
+   "placeholder:text-[#7185a1] focus:border-[#3f8068] " +
+   "focus:outline-none focus:ring-2 focus:ring-[#3f8068]/20";
+
  /**
   * @param search a string. if not empty, only return transactions which have names that match the string
   * @param sortingOrder what should be used to sort the array of transactions.
@@ -70,32 +103,49 @@ export type Transaction =
   * @param arr the array to be sorted.
   * @returns an array of Transactions identical to @param arr but sorted and filtered.
   */
- export function sortBy(search: string = "", sortingOrder: SORTING_ORDER = SORTING_ORDER.DATE, descending: boolean = true, category: CATEGORY_NAME = CATEGORY_NAME.ALL, include: boolean = true, arr: Transaction[]): Transaction[]
+ export function sortBy(search: string = "", sortingOrder: SORTING_ORDER = SORTING_ORDER.DATE, descending: boolean = true, category: CATEGORY_NAME = CATEGORY_NAME.ALL, include: boolean = true, type: string, arr: Transaction[]): Transaction[]
  {
    const newArr = arr.filter((transaction) => 
       {
          const matchSearch: boolean = transaction.name.toLowerCase().includes(search.toLowerCase());
          let matchCategory: boolean = transaction.categories.name.toLowerCase() === category.toLowerCase();
+         let matchType: boolean = transaction.categories.transaction_type.toLowerCase() === type.toLowerCase();
+
+         console.log(type);
+
+         if(type === "All")
+         {
+            matchType = true;
+         }
+
          if(category === CATEGORY_NAME.ALL)
          {
             matchCategory = true;
          }
-         if(category === CATEGORY_NAME.INCOME)
-         {
-            matchCategory = transaction.category_id < 7 //if transaction is from an expense category
-         }
-         if(category === CATEGORY_NAME.EXPENSE)
-         {
-             matchCategory = transaction.category_id > 6 //if transaction is from an income category
-         }
+         // else if(category === CATEGORY_NAME.INCOME)
+         // {
+         //    matchCategory = transaction.categories.transaction_type === "income" //if transaction is an income. will break if the database changes.
+         // }
+         // else if(category === CATEGORY_NAME.EXPENSE)
+         // {
+         //    matchCategory = transaction.categories.transaction_type === "expense" //if transaction is an expense
+         // }
+
+         console.log(type);
+         console.log(`matchSearch: ${matchCategory}`);
+         console.log(`matchCategory: ${matchCategory}`);
+         console.log(`matchType: ${matchCategory}`);     
          
+         console.log(`transaction match with include: ${(matchCategory && matchSearch) && matchType}`);
+         console.log(`transaction match with exclude: ${(!matchCategory && matchSearch) && matchType}`);
+
          if(include)
          {
-            return matchCategory && matchSearch;
+            return (matchCategory && matchSearch) && matchType;
          }
          else
          {
-            return !matchCategory && matchSearch;
+            return (!matchCategory && matchSearch) && matchType;
          }
       })
 
