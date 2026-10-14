@@ -1,3 +1,5 @@
+"use client";
+
 const categories = [
     { name: "Housing", amount: "$518.09", percent: 35, color: "#5794f6" },
     { name: "Food", amount: "$266.45", percent: 18, color: "#ff8963" },
