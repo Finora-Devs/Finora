@@ -31,41 +31,25 @@ export type Transaction =
  }
  export enum CATEGORY_NAME
  {
-    ALL = "All",
-    FOOD = "Food",
-    HOUSING = "Housing",
-    TRANSPORTATION = "Transportation",
-    TUITION = "Tuition",
-    ENTERTAINMENT = "Entertainment",
-    UTILITIES = "Utilities",
-    SUBSCRIPTIONS = "Subscriptions",
-    EMPLOYMENT = "Employment",
-    SCHOLARSHIPS = "Scholarships",
-    FINANCIAL_AID = "Financial Aid",
-    FAMILY_SUPPORT = "Family Support",
-    SIDE_HUSTLE = "Side Hustle",
-    REFUNDS = "Refunds",
-    OTHER = "Other"
- }
- export enum Category_ID
- {
-    ALL,
-    INCOME,
-    EXPENSE,
-    FOOD,
-    HOUSING,
-    TRANSPORTATION,
-    TUITION,
-    ENTERTAINMENT,
-    UTILITIES,
-    SUBSCRIPTIONS,
-    EMPLOYMENT,
-    SCHOLARSHIPS,
-    FINANCIAL_AID,
-    FAMILY_SUPPORT,
-    SIDE_HUSTLE,
-    REFUNDS,
-    OTHER
+   ALL = "All",
+   EXPENSE = "Expense",
+   INCOME = "Income",
+
+   FOOD = "Food",
+   HOUSING = "Housing",
+   TRANSPORTATION = "Transportation",
+   TUITION = "Tuition",
+   ENTERTAINMENT = "Entertainment",
+   UTILITIES = "Utilities",
+   SUBSCRIPTIONS = "Subscriptions",
+   OTHER = "Other",
+
+   EMPLOYMENT = "Employment",
+   SCHOLARSHIPS = "Scholarships",
+   FINANCIAL_AID = "Financial Aid",
+   ALLOWANCE = "Allowance",
+   SELF_EMPLOYMENT = "Self Employment",
+   OTHER_INCOME = "Other Income"
  }
  //enum to be used when sorting transactions by frequency.
  export enum FREQUENCY
@@ -77,6 +61,39 @@ export type Transaction =
    YEARLY
  }
 
+ export const incomeCategories = [
+   "Employment",
+   "Scholarships",
+   "Financial Aid",
+   "Allowance",
+   "Self Employment",
+   "Other Income",
+ ];
+ 
+ export const expenseCategories = [
+   "Food",
+   "Housing",
+   "Transportation",
+   "Tuition",
+   "Entertainment",
+   "Utilities",
+   "Subscriptions",
+   "Other",
+ ];
+ 
+ export const frequencies = [
+   "Once",
+   "Weekly",
+   "Monthly",
+   "Yearly",
+ ];
+ 
+ export const fieldClass =
+   "mt-2 w-full rounded-lg border border-[#dce7e2] " +
+   "bg-[#f7faf8] px-3 py-2.5 text-sm text-[#17324d] " +
+   "placeholder:text-[#7185a1] focus:border-[#3f8068] " +
+   "focus:outline-none focus:ring-2 focus:ring-[#3f8068]/20";
+
  /**
   * @param search a string. if not empty, only return transactions which have names that match the string
   * @param sortingOrder what should be used to sort the array of transactions.
@@ -86,34 +103,49 @@ export type Transaction =
   * @param arr the array to be sorted.
   * @returns an array of Transactions identical to @param arr but sorted and filtered.
   */
- export function sortBy(search: string = "", sortingOrder: SORTING_ORDER = SORTING_ORDER.DATE, descending: boolean = true, category: CATEGORY_NAME = CATEGORY_NAME.ALL, include: boolean = true, arr: Transaction[]): Transaction[]
+ export function sortBy(search: string = "", sortingOrder: SORTING_ORDER = SORTING_ORDER.DATE, descending: boolean = true, category: CATEGORY_NAME = CATEGORY_NAME.ALL, include: boolean = true, type: string, arr: Transaction[]): Transaction[]
  {
    const newArr = arr.filter((transaction) => 
       {
          const matchSearch: boolean = transaction.name.toLowerCase().includes(search.toLowerCase());
          let matchCategory: boolean = transaction.categories.name.toLowerCase() === category.toLowerCase();
-         if(category === CATEGORY_NAME.ALL)//if set to all, display all expense and income.
-         {                                 //if set to income, display categories that are income.
-            matchCategory = true;          //if set to expense, display categories that are expense.
-         }
-         /*
-         if(category === CATEGORY_NAME.INCOME)
-         {
+         let matchType: boolean = transaction.categories.transaction_type.toLowerCase() === type.toLowerCase();
 
-         }
-         if(category === CATEGORY_NAME.EXPENSE)
-         {
+         console.log(type);
 
+         if(type === "All")
+         {
+            matchType = true;
          }
-         */
+
+         if(category === CATEGORY_NAME.ALL)
+         {
+            matchCategory = true;
+         }
+         // else if(category === CATEGORY_NAME.INCOME)
+         // {
+         //    matchCategory = transaction.categories.transaction_type === "income" //if transaction is an income. will break if the database changes.
+         // }
+         // else if(category === CATEGORY_NAME.EXPENSE)
+         // {
+         //    matchCategory = transaction.categories.transaction_type === "expense" //if transaction is an expense
+         // }
+
+         console.log(type);
+         console.log(`matchSearch: ${matchCategory}`);
+         console.log(`matchCategory: ${matchCategory}`);
+         console.log(`matchType: ${matchCategory}`);     
          
+         console.log(`transaction match with include: ${(matchCategory && matchSearch) && matchType}`);
+         console.log(`transaction match with exclude: ${(!matchCategory && matchSearch) && matchType}`);
+
          if(include)
          {
-            return matchCategory && matchSearch;
+            return (matchCategory && matchSearch) && matchType;
          }
          else
          {
-            return !matchCategory && matchSearch;
+            return (!matchCategory && matchSearch) && matchType;
          }
       })
 

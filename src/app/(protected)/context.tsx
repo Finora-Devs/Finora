@@ -23,7 +23,7 @@ export default function TransactionContextProvider({children}: ProtectedLayoutPr
 {
     const [transactionsArr, setTransactionsArr] = useState<Transaction[]>([]);
 
-    useEffect(() => //this seems to be working, but I need to check supabase to see if its ignoring any columns.
+    useEffect(() => //Seems to run twice for some reason.
     { 
         const loadTransactions = async () => 
         {
@@ -64,9 +64,9 @@ export default function TransactionContextProvider({children}: ProtectedLayoutPr
  *           name: "",
  *           description: "",
  *           amount: 0,
+ *           category_id: 1
  *           frequency: "",
  *           transaction_date: "",
- *           next_due_date: "",
  *           categories: {
  *               name: "",
  *               transaction_type: ""

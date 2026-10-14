@@ -7,41 +7,81 @@ import {
 } from "lucide-react";
 import TransactionList from "./TransactionList";
 import SpendingByCategory from "./SpendingByCategory";
+import { useTransactionContext } from "@/app/(protected)/context";
+import TransactionSummaryCards from "./TransactionSummaryCards";
+
+function formatMoney(amount: number) : string {
+  return amount.toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD",
+  });
+}
+
+export default function TransactionsPage() {
+  const { transactionsArr } = useTransactionContext();
+
+  const totalTransactions = transactionsArr.length;
+  const totalIncome = transactionsArr.reduce<number>(
+    (total, transaction) => {
+      if (
+        transaction.categories.transaction_type === "income"
+      ) {
+        return total + Number(transaction.amount);
+      }
+
+      return total;
+    },
+    0
+  );
+
+  const totalExpenses = transactionsArr.reduce<number>(
+    (total, transaction) => {
+      if (
+        transaction.categories.transaction_type === "expense"
+      ) {
+        return total + Number(transaction.amount);
+      }
+
+      return total;
+    },
+    0
+  );
+
+const netAmount = totalIncome - totalExpenses;
 
 //should just need to pull information from the transaction list and stick it in these cards. May need to pull the state 
 //of the display list up here and pass it down to transaction list as a property.
 const summaryCards = [
   {
     label: "Total Transactions",
-    value: "24",
+    value: totalTransactions.toLocaleString("en-US"),
     icon: List,
     color: "text-[#3f8068]",
     background: "bg-[#e5f3ec]",
   },
   {
     label: "Total Income",
-    value: "$2,000.00",
+    value: formatMoney(totalIncome),
     icon: ArrowUpRight,
     color: "text-[#16834b]",
     background: "bg-[#e5f3ec]",
   },
   {
     label: "Total Expenses",
-    value: "$1,480.25",
+    value: formatMoney(totalExpenses),
     icon: ArrowDownRight,
     color: "text-[#d94c5c]",
     background: "bg-[#fce8eb]",
   },
   {
     label: "Net Amount",
-    value: "$519.75",
+    value: formatMoney(netAmount),
     icon: Wallet,
     color: "text-[#3173c9]",
     background: "bg-[#e8f1ff]",
   },
 ];
 
-export default function TransactionsPage() {
   return (
     <section className="space-y-6">
       {/*Heading*/}
@@ -79,7 +119,8 @@ export default function TransactionsPage() {
                 <div
                   className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${card.background}`}
                 >
-                  <Icon className={`h-5 w-5 ${card.color}`} />
+                  <Icon aria-hidden="true"
+                  className={`h-5 w-5 ${card.color}`} />
                 </div>
               </div>
             </div>
