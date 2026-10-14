@@ -9,19 +9,13 @@ import type {Dispatch, SetStateAction } from "react";
 
 /**
  * 
- * @param amount The amount of money earned/lost in the transaction. must be positive
- * @param category_id 
- * @param frequency 
- * @param name 
- * @param transaction_date 
- * @param setTransactionsArr This is the function that updates the array of all transactions. Doing this should immediately update the webpage.
  */
 export async function insertTransaction(formData: FormData, setTransactionsArr: Dispatch<SetStateAction<Transaction[]>>)
 {
     const supabase = await createClient();
 
     const name = formData.get("name") as string;
-    const amount = formData.get("amount") as unknown as number;
+    const amount = formData.get("amount") as unknown as number; //may need to get this a different way, but works for now.
     const transaction_date = formData.get("date") as string;
     const frequency = formData.get("frequency") as string;
     let description = formData.get("notes") as string | null;
@@ -74,6 +68,12 @@ export async function insertTransaction(formData: FormData, setTransactionsArr: 
             category_id = 14;
             break;
     } 
+
+    if(frequency !== "once")
+    {
+        //insert recurring transaction and break.
+        //insertReccurring should also insert any needed transactions.
+    }
 
     if(!description)
     {
@@ -129,78 +129,80 @@ export async function insertTransaction(formData: FormData, setTransactionsArr: 
          }
     }
 }
-// export async function insertTransaction(amount: number, category_id: number, frequency: string, name: string, transaction_date: string, setTransactionsArr: Dispatch<SetStateAction<Transaction[]>>)
-// {
-//     const supabase = await createClient();
 
-//     //I think this won't be necessary once I start setting up the automatic updates for
-//     //repeating transactions
-//     let next_due_date: Date = new Date();
-//     switch(frequency)
-//     {
-//         case "once":
-//             break;
-//         case "daily":
-//             next_due_date.setDate(next_due_date.getUTCDate() + 1)
-//         case "weekly":
-//             next_due_date.setDate(next_due_date.getUTCDate() + 7)
-//             break;
-//         case "monthly":
-//             next_due_date.setDate(next_due_date.getUTCDate() + 30)
-//             break;
-//         case "yearly":
-//             next_due_date.setDate(next_due_date.getUTCFullYear() + 1)
-//             break;
+//this function takes the information from the regular insertTransaction function and inserts a new row into the recurring_transactions table. calls another function that updates the transaction list.
+async function insertRecurringTransaction(name: string, amount: number, transaction_date: string, frequency: string, description: string, category_id: number, setTransactionArr: Dispatch<SetStateAction<Transaction[]>>)
+{
+    const supabase = await createClient();
 
-//     }
-//     ////////////////////////////////////////////////////////////////////////////////////////
+    const {data: { user }, error: userError} = await supabase.auth.getUser();
+    if(userError || user === null)
+    {
+        console.error("user authentication failed", userError);
+        throw userError;
+    }
+    else
+    {
+        const {data,  error} = await supabase
+        .from('recurring_transactions')
+        .insert(
+            { 
+                amount: amount,
+                category_id: category_id,
+                description: description,
+                frequency: frequency,
+                name: name,
+                next_due_date: transaction_date,
+                user_id: user.id
+            }).select(`
+                    id
+                    user_id,
+                    name,
+                    amount,
+                    category_id,
+                    frequency,
+                    next_due_date
+                    description,
+                    is_active
+                `)
+        if(data)
+        {
+            //insert transactions into the transaction table until the table is upt to date.
+            //may need to create an object just to make this cleaner.
+        }
 
-//     const {data: { user }, error: userError} = await supabase.auth.getUser();
-//     if(userError || user === null)
-//     {
-//         console.error("user authentication failed", userError);
-//         throw userError;
-//     }
-//     else
-//     {
-//         const {data,  error} = await supabase
-//         .from('transactions')
-//         .insert(
-//             { 
-//                 amount: amount,
-//                 category_id: category_id,
-//                 frequency: frequency,
-//                 name: name,
-//                 transaction_date: transaction_date,
-//                 user_id: user.id
-//          }).select(`
-//             id,
-//             name,
-//             description,
-//             amount,
-//             frequency, 
-//             transaction_date, 
-//             categories!inner(
-//                 name, 
-//                 transaction_type
-//                 )
-//                 `)
-//         if(data)
-//         {
-//             setTransactionsArr(prev => [...prev, (data[0] as Transaction)]) //updates the local copy of the transaction list.
-//         }
+        if(error)
+        {
+            console.error("Supabase insert reccuring error: ", error);
+            throw error;
+        }
+        else
+        {
+            console.log("Insert recurring Success");
+        }
+    }
+}
 
-//          if(error)
-//          {
-//             console.error("Supabase insert error: ", error);
-//             throw error;
-//          }
-//          else
-//          {
-//             console.log("Insert Success");
-//          }
-//     }
-// }
+//this function will take a recurring transaction and checks the next_due_date. Repeatedly adds transactions to the table and update the recurring transaction until everything is up to date.
+async function updateTransactions(current_due_date: string)
+{
+    const supabase = await createClient();
+
+    let next_due_date: Date = new Date(current_due_date);
+    const currentDate: Date = new Date();
+
+    while(next_due_date < currentDate)
+    {
+        //add transaction to table and update recurring transaction's next_due_date.
+        const {data, error} = await supabase
+            .from("recurring_transactions")
+            .update({
+                next_due_date: ""//needs to set new date based on frequency.
+            })
+            .eq("id", 3/*need to replace this with argument*/)
+    }
+}
+
 
 //Delete a transaction from the database.
 export async function deleteTransaction(transactionID: number, setTransactionsArr: Dispatch<SetStateAction<Transaction[]>>)
