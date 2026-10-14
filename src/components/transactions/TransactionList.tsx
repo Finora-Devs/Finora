@@ -30,9 +30,11 @@ import { deleteTransaction, insertTransaction } from "@/lib/clientFunctions";
 //Ascending/Descending toggle: complete.
 //category option box: complete
 //include/exclude toggle: complete
-//add income button: incomplete
-//add expense button: incomplete
-//remove transaction: incomplete.
+//add income button: complete
+//add expense button: complete
+//more options button: incomplete
+  //remove button: incomplete
+  //edit button: incomplete
 
 //still need summary cards and chart
 
