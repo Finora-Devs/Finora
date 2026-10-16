@@ -9,6 +9,7 @@ import { Database } from "@/types/database.types";
 import {createClient} from "./server"
 import { SupabaseClient } from '@supabase/supabase-js'
 import {Transaction, recurringTransaction} from "./types_and_helpers";
+import next from "next";
 
 /**
  * Gets all transactions for the current user.
@@ -16,6 +17,9 @@ import {Transaction, recurringTransaction} from "./types_and_helpers";
 export async function getTransactions(): Promise<Transaction[]>
 {
     const supabase = await createClient();
+
+    //inserts 2-3 transactions at a time instead of just one.
+    //await updateRecurringTransactions(supabase); //updates the transaction list and related recurring transactions.
 
     const transactionsQuery = await supabase
     .from("transactions")
@@ -39,7 +43,7 @@ export async function getTransactions(): Promise<Transaction[]>
 }
 
 /**
- * takes a supabase client and updates all recurring transactions with a next_due_date older than the current date.
+ * takes a supabase client and updates the transaction table based on the recurring transactions table.
  * @param supabase 
  */
 async function updateRecurringTransactions(supabase: SupabaseClient<Database>)
@@ -57,7 +61,7 @@ async function updateRecurringTransactions(supabase: SupabaseClient<Database>)
                 description,
                 is_active
             `)
-    .lt("next_due_date", new Date())//may break, idk yet.
+    .lt("next_due_date", new Intl.DateTimeFormat("sv-SE").format(new Date()))
 
     if(error)
     {
@@ -66,7 +70,7 @@ async function updateRecurringTransactions(supabase: SupabaseClient<Database>)
     }
     else if(data)
     {
-        const {data: { user }, error: userError} = await supabase.auth.getUser();
+        const {data: { user }, error: userError} = await supabase.auth.getUser();//probably need to just do this in the calling function...
         if(userError || user === null)
         {
             console.error("user authentication failed", userError);
@@ -78,10 +82,28 @@ async function updateRecurringTransactions(supabase: SupabaseClient<Database>)
             (data as recurringTransaction[]).forEach((recurring: recurringTransaction) => 
             {
                 const next_due_date = new Date(recurring.next_due_date);
-                while(next_due_date < new Date())
+                const currentDate = new Date()
+                while(next_due_date < currentDate) //there may be a way to do all of this in one loop. Need to look into this later.
                 {
                     insertTransaction(recurring, user, supabase);
-                    updateRecurringTransaction(recurring, user, supabase);
+
+                    switch(recurring.frequency)
+                        {
+                            case "daily":
+                                next_due_date.setDate(next_due_date.getDate() + 1);
+                                break;
+                            case "weekly":
+                                next_due_date.setDate(next_due_date.getDate() + 7);
+                                break;
+                            case "monthly":
+                                next_due_date.setDate(next_due_date.getDate() + 30);
+                                break;
+                            case "yearly":
+                                next_due_date.setDate(next_due_date.getDate() + 365);
+                                break;
+                        }
+                    recurring.next_due_date = new Intl.DateTimeFormat("sv-SE").format(next_due_date); //updates the local recurring transaction with the next due date.
+                    updateRecurringTransaction(recurring, user, supabase);//can't await this here. maybe an arrow function would work?
                 }
             })  
         }
@@ -95,7 +117,16 @@ async function updateRecurringTransactions(supabase: SupabaseClient<Database>)
 //takes a recurring transaction and adds one billing cycle to the next_due_date. returns new due date?
 async function updateRecurringTransaction(recurring: recurringTransaction, user: any, supabase: SupabaseClient<Database>)//USER SHOULD NOT BE ANY. User should always be the User type, but I can't delcare that for some reason.
 {
-    
+    const {error} = await supabase
+        .from("recurring_transactions")
+        .update({next_due_date: recurring.next_due_date})
+        .eq("id", recurring.id);
+
+    if(error)
+    {
+        console.error("Supabase update error (updateRecurringTransaction -> recurring_transactions table)", error)
+        throw error;
+    }
 }
 //takes a recurring transaction and inserts one bill into the transaction table.
 async function insertTransaction(recurring: recurringTransaction, user: any, supabase: SupabaseClient<Database>)//USER SHOULD NOT BE ANY. User should always be the User type, but I can't delcare that for some reason.
@@ -117,7 +148,7 @@ async function insertTransaction(recurring: recurringTransaction, user: any, sup
 
     if(error)
     {
-        console.error("Supabase insert error (updateRecurring -> transactions)", error)
+        console.error("Supabase insert error (updateRecurringTransactions -> insertTransaction -> transactions table)", error)
         throw error;
     }
 }
