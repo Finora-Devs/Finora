@@ -14,7 +14,6 @@ export type Transaction =
     category_id: number,
     frequency: string,
     transaction_date: string,
-    next_due_date: string | null,
     categories: {
         name: string,
         transaction_type: string,
@@ -96,6 +95,7 @@ export type Transaction =
  
  export const frequencies = [
    "Once",
+   "Daily",
    "Weekly",
    "Monthly",
    "Yearly",
