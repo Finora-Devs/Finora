@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 
 import Sidebar from "./Sidebar";
 import TopBar from "./TopBar";
-import {TransactionContextProvider, /*UserContext, UserContextProvider*/ } from "../../app/(protected)/context";
+import {TransactionContextProvider, UserContext, UserContextProvider} from "../../app/(protected)/context";
 
 type AppShellProps = {
     children: ReactNode;
@@ -17,7 +17,7 @@ type AppShellProps = {
 
 export default function AppShell({children}: AppShellProps) {
     return (
-        //<UserContextProvider> {/*Busted due to async nonsense. Gimme a little bit to find  the fix.*/}
+        <UserContextProvider> {/*Busted due to async nonsense. Gimme a little bit to find  the fix.*/}
             <TransactionContextProvider>    
                 <div className="min-h-screen bg-[#f3f7f5]">
                     <Sidebar />
@@ -31,6 +31,6 @@ export default function AppShell({children}: AppShellProps) {
                     </div>
                 </div>
             </TransactionContextProvider>
-        //</UserContextProvider>
+        </UserContextProvider>
     );
 }

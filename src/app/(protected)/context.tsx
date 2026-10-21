@@ -90,24 +90,34 @@ export function useTransactionContext()
 }
 
 
-/*export const UserContext = createContext<User | null>(null);
 
-export function UserContextProvider({children}: ProtectedLayoutProps)//think this will work?
+
+
+type UserData =
 {
-    let user: User | null = null;
+    id: string,
+    email: string
+}
+
+
+//need to look into maintaining a loading state. keep seeing it, but not sure why we would need it.
+export const UserContext = createContext<{user: UserData , setUser: Dispatch<SetStateAction<UserData>>}| undefined>(undefined);
+
+export function UserContextProvider({children}: ProtectedLayoutProps)
+{
+    const defaultUser: UserData = {id: "Loading...", email: "Loading...@Loading.Lod"}
+
+    const [user, setUser] = useState(defaultUser)
     useEffect(() =>
     { 
         const loadUser = async () => 
         {
             try
             {
-                console.log("before retrieving user for context");
-                user = await getUser();
-                console.log("after retrieving user for context");
+                setUser(await getUser()); //now returns id string and email string
             }
             catch (error)
             {
-                console.log("something went wrong with user retrival for context");
                 console.error("user retrieval failure", error);
                 throw error;
             }
@@ -116,7 +126,7 @@ export function UserContextProvider({children}: ProtectedLayoutProps)//think thi
     }, []) //runs only once.
 
     return(
-        <UserContext value={user}>
+        <UserContext value={{user, setUser}}>
             {children}
         </UserContext>
     );
@@ -126,14 +136,19 @@ export function UserContextProvider({children}: ProtectedLayoutProps)//think thi
 /**
  * A custom version of useContext that checks for null or undefined before returning.
  * This should be used instead of useContext() for retrieving the UserContext.
- *//*
-export function useUserContext()
+ * 
+ * 
+ */
+export function useUserContext():   {user: UserData, setUser: Dispatch<SetStateAction<UserData>>}
 {
-    const context: User | null = useContext(UserContext)
+    const context = useContext(UserContext);
 
-    if(context === undefined)
+    if(!context || !context.user)
     {
-        throw new Error("useUserContext must be used within a UserContext")
+        throw new Error("User Not Found")
     }
-    return context;
-}*/
+
+    const {user, setUser} = context;
+    
+    return {user, setUser};
+}

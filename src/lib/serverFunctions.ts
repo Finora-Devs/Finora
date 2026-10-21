@@ -184,17 +184,17 @@ async function insertTransactions(recurring: recurringTransaction, dates: Date[]
     }
 }
 
-export async function getUser(): Promise<User> //throws error for some reason, but works if left untyped.
+export async function getUser(): Promise<{id: string, email: string}>
 {
     const supabase = await createClient();
 
     //getSession().session.user for client. not as secure, but faster. consider using this instead in the client.
-    const {data: { user }, error: userError} = await supabase.auth.getUser();//probably need to just do this in the calling function...
-        if(userError || user === null)
+    const {data: { user }, error: userError} = await supabase.auth.getUser();
+        if(userError || user === null || user.email === undefined)
         {
             console.error("user authentication failed", userError);
             throw userError;
         }
         console.log("user successfully retrieved from supabase.")
-    return user;
+    return {id: user.id, email: user.email};
 }
