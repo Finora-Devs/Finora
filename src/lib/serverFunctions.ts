@@ -7,7 +7,7 @@
 
 import { Database } from "@/types/database.types";
 import {createClient} from "./server"
-import { SupabaseClient } from '@supabase/supabase-js'
+import { SupabaseClient, User } from '@supabase/supabase-js'
 import {Transaction, recurringTransaction} from "./types_and_helpers";
 
 /**
@@ -182,4 +182,19 @@ async function insertTransactions(recurring: recurringTransaction, dates: Date[]
         console.error("Supabase insert error (updateRecurringTransactions -> insertTransaction -> transactions table)", error)
         throw error;
     }
+}
+
+export async function getUser(): Promise<User> //throws error for some reason, but works if left untyped.
+{
+    const supabase = await createClient();
+
+    //getSession().session.user for client. not as secure, but faster. consider using this instead in the client.
+    const {data: { user }, error: userError} = await supabase.auth.getUser();//probably need to just do this in the calling function...
+        if(userError || user === null)
+        {
+            console.error("user authentication failed", userError);
+            throw userError;
+        }
+        console.log("user successfully retrieved from supabase.")
+    return user;
 }

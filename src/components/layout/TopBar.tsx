@@ -1,6 +1,11 @@
+'use client'
+import { useUserContext } from "@/app/(protected)/context";
 import{Bell, ChevronDown, Search} from "lucide-react";
 
 export default function TopBar(){
+
+    const userContext = useUserContext();
+
     return(
         <header className ="sticky top 0 z-30 flex h-[68px] w-full items-center gap-6 border-b border-[#dce7e2] bg-white px-6">
            {/*Search field*/}
@@ -38,7 +43,7 @@ export default function TopBar(){
                 className="flex items-center gap-3 rounded-lg px-2 py-1.5 text-left hover:bg-[#f3f2f5]">
                 
                 <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#3f8068] text-sm font-semibold text-white">
-                    SD
+                    {userContext?.email?.charAt(0)}
                 </span>
 
                 <span className="hidden sm:block">
@@ -46,7 +51,7 @@ export default function TopBar(){
                         Welcome back,
                     </span>
                     <span className="block text-base font medium text-[#17324d]">
-                        Steven
+                        {userContext?.email?.substring(0, userContext.email.indexOf("@"))} {/*replace with substring of email from 0 to @*/}
                     </span>
                 </span>
 

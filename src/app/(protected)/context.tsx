@@ -2,7 +2,8 @@
 import {createContext, useContext, useState, useEffect} from "react"//probably need to remember what each of these do in case dr. nicholson asks.
 import type { ReactNode, Dispatch, SetStateAction } from "react";
 import { Transaction } from "@/lib/types_and_helpers";
-import { getTransactions } from "@/lib/serverFunctions"
+import { getTransactions, getUser } from "@/lib/serverFunctions"
+import { User } from "@supabase/supabase-js";
 
 type ProtectedLayoutProps = {
     children: ReactNode;
@@ -19,7 +20,7 @@ export const TransactionContext = createContext<{transactionsArr: Transaction[],
  * This function creates a wrapper component that can be placed around the app shell (or any other component Steven makes) which 
  * makes the TransactionContext available to every child component. I have already wrapped the app shell, so don't worry about this.
  */
-export default function TransactionContextProvider({children}: ProtectedLayoutProps)
+export function TransactionContextProvider({children}: ProtectedLayoutProps)
 {
     const [transactionsArr, setTransactionsArr] = useState<Transaction[]>([]);
 
@@ -87,3 +88,52 @@ export function useTransactionContext()
     }
     return context;
 }
+
+
+/*export const UserContext = createContext<User | null>(null);
+
+export function UserContextProvider({children}: ProtectedLayoutProps)//think this will work?
+{
+    let user: User | null = null;
+    useEffect(() =>
+    { 
+        const loadUser = async () => 
+        {
+            try
+            {
+                console.log("before retrieving user for context");
+                user = await getUser();
+                console.log("after retrieving user for context");
+            }
+            catch (error)
+            {
+                console.log("something went wrong with user retrival for context");
+                console.error("user retrieval failure", error);
+                throw error;
+            }
+        }
+        loadUser();
+    }, []) //runs only once.
+
+    return(
+        <UserContext value={user}>
+            {children}
+        </UserContext>
+    );
+}
+
+
+/**
+ * A custom version of useContext that checks for null or undefined before returning.
+ * This should be used instead of useContext() for retrieving the UserContext.
+ *//*
+export function useUserContext()
+{
+    const context: User | null = useContext(UserContext)
+
+    if(context === undefined)
+    {
+        throw new Error("useUserContext must be used within a UserContext")
+    }
+    return context;
+}*/
