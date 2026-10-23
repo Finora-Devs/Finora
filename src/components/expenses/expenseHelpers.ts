@@ -152,7 +152,7 @@ export function visibleExpenses(
   reversed: boolean,
 ) {
   const term = search.trim().toLowerCase();
-  // Scope to expenses first so Exclude cannot expose income records.
+  
   return records
     .filter((record) => {
       if (record.categories.transaction_type !== "expense") return false;
