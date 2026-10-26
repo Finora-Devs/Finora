@@ -14,12 +14,24 @@ export type Transaction =
     category_id: number,
     frequency: string,
     transaction_date: string,
-    next_due_date: string | null,
     categories: {
         name: string,
         transaction_type: string,
         };
  };
+
+ export type recurringTransaction = 
+ {
+   id: number,
+   user_id: string,
+   name: string,
+   amount: number,
+   category_id: number,
+   frequency: string,
+   next_due_date: string,
+   description: string | null,
+   is_active: boolean,
+ }
 
  export enum SORTING_ORDER
  {
@@ -83,6 +95,7 @@ export type Transaction =
  
  export const frequencies = [
    "Once",
+   "Daily",
    "Weekly",
    "Monthly",
    "Yearly",
@@ -130,14 +143,6 @@ export type Transaction =
          // {
          //    matchCategory = transaction.categories.transaction_type === "expense" //if transaction is an expense
          // }
-
-         console.log(type);
-         console.log(`matchSearch: ${matchCategory}`);
-         console.log(`matchCategory: ${matchCategory}`);
-         console.log(`matchType: ${matchCategory}`);     
-         
-         console.log(`transaction match with include: ${(matchCategory && matchSearch) && matchType}`);
-         console.log(`transaction match with exclude: ${(!matchCategory && matchSearch) && matchType}`);
 
          if(include)
          {

@@ -2,7 +2,8 @@
 import {createContext, useContext, useState, useEffect} from "react"//probably need to remember what each of these do in case dr. nicholson asks.
 import type { ReactNode, Dispatch, SetStateAction } from "react";
 import { Transaction } from "@/lib/types_and_helpers";
-import { getTransactions } from "@/lib/serverFunctions"
+import { getTransactions, getUser } from "@/lib/serverFunctions"
+import { User } from "@supabase/supabase-js";
 
 type ProtectedLayoutProps = {
     children: ReactNode;
@@ -19,7 +20,7 @@ export const TransactionContext = createContext<{transactionsArr: Transaction[],
  * This function creates a wrapper component that can be placed around the app shell (or any other component Steven makes) which 
  * makes the TransactionContext available to every child component. I have already wrapped the app shell, so don't worry about this.
  */
-export default function TransactionContextProvider({children}: ProtectedLayoutProps)
+export function TransactionContextProvider({children}: ProtectedLayoutProps)
 {
     const [transactionsArr, setTransactionsArr] = useState<Transaction[]>([]);
 
@@ -86,4 +87,68 @@ export function useTransactionContext()
         throw new Error("useTransactionContext must be use within a TransactionContext")
     }
     return context;
+}
+
+
+
+
+
+type UserData =
+{
+    id: string,
+    email: string
+}
+
+
+//need to look into maintaining a loading state. keep seeing it, but not sure why we would need it.
+export const UserContext = createContext<{user: UserData , setUser: Dispatch<SetStateAction<UserData>>}| undefined>(undefined);
+
+export function UserContextProvider({children}: ProtectedLayoutProps)
+{
+    const defaultUser: UserData = {id: "Loading...", email: "Loading...@Loading.Lod"}
+
+    const [user, setUser] = useState(defaultUser)
+    useEffect(() =>
+    { 
+        const loadUser = async () => 
+        {
+            try
+            {
+                setUser(await getUser()); //now returns id string and email string
+            }
+            catch (error)
+            {
+                console.error("user retrieval failure", error);
+                throw error;
+            }
+        }
+        loadUser();
+    }, []) //runs only once.
+
+    return(
+        <UserContext value={{user, setUser}}>
+            {children}
+        </UserContext>
+    );
+}
+
+
+/**
+ * A custom version of useContext that checks for null or undefined before returning.
+ * This should be used instead of useContext() for retrieving the UserContext.
+ * 
+ * 
+ */
+export function useUserContext():   {user: UserData, setUser: Dispatch<SetStateAction<UserData>>}
+{
+    const context = useContext(UserContext);
+
+    if(!context || !context.user)
+    {
+        throw new Error("User Not Found")
+    }
+
+    const {user, setUser} = context;
+    
+    return {user, setUser};
 }
