@@ -1,3 +1,4 @@
+'use client';
 import {
   ArrowDownRight,
   ArrowUpRight,
@@ -9,16 +10,14 @@ import TransactionList from "./TransactionList";
 import SpendingByCategory from "./SpendingByCategory";
 import { useTransactionContext } from "@/app/(protected)/context";
 import TransactionSummaryCards from "./TransactionSummaryCards";
+import { formatMoney } from "@/lib/types_and_helpers";
+import { useState } from "react";
 
-function formatMoney(amount: number) : string {
-  return amount.toLocaleString("en-US", {
-    style: "currency",
-    currency: "USD",
-  });
-}
 
 export default function TransactionsPage() {
   const { transactionsArr } = useTransactionContext();
+  const [searchDate, setSearch] = useState(new Date());
+  const setSearchWrapper = (newDate: Date) => setSearch(newDate);
 
   const totalTransactions = transactionsArr.length;
   const totalIncome = transactionsArr.reduce<number>(
@@ -130,7 +129,10 @@ const summaryCards = [
 
      <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(300px,1fr)]">
   <div className="min-w-0">
-    <TransactionList />
+    <TransactionList 
+      searchDate = {searchDate}
+      setSearchDate={setSearchWrapper}
+      />
   </div>
 
   <SpendingByCategory />

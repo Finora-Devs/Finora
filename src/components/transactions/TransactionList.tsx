@@ -40,9 +40,13 @@ import { deleteTransaction, insertTransaction } from "@/lib/clientFunctions";
 
 type TransactionType = "income" | "expense";
 
+type Props = 
+{
+  searchDate: Date;
+  setSearchDate: (newDate: Date) => void;
+};
 
-
-export default function TransactionList() {
+export default function TransactionList({searchDate, setSearchDate}: Props) {
   const { transactionsArr, setTransactionsArr } = useTransactionContext();
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -58,20 +62,22 @@ export default function TransactionList() {
     category,
     include,
     "All",
+    searchDate.getMonth(),
+    searchDate.getFullYear(),
     transactionsArr
   );
 
-  const totalTransactions = transactionsArr.length;
+  // const totalTransactions = transactionsArr.length;
 
-  const totalIncome = transactionsArr
-    .filter((t) => t.categories.transaction_type === "income")
-    .reduce((sum, t) => sum + t.amount, 0);
+  // const totalIncome = transactionsArr
+  //   .filter((t) => t.categories.transaction_type === "income")
+  //   .reduce((sum, t) => sum + t.amount, 0);
 
-  const totalExpenses = transactionsArr
-    .filter((t) => t.categories.transaction_type === "expense")
-    .reduce((sum, t) => sum + t.amount, 0);
+  // const totalExpenses = transactionsArr
+  //   .filter((t) => t.categories.transaction_type === "expense")
+  //   .reduce((sum, t) => sum + t.amount, 0);
 
-  const totalAmount = totalIncome - totalExpenses;
+  // const totalAmount = totalIncome - totalExpenses;
 
   const [formType, setFormType] =
     useState<TransactionType | null>(null);
@@ -217,7 +223,7 @@ export default function TransactionList() {
             aria-hidden="true"
             className="h-4 w-4 text-[#607394]"
           />
-          <span>Sep 1, 2026 – Sep 30, 2026</span>
+          <span>{Intl.DateTimeFormat("en-us", {month: "short", year: "numeric"}).format(searchDate)}</span>
         </div>
       </div>
 
@@ -607,8 +613,8 @@ export default function TransactionList() {
                   </option>
 
                   {formCategories.map((category) => (
-                    <option key={category} value={category}>
-                      {category}
+                    <option key={category.value} value={category.value}>
+                      {category.name}
                     </option>
                   ))}
                 </select>
@@ -634,8 +640,8 @@ export default function TransactionList() {
                   </option>
 
                   {frequencies.map((frequency) => (
-                    <option key={frequency} value={frequency.toLowerCase()}>
-                      {frequency}
+                    <option key={frequency.value} value={frequency.value}>
+                      {frequency.label}
                     </option>
                   ))}
                 </select>

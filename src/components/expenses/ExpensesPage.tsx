@@ -5,60 +5,56 @@ import { ArrowDownRight, CalendarDays, Tags, TrendingUp } from "lucide-react";
 import { useTransactionContext } from "@/app/(protected)/context";
 import ExpenseList from "./ExpenseList";
 import SpendingByCategory from "./SpendingByCategory";
-import {
-  categoryBreakdown,
-  currentMonth,
-  expensesInMonth,
-  formatMoney,
-  monthLabel,
-  previousMonth,
-} from "./expenseHelpers";
+import { formatMoney } from "@/lib/types_and_helpers";
 
 export default function ExpensesPage() {
   const { transactionsArr } = useTransactionContext();
-  const [month, setMonth] = useState(currentMonth);
-  const expenses = expensesInMonth(transactionsArr, month);
-  const total = expenses.reduce((sum, expense) => sum + expense.amount, 0);
-  const priorTotal = expensesInMonth(
-    transactionsArr,
-    previousMonth(month),
-  ).reduce((sum, expense) => sum + expense.amount, 0);
-  const largest = expenses.reduce(
-    (max, expense) => Math.max(max, expense.amount),
-    0,
-  );
-  const topCategory = categoryBreakdown(expenses).sort(
-    (a, b) => b.amount - a.amount,
-  )[0];
+  const [searchDate, setSearch] = useState(new Date());
+
+  const setSearchWrapper = (newDate: Date) => setSearch(newDate);
+  // const [month, setMonth] = useState(currentMonth);
+      // const expenses = expensesInMonth(transactionsArr, month);
+      // const total = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+  // const priorTotal = expensesInMonth(
+  //   transactionsArr,
+  //   previousMonth(month),
+  // ).reduce((sum, expense) => sum + expense.amount, 0);
+  // const largest = expenses.reduce(
+  //   (max, expense) => Math.max(max, expense.amount),
+  //   0,
+  // );
+  // const topCategory = categoryBreakdown(expenses).sort(
+  //   (a, b) => b.amount - a.amount,
+  // )[0];
   const cards = [
     {
       label: "Total Expenses",
-      value: formatMoney(total),
-      note: monthLabel(month),
+      value: 1_000_000, //formatMoney(total),
+      note: Intl.DateTimeFormat("en-us", {month: "long"}).format(searchDate),//monthLabel(month),
       icon: ArrowDownRight,
       color: "text-[#d94c5c]",
       background: "bg-[#fce8eb]",
     },
     {
       label: "Largest Expense",
-      value: formatMoney(largest),
-      note: monthLabel(month),
+      value: 5_000,//formatMoney(largest),
+      note: Intl.DateTimeFormat("en-us", {month: "long"}).format(searchDate),//monthLabel(month),
       icon: TrendingUp,
       color: "text-[#c58627]",
       background: "bg-[#fff3dc]",
     },
     {
       label: "Most-Spent Category",
-      value: total > 0 ? topCategory.name : "No expenses",
-      note: total > 0 ? formatMoney(topCategory.amount) : monthLabel(month),
+      value: "Housing",//total > 0 ? topCategory.name : "No expenses",
+      note: Intl.DateTimeFormat("en-us", {month: "long"}).format(searchDate),//total > 0 ? formatMoney(topCategory.amount) : monthLabel(month),
       icon: Tags,
       color: "text-[#8246c8]",
       background: "bg-[#f0e7fc]",
     },
     {
       label: "Previous Month",
-      value: formatMoney(priorTotal),
-      note: monthLabel(previousMonth(month)),
+      value: 999_999,//formatMoney(priorTotal),
+      note: Intl.DateTimeFormat("en-us", {month: "long"}).format(searchDate),//monthLabel(previousMonth(month)),
       icon: CalendarDays,
       color: "text-[#3173c9]",
       background: "bg-[#e8f1ff]",
@@ -82,16 +78,16 @@ export default function ExpensesPage() {
           >
             Month
           </label>
-          <input
+          <input //this shouldn't be an input should it?
             id="expense-month"
             type="month"
-            value={month}
+            value={Intl.DateTimeFormat("en-us", {month: "long", day: "numeric", year: "numeric"}).format(new Date())}
             min="1900-01"
             max="9998-12"
-            onChange={(event) => {
-              if (/^\d{4}-\d{2}$/.test(event.target.value))
-                setMonth(event.target.value);
-            }}
+            // onChange={(event) => {
+            //   if (/^\d{4}-\d{2}$/.test(event.target.value))
+            //     setMonth(event.target.value);
+            // }}
             className="rounded-lg border border-[#dce7e2] bg-white px-3 py-2 text-sm text-[#17324d] focus:outline-2 focus:outline-[#3f8068]"
           />
         </div>
@@ -129,13 +125,13 @@ export default function ExpensesPage() {
       <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(300px,1fr)]">
         <div className="min-w-0">
           <ExpenseList
-            transactions={expenses}
-            periodLabel={monthLabel(month)}
+            //transactions={expenses}
+            searchDate = {searchDate}
+            setSearchDate={setSearchWrapper}
           />
         </div>
         <SpendingByCategory
-          transactions={expenses}
-          periodLabel={monthLabel(month)}
+          periodLabel={Intl.DateTimeFormat("en-us", {month: "long", year: "numeric"}).format(searchDate)}
         />
       </div>
     </section>

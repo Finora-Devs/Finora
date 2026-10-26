@@ -1,4 +1,6 @@
+'use client';
 import { ArrowUpRight, BriefcaseBusiness, GraduationCap, Wallet } from "lucide-react";
+import { useState } from "react";
 import IncomeList from "./IncomeList";
 import IncomeBySource from "./IncomeBySource";
 import { formatMoney, incomeEntries, lastMonthIncome, totalIncome } from "./incomeData";
@@ -13,6 +15,10 @@ const summaryCards = [
 ];
 
 export default function IncomePage() {
+
+  const [searchDate, setSearch] = useState(new Date());
+  const setSearchWrapper = (newDate: Date) => setSearch(newDate);
+
   return (
     <section className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -41,9 +47,12 @@ export default function IncomePage() {
         })}
       </div>
       <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(300px,1fr)]">
-        <div className="min-w-0"><IncomeList /></div>
-        <IncomeBySource />
-      </div>
-    </section>
+        <div className="min-w-0">
+          <IncomeList 
+            searchDate = {searchDate}
+            setSearchDate={setSearchWrapper}/></div>
+          <IncomeBySource />
+        </div>
+      </section>
   );
 }

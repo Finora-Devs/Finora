@@ -1,12 +1,12 @@
-import { categoryBreakdown, formatMoney } from "./expenseHelpers";
-import type { ExpenseRecord } from "./expenseHelpers";
+import { useTransactionContext } from "@/app/(protected)/context";
+import { Transaction, formatMoney, categoryBreakdown } from "@/lib/types_and_helpers";
 
-type Props = { transactions: ExpenseRecord[]; periodLabel: string };
+type Props = {periodLabel: string };
 export default function SpendingByCategory({
-  transactions,
   periodLabel,
 }: Props) {
-  const categories = categoryBreakdown(transactions);
+  const {transactionsArr} = useTransactionContext();
+  const categories = categoryBreakdown(transactionsArr);
   const total = categories.reduce((sum, category) => sum + category.amount, 0);
   let position = 0;
   const stops = categories

@@ -20,6 +20,27 @@ export type Transaction =
         };
  };
 
+export type TransactionDraft = {
+  name: string;
+  amount: string;
+  date: string;
+  category: string;
+  frequency: string;
+  description: string;
+};
+
+export const emptyTransactionDraft: TransactionDraft = {
+  name: "",
+  amount: "",
+  date: "",
+  category: "",
+  frequency: "once",
+  description: "",
+};
+
+export type TransactionErrors = Partial<Record<keyof TransactionDraft, string>>;
+
+
  export type recurringTransaction = 
  {
    id: number,
@@ -74,32 +95,32 @@ export type Transaction =
  }
 
  export const incomeCategories = [
-   "Employment",
-   "Scholarships",
-   "Financial Aid",
-   "Allowance",
-   "Self Employment",
-   "Other Income",
- ];
- 
+  { name: "Employment", value: CATEGORY_NAME.EMPLOYMENT ,color: "#5794f6" },
+  { name: "Scholarships", value: CATEGORY_NAME.SCHOLARSHIPS ,color: "#ffce32" },
+  { name: "Financial Aid", value: CATEGORY_NAME.FINANCIAL_AID ,color: "#b36af5" },
+  { name: "Allowance", value: CATEGORY_NAME.ALLOWANCE ,color: "#ff7b96" },
+  { name: "Self Employment", value: CATEGORY_NAME.SELF_EMPLOYMENT ,color: "#48c4ac" },
+  { name: "Other Income", value: CATEGORY_NAME.OTHER_INCOME ,color: "#7437ed" },
+ ] as const;
+
  export const expenseCategories = [
-   "Food",
-   "Housing",
-   "Transportation",
-   "Tuition",
-   "Entertainment",
-   "Utilities",
-   "Subscriptions",
-   "Other",
- ];
+  { name: "Food", value: CATEGORY_NAME.FOOD, color: "#ff8963" },
+  { name: "Housing", value: CATEGORY_NAME.HOUSING, color: "#5794f6" },
+  { name: "Transportation", value: CATEGORY_NAME.TRANSPORTATION, color: "#ffce32" },
+  { name: "Tuition", value: CATEGORY_NAME.TUITION, color: "#48c4ac" },
+  { name: "Entertainment", value: CATEGORY_NAME.ENTERTAINMENT, color: "#c65be3" },
+  { name: "Utilities", value: CATEGORY_NAME.UTILITIES, color: "#7b6be8" },
+  { name: "Subscriptions", value: CATEGORY_NAME.SUBSCRIPTIONS, color: "#7437ed" },
+  { name: "Other", value: CATEGORY_NAME.OTHER, color: "#b978d9" },
+] as const;
  
  export const frequencies = [
-   "Once",
-   "Daily",
-   "Weekly",
-   "Monthly",
-   "Yearly",
- ];
+  { value: "once", label: "Just Once" },
+  { value: "daily", label: "Daily" },
+  { value: "weekly", label: "Weekly" },
+  { value: "monthly", label: "Monthly" },
+  { value: "yearly", label: "Yearly" },
+] as const;
  
  export const fieldClass =
    "mt-2 w-full rounded-lg border border-[#dce7e2] " +
@@ -113,10 +134,12 @@ export type Transaction =
   * @param descending determines if the array is sorted in ascending or descending order.
   * @param category which category to affect with include.
   * @param include if set to include, returned array will only have Transactions which match @param category. if false, return only transaction which do NOT match.
+  * @param month a number representing which month of transactions you would like returned. This number can be easily retrieved from a Date object useing the getMonth() function.
+  * @param year a number representing which year you would like of transactions you would like returned. This number can be easily retrieved from a Date object useing the getFullYear() function.
   * @param arr the array to be sorted.
   * @returns an array of Transactions identical to @param arr but sorted and filtered.
   */
- export function sortBy(search: string = "", sortingOrder: SORTING_ORDER = SORTING_ORDER.DATE, descending: boolean = true, category: CATEGORY_NAME = CATEGORY_NAME.ALL, include: boolean = true, type: string, arr: Transaction[]): Transaction[]
+ export function sortBy(search: string = "", sortingOrder: SORTING_ORDER = SORTING_ORDER.DATE, descending: boolean = true, category: CATEGORY_NAME = CATEGORY_NAME.ALL, include: boolean = true, type: string, month: number, year: number, arr: Transaction[]): Transaction[]
  {
    const newArr = arr.filter((transaction) => 
       {
@@ -144,13 +167,15 @@ export type Transaction =
          //    matchCategory = transaction.categories.transaction_type === "expense" //if transaction is an expense
          // }
 
+         const transactionDate = new Date(`${transaction.transaction_date}T00:00:00`);
+
          if(include)
          {
-            return (matchCategory && matchSearch) && matchType;
+            return (matchCategory && matchSearch) && matchType && (transactionDate.getMonth() === month && transactionDate.getFullYear() === year);
          }
          else
          {
-            return (!matchCategory && matchSearch) && matchType;
+            return (!matchCategory && matchSearch) && matchType && (transactionDate.getMonth() === month && transactionDate.getFullYear() === year);
          }
       })
 
@@ -259,3 +284,43 @@ export function logAllTransactions(transactionsArr: Transaction[])
         console.log(transaction.id);
     });
 }
+
+export function validateTransaction(draft: TransactionDraft): TransactionErrors {
+  const errors: TransactionErrors = {};
+  if (!draft.name.trim()) errors.name = "Enter a transaction name or payee.";
+  else if (draft.name.trim().length > 100)
+    errors.name = "Use 100 characters or fewer.";
+  const amount = draft.amount.trim();
+  if (
+    !/^\d+(\.\d{1,2})?$/.test(amount) || //checks if input number matches this format: 1.12, any amount of numbers, optionally followed by a . and either one or two more numbers.
+    !Number.isFinite(Number(amount)) ||
+    Number(amount) <= 0 ||
+    Number(amount) > 999999999.99
+  )
+    errors.amount =
+      "Enter an amount greater than zero, with up to two decimal places.";
+  if (!draft.date /*|| normalizeDate(draft.date) !== draft.date*/)  //it should not be possible to enter an invalid date with the way the form works.
+    errors.date = "Select a valid date.";
+  if (!expenseCategories.some((category) => category.value === draft.category))
+    errors.category = "Select an expense category.";
+  if (
+    !frequencies.some((frequency) => frequency.value === draft.frequency)
+  )
+    errors.frequency = "Select a frequency.";
+  if (draft.description.length > 500)
+    errors.description = "Use 500 characters or fewer.";
+  return errors;
+}
+
+export function categoryBreakdown(records: Transaction[]) { //Does this already exist somewhere?
+          return expenseCategories.map((category) => ({
+            ...category,
+            amount: records
+              .filter(
+                (record) => record.categories.name === category.value,
+              )
+              .reduce((sum, record) => sum + record.amount, 0),
+          }));
+        }
+
+export const formatMoney = (value: number) => value.toLocaleString("en-US", { style: "currency", currency: "USD" });

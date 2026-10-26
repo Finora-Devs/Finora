@@ -324,13 +324,73 @@ export async function deleteTransaction(transactionID: number, setTransactionsAr
 }
 
 
-
+//need to switch to take a form, id, and setTransactionArr.
 //changes an existing transaction with new information. untested
-export async function updateTransaction(transactionID: number, amount: number, category_id: number, frequency: string, name: string, transaction_date: string, setTransactionArr: Dispatch<SetStateAction<Transaction[]>>)
+export async function updateTransaction(formData: FormData, transactionID: number, setTransactionArr: Dispatch<SetStateAction<Transaction[]>>)
 {
     const supabase = await createClient();
 
     //if transaction is repeating, also update recurring transaction and all related transactions.
+
+    const name = formData.get("name") as string;
+    const amount = formData.get("amount") as unknown as number;
+    const transaction_date = formData.get("date") as string; //updating this would probably break recurring transactions...
+    const frequency = formData.get("frequency") as string; 
+    let description = formData.get("notes") as string | null;
+    const category = formData.get("category") as string;
+
+    let category_id;
+    
+    switch(category)
+    {
+        case CATEGORY_NAME.EMPLOYMENT:
+            category_id = 1;
+            break;
+        case CATEGORY_NAME.FINANCIAL_AID:
+            category_id = 2;
+            break;
+        case CATEGORY_NAME.SCHOLARSHIPS:
+            category_id = 3;
+            break;
+        case CATEGORY_NAME.ALLOWANCE:
+            category_id = 4;
+            break;
+        case CATEGORY_NAME.SELF_EMPLOYMENT:
+            category_id = 5;
+            break;
+        case CATEGORY_NAME.OTHER_INCOME:
+            category_id = 6;
+            break;
+        case CATEGORY_NAME.FOOD:
+            category_id = 7;
+            break;
+        case CATEGORY_NAME.HOUSING:
+            category_id = 8;
+            break;
+        case CATEGORY_NAME.TRANSPORTATION:
+            category_id = 9;
+            break
+        case CATEGORY_NAME.TUITION:
+            category_id = 10;
+            break;
+        case CATEGORY_NAME.ENTERTAINMENT:
+            category_id = 11;
+            break;
+        case CATEGORY_NAME.UTILITIES:
+            category_id = 12;
+            break;
+        case CATEGORY_NAME.SUBSCRIPTIONS:
+            category_id = 13;
+            break;
+        default:
+            category_id = 14;
+            break;
+    } 
+
+    if(!description)
+    {
+        description = "";
+    }
 
     const {data: { user }, error: userError} = await supabase.auth.getUser();
     if(userError || user === null)

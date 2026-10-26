@@ -28,7 +28,13 @@ import { insertTransaction } from "@/lib/clientFunctions";
 
 //include/exclude currently shows expenses when toggled to exclude;
 
-export default function IncomeList() {
+type Props = 
+{
+  searchDate: Date;
+  setSearchDate: (newDate: Date) => void;
+};
+
+export default function IncomeList({searchDate, setSearchDate}: Props) {
   const { transactionsArr, setTransactionsArr } = useTransactionContext();
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -44,6 +50,8 @@ export default function IncomeList() {
     category,
     include,
     "Income",
+    new Date().getMonth(),
+    new Date().getFullYear(),
     transactionsArr
   );
 
@@ -175,7 +183,7 @@ export default function IncomeList() {
             aria-hidden="true"
             className="h-4 w-4 text-[#607394]"
           />
-          <span>Sep 1, 2026 – Sep 30, 2026</span>
+          <span>{Intl.DateTimeFormat("en-us", {month: "short", year: "numeric"}).format(searchDate)}</span>
         </div>
       </div>
 
@@ -498,8 +506,8 @@ export default function IncomeList() {
                   </option>
 
                   {incomeCategories.map((category) => (
-                    <option key={category} value={category}>
-                      {category}
+                    <option key={category.value} value={category.value}>
+                      {category.name}
                     </option>
                   ))}
                 </select>
@@ -525,8 +533,8 @@ export default function IncomeList() {
                   </option>
 
                   {frequencies.map((frequency) => (
-                    <option key={frequency} value={frequency.toLowerCase()}>
-                      {frequency}
+                    <option key={frequency.value} value={frequency.value}>
+                      {frequency.label}
                     </option>
                   ))}
                 </select>
