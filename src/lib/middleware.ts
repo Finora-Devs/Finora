@@ -47,11 +47,18 @@ export async function updateSession(request: NextRequest) {
     // itself, so that it can preserve the authorization in the `next` parameter
     request.nextUrl.pathname !== '/oauth/consent'
   ) {
-    // no user, potentially respond by redirecting the user to the login page
-    const url = request.nextUrl.clone()
-    url.pathname = '/auth/login'
-    return NextResponse.redirect(url)
-  }
+  const url = request.nextUrl.clone()
+  url.pathname = '/auth/login'
+
+  const redirectResponse = NextResponse.redirect(url)
+
+  // Include Supabase's updated or deleted session cookies.
+  supabaseResponse.cookies.getAll().forEach((cookie) => {
+    redirectResponse.cookies.set(cookie)
+  })
+
+  return redirectResponse
+}
 
   // IMPORTANT: You *must* return the supabaseResponse object as it is.
   // If you're creating a new response object with NextResponse.next() make sure to:
