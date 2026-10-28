@@ -71,25 +71,17 @@ export default function ExpensesPage() {
             View and manage your expenses and spending categories.
           </p>
         </div>
-        <div>
-          <label
-            htmlFor="expense-month"
-            className="mb-1 block text-xs text-[#4e7069]"
-          >
+        <div className="mr-6 text-center">
+          <p className="mb-1 text-xs text-[#4e7069]">
             Month
-          </label>
-          <input //this shouldn't be an input should it?
-            id="expense-month"
-            type="month"
-            value={Intl.DateTimeFormat("en-us", {month: "long", day: "numeric", year: "numeric"}).format(new Date())}
-            min="1900-01"
-            max="9998-12"
-            // onChange={(event) => {
-            //   if (/^\d{4}-\d{2}$/.test(event.target.value))
-            //     setMonth(event.target.value);
-            // }}
-            className="rounded-lg border border-[#dce7e2] bg-white px-3 py-2 text-sm text-[#17324d] focus:outline-2 focus:outline-[#3f8068]"
-          />
+          </p>
+
+          <p className="rounded-lg bg-white px-3 py-1 text-sm text-[#17324d]">
+            {new Intl.DateTimeFormat("en-US", {
+              month: "long",
+              year: "numeric",
+            }).format(new Date())}
+          </p>
         </div>
       </div>
       {/* Top cards */}
