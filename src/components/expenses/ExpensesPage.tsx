@@ -9,9 +9,9 @@ import { formatMoney } from "@/lib/types_and_helpers";
 
 export default function ExpensesPage() {
   const { transactionsArr } = useTransactionContext();
-  const [searchDate, setSearch] = useState(new Date());
+  const [searchDate, setSearchDate] = useState(new Date());
 
-  const setSearchWrapper = (newDate: Date) => setSearch(newDate);
+  const setSearchDateWrapper = (newDate: Date) => setSearchDate(newDate);
   // const [month, setMonth] = useState(currentMonth);
       // const expenses = expensesInMonth(transactionsArr, month);
       // const total = expenses.reduce((sum, expense) => sum + expense.amount, 0);
@@ -82,6 +82,21 @@ export default function ExpensesPage() {
               year: "numeric",
             }).format(new Date())}
           </p>
+            {/* <input //this shouldn't be an input should it?
+            id="expense-month"
+            type="month"
+            value={new Intl.DateTimeFormat("sv-SE", {year: "numeric", month: "numeric"}).format(searchDate)}
+            min="1900-01"
+            max="9998-12"
+            onChange={(event) => {
+              const date = event.target.value.split("-");
+              if (/^\d{4}-\d{2}$/.test(event.target.value))
+                {
+                  setSearchDate(new Date(Number(date[0]), Number(date[1]) - 1));
+                }
+            }}
+            className="rounded-lg border border-[#dce7e2] bg-white px-3 py-2 text-sm text-[#17324d] focus:outline-2 focus:outline-[#3f8068]"
+          /> */}
         </div>
       </div>
       {/* Top cards */}
@@ -119,7 +134,7 @@ export default function ExpensesPage() {
           <ExpenseList
             //transactions={expenses}
             searchDate = {searchDate}
-            setSearchDate={setSearchWrapper}
+            setSearchDate={setSearchDateWrapper}
           />
         </div>
         <SpendingByCategory

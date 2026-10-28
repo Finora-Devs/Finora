@@ -219,11 +219,27 @@ export default function TransactionList({searchDate, setSearchDate}: Props) {
         </div>
 
         <div className="flex items-center gap-2 rounded-lg border border-[#dce7e2] bg-white px-3 py-2.5 text-sm text-[#17324d]">
-          <CalendarDays
+          {/* <CalendarDays
             aria-hidden="true"
             className="h-4 w-4 text-[#607394]"
           />
-          <span>{Intl.DateTimeFormat("en-us", {month: "short", year: "numeric"}).format(searchDate)}</span>
+          <span>{Intl.DateTimeFormat("en-us", {month: "short", year: "numeric"}).format(searchDate)}</span> */}
+          <span>
+            <input
+              id="expense-month"
+              type="month"
+              value={new Intl.DateTimeFormat("sv-SE", {year: "numeric", month: "numeric"}).format(searchDate)}
+              min="1900-01"
+              max="9998-12"
+              onChange={(event) => {
+                const date = event.target.value.split("-");
+                if (/^\d{4}-\d{2}$/.test(event.target.value))
+                  {
+                    setSearchDate(new Date(Number(date[0]), Number(date[1]) - 1));
+                  }
+              }}
+            />
+            </span>
         </div>
       </div>
 

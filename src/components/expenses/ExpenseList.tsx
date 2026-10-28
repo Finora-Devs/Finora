@@ -296,8 +296,23 @@ export default function ExpenseList({searchDate, setSearchDate}: Props) {
           </button>
         </div>
         <span className="inline-flex items-center gap-2 rounded-lg border border-[#dce7e2] px-3 py-2.5 text-sm text-[#17324d]">
-          <CalendarDays aria-hidden="true" className="h-4 w-4 text-[#607394]" />
-          {Intl.DateTimeFormat("en-us", {month: "short", year: "numeric"}).format(searchDate)}
+          {/* <CalendarDays aria-hidden="true" className="h-4 w-4 text-[#607394]" />
+          {Intl.DateTimeFormat("en-us", {month: "short", year: "numeric"}).format(searchDate)} */}
+          
+          <input
+            id="expense-month"
+            type="month"
+            value={new Intl.DateTimeFormat("sv-SE", {year: "numeric", month: "numeric"}).format(searchDate)}
+            min="1900-01"
+            max="9998-12"
+            onChange={(event) => {
+              const date = event.target.value.split("-");
+              if (/^\d{4}-\d{2}$/.test(event.target.value))
+                {
+                  setSearchDate(new Date(Number(date[0]), Number(date[1]) - 1));
+                }
+            }}
+          />
         </span>
       </div>
       {/* Include and exclude controls */}
