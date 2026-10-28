@@ -22,7 +22,7 @@ import {
 import { useTransactionContext } from "@/app/(protected)/context";
 import { 
   CATEGORY_NAME,
-  sortBy,
+  sortTransactionList,
   SORTING_ORDER,
   expenseCategories,
   Transaction,
@@ -64,7 +64,7 @@ export default function ExpenseList({searchDate, setSearchDate}: Props) {
   const [category, setCategory] = useState(CATEGORY_NAME.ALL);
   const [include, setInclude] = useState(true);
 
-  const rows = sortBy(search,
+  const rows = sortTransactionList(search,
     sortField,
     reversed,
     category,

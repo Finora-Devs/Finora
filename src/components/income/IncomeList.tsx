@@ -16,7 +16,7 @@ import { formatMoney, incomeEntries } from "./incomeData";
 import {
   SORTING_ORDER,
   CATEGORY_NAME,
-  sortBy,
+  sortTransactionList,
   incomeCategories,
   fieldClass,
   frequencies
@@ -43,7 +43,7 @@ export default function IncomeList({searchDate, setSearchDate}: Props) {
   const [category, setCategory] = useState(CATEGORY_NAME.ALL);
   const [include, setInclude] = useState(true);
 
-  const incomeList = sortBy(
+  const incomeList = sortTransactionList(
     searchTerm,
     sortingOrder,
     descending,

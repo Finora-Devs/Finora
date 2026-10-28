@@ -16,8 +16,8 @@ const summaryCards = [
 
 export default function IncomePage() {
 
-  const [searchDate, setSearch] = useState(new Date());
-  const setSearchWrapper = (newDate: Date) => setSearch(newDate);
+  const [searchDate, setSearchDate] = useState(new Date());
+  const setSearchDateWrapper = (newDate: Date) => setSearchDate(newDate);
 
   return (
     <section className="space-y-6">
@@ -50,7 +50,7 @@ export default function IncomePage() {
         <div className="min-w-0">
           <IncomeList 
             searchDate = {searchDate}
-            setSearchDate={setSearchWrapper}/></div>
+            setSearchDate={setSearchDateWrapper}/></div>
           <IncomeBySource />
         </div>
       </section>

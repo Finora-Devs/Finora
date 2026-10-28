@@ -128,7 +128,8 @@ export type TransactionErrors = Partial<Record<keyof TransactionDraft, string>>;
    "placeholder:text-[#7185a1] focus:border-[#3f8068] " +
    "focus:outline-none focus:ring-2 focus:ring-[#3f8068]/20";
 
- /**
+
+/**
   * @param search a string. if not empty, only return transactions which have names that match the string
   * @param sortingOrder what should be used to sort the array of transactions.
   * @param descending determines if the array is sorted in ascending or descending order.
@@ -139,15 +140,18 @@ export type TransactionErrors = Partial<Record<keyof TransactionDraft, string>>;
   * @param arr the array to be sorted.
   * @returns an array of Transactions identical to @param arr but sorted and filtered.
   */
- export function sortBy(search: string = "", sortingOrder: SORTING_ORDER = SORTING_ORDER.DATE, descending: boolean = true, category: CATEGORY_NAME = CATEGORY_NAME.ALL, include: boolean = true, type: string, month: number, year: number, arr: Transaction[]): Transaction[]
+ export function sortTransactionList(search: string = "", sortingOrder: SORTING_ORDER = SORTING_ORDER.DATE, descending: boolean = true, category: CATEGORY_NAME = CATEGORY_NAME.ALL, include: boolean = true, type: string, month: number, year: number, arr: Transaction[]): Transaction[]
  {
-   const newArr = arr.filter((transaction) => 
+   return sortBy(sortingOrder, descending, filterTransactions(search, category, include, type, month, year, arr));
+ }
+   export function filterTransactions(search: string = "", category: CATEGORY_NAME = CATEGORY_NAME.ALL, include: boolean = true, type: string, month: number, year: number, arr: Transaction[])
+   {
+      const newArr = arr.filter((transaction) => 
       {
          const matchSearch: boolean = transaction.name.toLowerCase().includes(search.toLowerCase());
          let matchCategory: boolean = transaction.categories.name.toLowerCase() === category.toLowerCase();
          let matchType: boolean = transaction.categories.transaction_type.toLowerCase() === type.toLowerCase();
 
-         console.log(type);
 
          if(type === "All")
          {
@@ -158,14 +162,6 @@ export type TransactionErrors = Partial<Record<keyof TransactionDraft, string>>;
          {
             matchCategory = true;
          }
-         // else if(category === CATEGORY_NAME.INCOME)
-         // {
-         //    matchCategory = transaction.categories.transaction_type === "income" //if transaction is an income. will break if the database changes.
-         // }
-         // else if(category === CATEGORY_NAME.EXPENSE)
-         // {
-         //    matchCategory = transaction.categories.transaction_type === "expense" //if transaction is an expense
-         // }
 
          const transactionDate = new Date(`${transaction.transaction_date}T00:00:00`);
 
@@ -178,11 +174,15 @@ export type TransactionErrors = Partial<Record<keyof TransactionDraft, string>>;
             return (!matchCategory && matchSearch) && matchType && (transactionDate.getMonth() === month && transactionDate.getFullYear() === year);
          }
       })
+      return newArr;
+   }
+   export function sortBy(sortingOrder: SORTING_ORDER = SORTING_ORDER.DATE, descending: boolean = true, arr: Transaction[]): Transaction[]
+ {
 
       switch(sortingOrder)
       {
          case SORTING_ORDER.DATE:
-            newArr.sort((a, b) => //return -1 if a is smaller than b, 0 if a = b, and 1 if a is bigger than b
+            arr.sort((a, b) => //return -1 if a is smaller than b, 0 if a = b, and 1 if a is bigger than b
                {               //need to test this. been ages since I wrote a sorting function. still need to add in ascending and descending.
                   if(new Date(a.transaction_date) > new Date(b.transaction_date))
                   {
@@ -199,16 +199,16 @@ export type TransactionErrors = Partial<Record<keyof TransactionDraft, string>>;
                })
             break;
          case SORTING_ORDER.NAME:
-            newArr.sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
+            arr.sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
             break;
          case SORTING_ORDER.AMOUNT:
-            newArr.sort((a, b) => b.amount - a.amount);
+            arr.sort((a, b) => b.amount - a.amount);
             break;
          case SORTING_ORDER.CATEGORY:
-            newArr.sort((a, b) => a.categories.name.toLowerCase().localeCompare(b.categories.name.toLowerCase()));
+            arr.sort((a, b) => a.categories.name.toLowerCase().localeCompare(b.categories.name.toLowerCase()));
             break;
          case SORTING_ORDER.FREQUENCY:
-            newArr.sort((a, b) => 
+            arr.sort((a, b) => 
                {
                   let aSortVal;
                   let bSortVal;
@@ -262,13 +262,14 @@ export type TransactionErrors = Partial<Record<keyof TransactionDraft, string>>;
 
       if(descending)
       {
-         return newArr;
+         return arr;
       }
       else
       {
-         return newArr.reverse();
+         return arr.reverse();
       }
  }
+
 
  //this function will take a category ID and return the amount of money spent in that category. This will be called to get the numbers needed for the pie chart.
 export function getCategoryAmount(category_id: number): number

@@ -14,7 +14,7 @@ import {
 import {
   SORTING_ORDER,
   CATEGORY_NAME,
-  sortBy,
+  sortTransactionList,
   incomeCategories,
   expenseCategories,
   fieldClass,
@@ -33,8 +33,8 @@ import { deleteTransaction, insertTransaction } from "@/lib/clientFunctions";
 //add income button: complete
 //add expense button: complete
 //more options button: incomplete
-  //remove button: incomplete
-  //edit button: incomplete
+  //remove button: incomplete, complete in expense page.
+  //edit button: incomplete, complete in expense page.
 
 //still need summary cards and chart
 
@@ -55,7 +55,7 @@ export default function TransactionList({searchDate, setSearchDate}: Props) {
   const [category, setCategory] = useState(CATEGORY_NAME.ALL);
   const [include, setInclude] = useState(true);
 
-  const TransactionList = sortBy(
+  const TransactionList = sortTransactionList(
     searchTerm,
     sortingOrder,
     descending,
