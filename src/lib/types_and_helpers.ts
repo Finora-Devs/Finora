@@ -127,6 +127,7 @@ export type TransactionErrors = Partial<Record<keyof TransactionDraft, string>>;
    "bg-[#f7faf8] px-3 py-2.5 text-sm text-[#17324d] " +
    "placeholder:text-[#7185a1] focus:border-[#3f8068] " +
    "focus:outline-none focus:ring-2 focus:ring-[#3f8068]/20";
+export const labelClass = "block text-sm font-medium text-[#4e7069]";
 
 
 /**
@@ -270,23 +271,7 @@ export type TransactionErrors = Partial<Record<keyof TransactionDraft, string>>;
       }
  }
 
-
- //this function will take a category ID and return the amount of money spent in that category. This will be called to get the numbers needed for the pie chart.
-export function getCategoryAmount(category_id: number): number
-{
-    return 0;
-}
-
-//prints the transaction ids of all transaction in an array. This is for testing, it should not be used in the final version of the website.
-export function logAllTransactions(transactionsArr: Transaction[])
-{
-    transactionsArr.forEach((transaction) => 
-    {
-        console.log(transaction.id);
-    });
-}
-
-export function validateTransaction(draft: TransactionDraft): TransactionErrors {
+export function validateTransaction(draft: TransactionDraft, isIncomeForm: boolean): TransactionErrors {
   const errors: TransactionErrors = {};
   if (!draft.name.trim()) errors.name = "Enter a transaction name or payee.";
   else if (draft.name.trim().length > 100)
@@ -302,8 +287,20 @@ export function validateTransaction(draft: TransactionDraft): TransactionErrors 
       "Enter an amount greater than zero, with up to two decimal places.";
   if (!draft.date /*|| normalizeDate(draft.date) !== draft.date*/)  //it should not be possible to enter an invalid date with the way the form works.
     errors.date = "Select a valid date.";
-  if (!expenseCategories.some((category) => category.value === draft.category))
-    errors.category = "Select an expense category.";
+  if(isIncomeForm)
+  {
+   if(!incomeCategories.some((category) => category.value === draft.category))
+   {
+      errors.category = "Select an income category.";
+   }
+  }
+  else
+  {
+   if (!expenseCategories.some((category) => category.value === draft.category))
+   {
+      errors.category = "Select an expense category.";
+   }
+  }
   if (
     !frequencies.some((frequency) => frequency.value === draft.frequency)
   )

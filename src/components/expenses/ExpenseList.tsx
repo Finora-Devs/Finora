@@ -5,7 +5,6 @@
 
 
 import { useEffect, useId, useRef, useState } from "react";
-import type { FormEvent } from "react";
 import {
   ArrowDown,
   ArrowUp,
@@ -31,7 +30,9 @@ import {
   frequencies, 
   TransactionDraft,
   TransactionErrors,
-  formatMoney
+  formatMoney,
+  fieldClass,
+  labelClass
   } from "@/lib/types_and_helpers";
 import { deleteTransaction, insertTransaction, updateTransaction } from "@/lib/clientFunctions";
 
@@ -51,9 +52,6 @@ type Props =
   searchDate: Date;
   setSearchDate: (newDate: Date) => void;
 };
-const fieldClass =
-  "mt-2 w-full rounded-lg border border-[#dce7e2] bg-[#f7faf8] px-3 py-2.5 text-sm text-[#17324d] placeholder:text-[#7185a1] focus:border-[#3f8068] focus:outline-none focus:ring-2 focus:ring-[#3f8068]/20 aria-[invalid=true]:border-[#d94c5c]";
-const labelClass = "block text-sm font-medium text-[#4e7069]";
 
 export default function ExpenseList({searchDate, setSearchDate}: Props) {
   // Search, sorting, and category controls.
@@ -157,7 +155,7 @@ export default function ExpenseList({searchDate, setSearchDate}: Props) {
         console.log("busyRef.current false");
         return;
       }
-    const nextErrors = validateTransaction(draft);
+    const nextErrors = validateTransaction(draft, false); //isIncomeForm = false;
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length) {
       console.log("Object.keys(nextErrors).length = 0")
@@ -169,21 +167,10 @@ export default function ExpenseList({searchDate, setSearchDate}: Props) {
     busyRef.current = true;
     setSaving(true);
     setActionError("");
-    try {/*
-      await onSave(
-        {
-          ...draft,
-          name: draft.name.trim(),
-          amount: Number(draft.amount),
-          description: draft.description.trim(),
-        },
-        selected?.id,
-      );
-      setPanel(null);*/
-
+    try {
       if(selected)
       {
-        updateTransaction(event, selected.id, setTransactionsArr); //WARING: this function does not work on recurring transactions.
+        await updateTransaction(event, selected.id, setTransactionsArr); //WARING: This function will not affect recurring transaction table
       }
       else
       {
@@ -548,26 +535,14 @@ export default function ExpenseList({searchDate, setSearchDate}: Props) {
           <form onSubmit={
             (event) => 
                         {
-                          if(panel === "edit")
-                          {
-                            //selected.id
-                            //update the selected transaction using the form
-
-                            event.preventDefault();
-                            const formData = new FormData(event.currentTarget);
-              
-                            submit(formData);
-                          }
-                          else
-                          {
-                            //this portion is an insert.
-                            event.preventDefault();
-                            const formData = new FormData(event.currentTarget);
-              
-                            submit(formData);
-                          }
+                          //This will insert or update the transaction based on panel mode.
+                          event.preventDefault();
+                          const formData = new FormData(event.currentTarget);
+            
+                          submit(formData);
                         }
-          } noValidate aria-busy={saving}>
+          } noValidate aria-busy={saving}
+          >
             <fieldset disabled={saving} className="min-w-0 space-y-4 p-5">
               <p className="text-xs text-[#7185a1]">
                 Fields marked * are required.
