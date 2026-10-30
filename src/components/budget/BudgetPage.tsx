@@ -1,4 +1,6 @@
 import BudgetSummaryCards from "./BudgetSummaryCards";
+import MonthlyBudget from "./MonthlyBudget";
+import CategoryBudgetList from "./CategoryBudgetList";
 
 export default function BudgetPage(){
     return(
@@ -29,7 +31,9 @@ export default function BudgetPage(){
     {/*Summary cards*/ }
     <BudgetSummaryCards/>
     {/*Monthly budget */}
+    <MonthlyBudget/>
     {/*Budget category */}
+    <CategoryBudgetList />
 
 
         </section>
