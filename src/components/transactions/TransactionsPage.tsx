@@ -16,8 +16,8 @@ import { useState } from "react";
 
 export default function TransactionsPage() {
   const { transactionsArr } = useTransactionContext();
-  const [searchDate, setSearch] = useState(new Date());
-  const setSearchWrapper = (newDate: Date) => setSearch(newDate);
+  const [searchDate, setSearchDate] = useState(new Date());
+  const setSearchDateWrapper = (newDate: Date) => setSearchDate(newDate);
 
   const totalTransactions = transactionsArr.length;
   const totalIncome = transactionsArr.reduce<number>(
@@ -131,7 +131,7 @@ const summaryCards = [
   <div className="min-w-0">
     <TransactionList 
       searchDate = {searchDate}
-      setSearchDate={setSearchWrapper}
+      setSearchDate={setSearchDateWrapper}
       />
   </div>
 

@@ -16,10 +16,11 @@ CREATE TABLE public.transactions (
   category_id bigint NOT NULL,
   frequency text NOT NULL DEFAULT 'once'::text CHECK (frequency = ANY (ARRAY['once'::text, 'daily'::text, 'weekly'::text, 'monthly'::text, 'yearly'::text])),
   transaction_date date NOT NULL,
-  next_due_date date,
   description text,
   created_at timestamp with time zone NOT NULL DEFAULT now(),
+  recurring_transaction_id bigint,
   CONSTRAINT transactions_pkey PRIMARY KEY (id),
+  CONSTRAINT transactions_recurring_transaction_id_fkey FOREIGN KEY (recurring_transaction_id) REFERENCES public.recurring_transactions(id),
   CONSTRAINT transactions_category_id_fkey FOREIGN KEY (category_id) REFERENCES public.categories(id),
   CONSTRAINT transactions_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
 );
@@ -61,6 +62,31 @@ CREATE TABLE public.savings_goals (
   priority integer NOT NULL DEFAULT 1 CHECK (priority > 0),
   CONSTRAINT savings_goals_pkey PRIMARY KEY (id),
   CONSTRAINT savings_goals_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+);
+CREATE TABLE public.recurring_transactions (
+  id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
+  user_id uuid NOT NULL,
+  name text NOT NULL,
+  amount numeric NOT NULL CHECK (amount > 0::numeric),
+  category_id bigint NOT NULL,
+  frequency text NOT NULL CHECK (frequency = ANY (ARRAY['daily'::text, 'weekly'::text, 'monthly'::text, 'yearly'::text])),
+  next_due_date date NOT NULL,
+  description text,
+  is_active boolean NOT NULL DEFAULT true,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT recurring_transactions_pkey PRIMARY KEY (id),
+  CONSTRAINT recurring_transactions_category_id_fkey FOREIGN KEY (category_id) REFERENCES public.categories(id),
+  CONSTRAINT recurring_transactions_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+);
+CREATE TABLE public.profiles (
+  id uuid NOT NULL,
+  first_name text,
+  last_name text,
+  opening_balance numeric NOT NULL DEFAULT 0 CHECK (opening_balance >= 0::numeric),
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT profiles_pkey PRIMARY KEY (id),
+  CONSTRAINT profiles_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id)
 );
 
 
@@ -117,6 +143,55 @@ for all
 to authenticated
 using (auth.uid() = user_id)
 with check (auth.uid() = user_id);
+
+create policy "Users can view their own profile"
+on public.profiles
+for select
+to authenticated
+using (auth.uid() = id);
+
+create policy "Users can create their own profile"
+on public.profiles
+for insert
+to authenticated
+with check (auth.uid() = id);
+
+create policy "Users can update their own profile"
+on public.profiles
+for update
+to authenticated
+using (auth.uid() = id)
+with check (auth.uid() = id);
+
+-- Trigger to create profile for new users
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+    insert into public.profiles (
+        id,
+        first_name,
+        last_name,
+        opening_balance
+    )
+    values (
+        new.id,
+        new.raw_user_meta_data ->> 'first_name',
+        new.raw_user_meta_data ->> 'last_name',
+        0
+    );
+
+    return new;
+end;
+$$;
+
+create trigger create_profile_after_signup
+after insert on auth.users
+for each row
+execute function public.handle_new_user();
 
 
 commit;
