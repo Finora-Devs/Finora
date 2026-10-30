@@ -198,3 +198,63 @@ export async function getUser(): Promise<{id: string, email: string}>
         console.log("user successfully retrieved from supabase.")
     return {id: user.id, email: user.email};
 }
+
+//will eventually replace getUser. Leaving original getUser for now so avoid errors until I am ready to test
+export async function getUser2()
+{
+    const supabase = await createClient();
+
+    const {data: { user }, error: userError} = await supabase.auth.getUser();
+        if(userError || user === null || user.email === undefined)
+        {
+            console.error("user authentication failed", userError);
+            throw userError;
+        }
+        console.log("user successfully retrieved from supabase.");
+    const {data, error} = await supabase
+    .from("profiles")
+    .select(`
+            first_name,
+            last_name
+            `);
+    //may need to filter by userId
+
+    if(error)
+    {
+        console.error("Error in getUser", error);
+        throw error;
+    }
+    if(user && data)
+    {
+        const userData = {...user, ...data};
+        return 
+    }
+}
+
+/*
+Should retrieve user balance for storage in a context. That context can then be used to find current balance based
+total income and expenses.
+*/
+export async function getUserBalance()
+{
+    const supabase = await createClient();
+
+    const {data, error} = await supabase
+    .from("profiles")
+    .select(`opening_balance`);
+    //may need to filter by user id.
+
+    if(error)
+    {
+        console.error("Error retrieving user Balance", error)
+        throw error;
+    }
+    else if(data)
+    {
+        //return balance
+    }
+    else
+    {
+        console.log("There was no error or data returned by getUserBalance");
+    }
+}
