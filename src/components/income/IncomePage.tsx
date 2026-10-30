@@ -87,8 +87,37 @@ export default function IncomePage() {
     <section className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-[#123c35]">Income</h1>
-          <p className="mt-2 text-sm text-[#4e7069]">View and manage all of your income sources.</p>
+          <h1 className="text-3xl font-bold text-[#123c35]">Expenses</h1>
+          <p className="mt-2 text-sm text-[#4e7069]">
+            View and manage your expenses and spending categories.
+          </p>
+        </div>
+        <div className="mr-6 text-center">
+          <p className="mb-1 text-xs text-[#4e7069]">
+            Month
+          </p>
+
+          <p className="rounded-lg bg-white px-3 py-1 text-sm text-[#17324d]">
+            {new Intl.DateTimeFormat("en-US", {
+              month: "long",
+              year: "numeric",
+            }).format(new Date())}
+          </p>
+            {/* <input
+            id="expense-month"
+            type="month"
+            value={new Intl.DateTimeFormat("sv-SE", {year: "numeric", month: "numeric"}).format(searchDate)}
+            min="1900-01"
+            max="9998-12"
+            onChange={(event) => {
+              const date = event.target.value.split("-");
+              if (/^\d{4}-\d{2}$/.test(event.target.value))
+                {
+                  setSearchDate(new Date(Number(date[0]), Number(date[1]) - 1));
+                }
+            }}
+            className="rounded-lg border border-[#dce7e2] bg-white px-3 py-2 text-sm text-[#17324d] focus:outline-2 focus:outline-[#3f8068]"
+          /> */}
         </div>
       </div>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

@@ -77,8 +77,6 @@ export default function TransactionList({searchDate, setSearchDate}: Props) {
   const [formType, setFormType] =
     useState<TransactionType | null>(null);
 
-  const formRef = useRef<HTMLFormElement>(null);
-  //const nameRef = useRef<HTMLInputElement>(null);
   const id = useId();
 
   const [panel, setPanel] = useState<"add" | "edit" | "remove" | null>(null);
@@ -98,31 +96,6 @@ export default function TransactionList({searchDate, setSearchDate}: Props) {
   const formCategories = isIncomeForm
     ? incomeCategories
     : expenseCategories;
-
-  // useEffect(() => {
-  //   if (!formType) return;
-
-  //   const dialog = dialogRef.current;
-  //   if (!dialog) return;
-
-  //   const previousFocus =
-  //     document.activeElement instanceof HTMLElement
-  //       ? document.activeElement
-  //       : null;
-
-  //   const previousOverflow = document.body.style.overflow;
-
-  //   formRef.current?.reset();
-  //   dialog.showModal();
-  //   document.body.style.overflow = "hidden";
-  //   nameRef.current?.focus();
-
-  //   return () => {
-  //     dialog.close();
-  //     document.body.style.overflow = previousOverflow;
-  //     previousFocus?.focus();
-  //   };
-  // }, [formType]);
 
   useEffect(() => {
     if (!panel) return;
@@ -377,46 +350,6 @@ export default function TransactionList({searchDate, setSearchDate}: Props) {
         >
           Category
         </label>
-
-        {/* <select //keeping this in case I break something. if your seeing it, it means i forgot to delete it.
-          id="transaction-category"
-          defaultValue="all"
-          className="min-w-[180px] rounded-lg border border-[#dce7e2] bg-white px-3 py-2.5 text-sm text-[#17324d]"
-          onChange={(val) => {
-            setCategory(val.target.value as CATEGORY_NAME);
-          }} //done
-        >
-          <option value={CATEGORY_NAME.ALL}>All Categories</option>
-          <option value={CATEGORY_NAME.FOOD}>Food</option>
-          <option value={CATEGORY_NAME.HOUSING}>Housing</option>
-          <option value={CATEGORY_NAME.TRANSPORTATION}>
-            Transportation
-          </option>
-          <option value={CATEGORY_NAME.TUITION}>Tuition</option>
-          <option value={CATEGORY_NAME.ENTERTAINMENT}>
-            Entertainment
-          </option>
-          <option value={CATEGORY_NAME.UTILITIES}>Utilities</option>
-          <option value={CATEGORY_NAME.SUBSCRIPTIONS}>
-            Subscriptions
-          </option>
-          <option value={CATEGORY_NAME.OTHER}>Other</option>
-
-          <option value={CATEGORY_NAME.EMPLOYMENT}>Employment</option>
-          <option value={CATEGORY_NAME.SCHOLARSHIPS}>
-            Scholarships
-          </option>
-          <option value={CATEGORY_NAME.FINANCIAL_AID}>
-            Financial Aid
-          </option>
-          <option value={CATEGORY_NAME.ALLOWANCE}>Allowance</option>
-          <option value={CATEGORY_NAME.SELF_EMPLOYMENT}>
-            Self Employment
-          </option>
-          <option value={CATEGORY_NAME.OTHER_INCOME}>
-            Other Income
-          </option>
-        </select> */}
 
         <select
           id={`${id}-filter`}

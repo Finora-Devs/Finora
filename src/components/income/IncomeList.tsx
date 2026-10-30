@@ -4,29 +4,33 @@ import {
   ArrowDown,
   ArrowUp,
   CalendarDays,
-  Ellipsis,
+  Info,
+  Pencil,
   Plus,
   Search,
-  Info,
+  Trash2,
   X,
 } from "lucide-react";
 
-import { formatMoney, incomeEntries } from "./incomeData";
-
-import {
-  SORTING_ORDER,
+import { 
   CATEGORY_NAME,
   sortTransactionList,
+  SORTING_ORDER,
   incomeCategories,
+  Transaction,
+  validateTransaction,
+  emptyTransactionDraft, 
+  frequencies, 
+  TransactionDraft,
+  TransactionErrors,
+  formatMoney,
   fieldClass,
-  frequencies
-} from "@/lib/types_and_helpers";
+  labelClass
+  } from "@/lib/types_and_helpers";
 
 import { useTransactionContext } from "@/app/(protected)/context";
 import { useEffect, useId, useRef, useState } from "react";
-import { insertTransaction } from "@/lib/clientFunctions";
-
-//include/exclude currently shows expenses when toggled to exclude;
+import { deleteTransaction, insertTransaction, updateTransaction } from "@/lib/clientFunctions";
 
 type Props = 
 {
@@ -50,43 +54,143 @@ export default function IncomeList({searchDate, setSearchDate}: Props) {
     category,
     include,
     "Income",
-    new Date().getMonth(),
-    new Date().getFullYear(),
+    searchDate.getMonth(),
+    searchDate.getFullYear(),
     transactionsArr
   );
 
-  const [isIncomeFormOpen, setIsIncomeFormOpen] = useState(false);
+  const id = useId();
 
+  const [panel, setPanel] = useState<"add" | "edit" | "remove" | null>(null);
+  const [selected, setSelected] = useState<Transaction | null>(null);
+  const [draft, setDraft] = useState<TransactionDraft>({ ...emptyTransactionDraft });
+  const [errors, setErrors] = useState<TransactionErrors>({});
+  const [actionError, setActionError] = useState("");
+  const [saving, setSaving] = useState(false);
+  const busyRef = useRef(false);
   const dialogRef = useRef<HTMLDialogElement>(null);
-  const formRef = useRef<HTMLFormElement>(null);
-  const nameRef = useRef<HTMLInputElement>(null);
-  const formId = useId();
+  const firstFieldRef = useRef<HTMLInputElement>(null);
+  const errorRef = useRef<HTMLParagraphElement>(null);
+  const cancelRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    if (!isIncomeFormOpen) return;
-
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-
-    const previousFocus =
-      document.activeElement instanceof HTMLElement
-        ? document.activeElement
-        : null;
-
-    const previousOverflow = document.body.style.overflow;
-
-    formRef.current?.reset();
-    dialog.showModal();
-    document.body.style.overflow = "hidden";
-    nameRef.current?.focus();
-
-    return () => {
-      dialog.close();
-      document.body.style.overflow = previousOverflow;
-      previousFocus?.focus();
-    };
-  }, [isIncomeFormOpen]);
-
+      if (!panel) return;
+      const dialog = dialogRef.current;
+      if (!dialog) return;
+      const previousFocus =
+        document.activeElement instanceof HTMLElement
+          ? document.activeElement
+          : null;
+      const previousOverflow = document.body.style.overflow;
+      dialog.showModal();
+      document.body.style.overflow = "hidden";
+      if (panel === "remove") cancelRef.current?.focus();
+      else firstFieldRef.current?.focus();
+      return () => {
+        dialog.close();
+        document.body.style.overflow = previousOverflow;
+        previousFocus?.focus();
+      };
+    }, [panel]);
+  
+    function close() {
+      if (!busyRef.current) setPanel(null);
+    }
+  
+    function open(mode: "add" | "edit" | "remove", record?: Transaction) {
+        setSelected(record ?? null);
+        setDraft(
+          record
+            ? {
+                name: record.name,
+                amount: String(record.amount),
+                date: record.transaction_date,
+                category: record.categories.name,
+                frequency:
+                  record.frequency.toLowerCase() === "just once"
+                    ? "once"
+                    : record.frequency.toLowerCase(),
+                description: record.description ?? "",
+              }
+            : { ...emptyTransactionDraft },
+        );
+        setErrors({});
+        setActionError("");
+        setPanel(mode);
+      }
+      function update(field: keyof TransactionDraft, value: string) {
+        setDraft((current) => ({ ...current, [field]: value }));
+        setErrors((current) => ({ ...current, [field]: undefined }));
+        setActionError("");
+      }
+      function errorProps(field: keyof TransactionDraft) {
+        return {
+          "aria-invalid": Boolean(errors[field]),
+          "aria-describedby": errors[field] ? `${id}-${field}-error` : undefined,
+        };
+      }
+      function fieldError(field: keyof TransactionDraft) {
+        return errors[field] ? (
+          <p id={`${id}-${field}-error`} className="mt-1 text-xs text-[#b53648]">
+            {errors[field]}
+          </p>
+        ) : null;
+      }
+      async function submit(event: FormData) {
+        if (busyRef.current) 
+          {
+            console.log("busyRef.current false");
+            return;
+          }
+        const nextErrors = validateTransaction(draft, true); //isIncomeForm = true;
+        setErrors(nextErrors);
+        if (Object.keys(nextErrors).length) {
+          console.log("Object.keys(nextErrors).length = 0")
+          requestAnimationFrame(() => errorRef.current?.focus());
+          return;
+        }
+       
+        busyRef.current = true;
+        setSaving(true);
+        setActionError("");
+        try {
+          if(selected)
+          {
+            await updateTransaction(event, selected.id, setTransactionsArr); //WARING: this function does not work on recurring transactions.
+          }
+          else
+          {
+            await insertTransaction(event, setTransactionsArr);
+          }
+          setPanel(null);
+        } catch {
+          setActionError("Unable to save this expense. Please try again.");
+        } finally {
+          busyRef.current = false;
+          setSaving(false);
+        }
+      }
+      async function remove() {
+        if(!selected || busyRef.current) return;
+        busyRef.current = true;
+        setSaving(true);
+        setActionError("");
+        try {
+          await deleteTransaction(selected?.id, setTransactionsArr);
+          setPanel(null);
+        } catch {
+          setActionError("Unable to remove this expense. Please try again.");
+        } finally {
+          busyRef.current = false;
+          setSaving(false);
+        }
+      }
+      const title =
+        panel === "edit" ? `Edit Income` : panel === "remove" ? `Remove Income` : `Add Income`;
+      const normalOrder =
+        sortingOrder === SORTING_ORDER.DATE || sortingOrder === SORTING_ORDER.AMOUNT || sortingOrder === SORTING_ORDER.FREQUENCY
+          ? "descending"
+          : "alphabetical";
   return (
     <section className="overflow-hidden rounded-xl border border-[#dce7e2] bg-white">
       {/* Heading and action buttons */}
@@ -99,7 +203,7 @@ export default function IncomeList({searchDate, setSearchDate}: Props) {
           <button
             type="button"
             className="inline-flex items-center gap-2 rounded-lg bg-[#008f73] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#00765f]"
-            onClick={() => setIsIncomeFormOpen(true)}
+            onClick={() => open("add")}
           >
             <Plus className="h-4 w-4" />
             Add Income
@@ -153,28 +257,22 @@ export default function IncomeList({searchDate, setSearchDate}: Props) {
         <div className="flex overflow-hidden rounded-lg border border-[#dce7e2]">
           <button
             type="button"
-            aria-label="Sort descending"
-            className={`px-3 py-2.5 hover:bg-[#f7faf8] ${
-              descending
-                ? "bg-[#e5f3ec] text-[#28664f]"
-                : "text-[#7185a1]"
-            }`}
+            aria-label={`Use default ${normalOrder} order`}
+            aria-pressed={!descending}
             onClick={() => setDescending(true)}
+            className={`px-3 py-2.5 ${descending ? "bg-[#e5f3ec] text-[#28664f]" : "text-[#7185a1] hover:bg-[#f7faf8]"}`}
           >
             <ArrowDown className="h-4 w-4" />
           </button>
 
           <button
             type="button"
-            aria-label="Sort ascending"
-            className={`border-l border-[#dce7e2] px-3 py-2.5 hover:bg-[#f7faf8] ${
-              !descending
-                ? "bg-[#e5f3ec] text-[#28664f]"
-                : "text-[#7185a1]"
-            }`}
+            aria-label="Reverse sorting order"
+            aria-pressed={descending}
             onClick={() => setDescending(false)}
+            className={`border-l border-[#dce7e2] px-3 py-2.5 ${!descending ? "bg-[#e5f3ec] text-[#28664f]" : "text-[#7185a1] hover:bg-[#f7faf8]"}`}
           >
-            <ArrowUp className="h-4 w-4" />
+            <ArrowUp aria-hidden="true" className="h-4 w-4" />
           </button>
         </div>
 
@@ -211,24 +309,17 @@ export default function IncomeList({searchDate, setSearchDate}: Props) {
         </label>
 
         <select
-          id="income-category"
-          defaultValue="all"
+          id={`${id}-filter`}
+          value={category}
+          onChange={(event) => setCategory(event.target.value as CATEGORY_NAME)}
           className="min-w-[180px] rounded-lg border border-[#dce7e2] bg-white px-3 py-2.5 text-sm text-[#17324d]"
-          onChange={(val) => {
-            setCategory(val.target.value as CATEGORY_NAME);
-          }}
         >
-          <option value={CATEGORY_NAME.ALL}>All Sources</option>
-          <option value={CATEGORY_NAME.EMPLOYMENT}>Employment</option>
-          <option value={CATEGORY_NAME.SCHOLARSHIPS}>Scholarships</option>
-          <option value={CATEGORY_NAME.FINANCIAL_AID}>Financial Aid</option>
-          <option value={CATEGORY_NAME.ALLOWANCE}>Allowance</option>
-          <option value={CATEGORY_NAME.SELF_EMPLOYMENT}>Self Employment</option>
-          <option value={CATEGORY_NAME.OTHER_INCOME}>Other Income</option>
-
-          {/* {incomeCategories.map((category) => (
-              <option key={category.name} value={category.name}>{category.name}</option>
-          ))} */}
+          <option value={CATEGORY_NAME.ALL}>All Categories</option>
+          {incomeCategories.map((item) => (
+            <option key={item.value} value={item.value}>
+              {item.name}
+            </option>
+          ))}
         </select>
 
         <div className="flex items-center gap-2 text-sm text-[#7185a1]">
@@ -265,24 +356,17 @@ export default function IncomeList({searchDate, setSearchDate}: Props) {
         <div className="flex overflow-hidden rounded-lg border border-[#dce7e2]">
           <button
             type="button"
-            className={`px-4 py-2.5 text-sm font-medium hover:bg-[#f7faf8] ${
-              include
-                ? "bg-[#e5f3ec] text-[#28664f]"
-                : "text-[#607394] bg-white"
-            }`}
+            aria-pressed={include}
             onClick={() => setInclude(true)}
+            className={`px-4 py-2.5 text-sm font-medium ${include ? "bg-[#e5f3ec] text-[#28664f]" : "text-[#607394] hover:bg-[#f7faf8]"}`}
           >
             Include
           </button>
-
           <button
             type="button"
-            className={`border-l border-[#dce7e2] px-4 py-2.5 text-sm font-medium hover:bg-[#f7faf8] ${
-              !include
-                ? "bg-[#e5f3ec] text-[#28664f]"
-                : "text-[#607394] bg-white"
-            }`}
+            aria-pressed={!include}
             onClick={() => setInclude(false)}
+            className={`border-l border-[#dce7e2] px-4 py-2.5 text-sm font-medium ${!include ? "bg-[#e5f3ec] text-[#28664f]" : "text-[#607394] hover:bg-[#f7faf8]"}`}
           >
             Exclude
           </button>
@@ -293,30 +377,22 @@ export default function IncomeList({searchDate, setSearchDate}: Props) {
         <table className="w-full min-w-[700px] text-left text-sm">
           <thead className="bg-[#f7faf8] text-[#4e7069]">
             <tr>
-              <th scope="col" className="px-5 py-3 font-semibold">
-                Date
-              </th>
-              <th scope="col" className="px-5 py-3 font-semibold">
-                Source
-              </th>
-              <th scope="col" className="px-5 py-3 font-semibold">
-                Category
-              </th>
-              <th scope="col" className="px-5 py-3 font-semibold">
-                Frequency
-              </th>
-              <th
-                scope="col"
-                className="px-5 py-3 text-right font-semibold"
-              >
-                Amount
-              </th>
-              <th
-                scope="col"
-                className="px-5 py-3 text-right font-semibold"
-              >
-                <span className="sr-only">Actions</span>
-              </th>
+              {[
+                "Date",
+                "Name",
+                "Category",
+                "Frequency",
+                "Amount",
+                "Actions",
+              ].map((heading) => (
+                <th
+                  key={heading}
+                  scope="col"
+                  className={`px-5 py-3 font-semibold ${heading === "Amount" || heading === "Actions" ? "text-right" : ""}`}
+                >
+                  {heading}
+                </th>
+              ))}
             </tr>
           </thead>
 
@@ -365,13 +441,24 @@ export default function IncomeList({searchDate, setSearchDate}: Props) {
 
                   {/* Actions */}
                   <td className="px-5 py-4 text-right">
+                    <div className="flex justify-end gap-1">
                     <button
                       type="button"
-                      aria-label={`More options for ${transaction.name}`}
+                      aria-label={`Edit ${transaction.name}`}
+                      onClick={() => open("edit", transaction)}
                       className="rounded-lg p-2 text-[#4e7069] hover:bg-[#e5efeb]"
                     >
-                      <Ellipsis className="h-5 w-5" />
+                      <Pencil aria-hidden="true" className="h-4 w-4" />
                     </button>
+                    <button
+                      type="button"
+                      aria-label={`Remove ${transaction.name}`}
+                      onClick={() => open("remove", transaction)}
+                      className="rounded-lg p-2 text-[#d94c5c] hover:bg-[#fce8eb]"
+                    >
+                      <Trash2 aria-hidden="true" className="h-4 w-4" />
+                    </button>
+                  </div>
                   </td>
                 </tr>
               );
@@ -381,38 +468,39 @@ export default function IncomeList({searchDate, setSearchDate}: Props) {
       </div>
 
       <div className="border-t border-[#e5ebe8] px-5 py-4 text-sm text-[#4e7069]">
-        Showing 1 to {incomeEntries.length} of {incomeEntries.length}
-        {" "}sample income entries
+        Showing {incomeList.length} incomes
       </div>
 
-      {/* Add Income popup: UI only */}
+      {/* Add Income / Add Expense popup: UI only */}
       <dialog
         ref={dialogRef}
-        aria-labelledby={`${formId}-title`}
+        aria-labelledby={`${id}-title`}
         aria-modal="true"
         onCancel={(event) => {
           event.preventDefault();
-          setIsIncomeFormOpen(false);
+          close();
         }}
         className="fixed inset-0 m-auto max-h-[90dvh] w-[calc(100%_-_2rem)] max-w-lg overflow-y-auto rounded-2xl border border-[#dce7e2] bg-white p-0 text-[#17324d] shadow-2xl backdrop:bg-black/40"
       >
         <div className="flex items-start justify-between gap-4 border-b border-[#e5ebe8] p-5">
           <div>
             <h2
-              id={`${formId}-title`}
+              id={`${id}-title`}
               className="text-xl font-semibold text-[#123c35]"
             >
-              Add Income
+              {title}
             </h2>
 
             <p className="mt-1 text-sm text-[#4e7069]">
-              Enter your income details.
+                {panel === "remove" ? "Review the income before removing it." :
+                "Enter your income details."}
             </p>
           </div>
 
           <button
             type="button"
-            onClick={() => setIsIncomeFormOpen(false)}
+            onClick={close}
+            disabled={saving}
             aria-label="Close form"
             className="rounded-lg p-2 text-[#7185a1] hover:bg-[#f7faf8]"
           >
@@ -420,177 +508,229 @@ export default function IncomeList({searchDate, setSearchDate}: Props) {
           </button>
         </div>
 
-        <form
-          ref={formRef}
-          onSubmit={async (event) => 
-            {
-              event.preventDefault();
-              const formData = new FormData(event.currentTarget);
-
-              console.log("inserting...")
-              await insertTransaction(formData, setTransactionsArr);
-              console.log("insert complete!");
-
-              setIsIncomeFormOpen(false);
-            }}
-        >
-          <div className="space-y-4 p-5">
-            <p className="text-xs text-[#7185a1]">
-              Fields marked * are required.
+        {panel === "remove" ? (
+          <div className="p-5">
+            <p className="text-sm text-[#4e7069]">
+              Remove <strong>{selected?.name}</strong> (
+              {formatMoney(selected?.amount ?? 0)})?
             </p>
-
-            <div>
-              <label
-                htmlFor={`${formId}-name`}
-                className="block text-sm font-medium text-[#4e7069]"
+            {actionError && (
+              <p role="alert" className="mt-3 text-sm text-[#b53648]">
+                {actionError}
+              </p>
+            )}
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                ref={cancelRef}
+                type="button"
+                onClick={close}
+                disabled={saving}
+                className="rounded-lg border border-[#dce7e2] px-4 py-2 text-sm"
               >
-                Income name / source *
-              </label>
-
-              <input
-                ref={nameRef}
-                id={`${formId}-name`}
-                name="name"
-                type="text"
-                required
-                maxLength={100}
-                placeholder="e.g., Paycheck"
-                className={fieldClass}
-              />
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <label
-                  htmlFor={`${formId}-amount`}
-                  className="block text-sm font-medium text-[#4e7069]"
-                >
-                  Amount (USD) *
-                </label>
-
-                <input
-                  id={`${formId}-amount`}
-                  name="amount"
-                  type="number"
-                  inputMode="decimal"
-                  min="0.01"
-                  step="0.01"
-                  required
-                  placeholder="0.00"
-                  className={fieldClass}
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor={`${formId}-date`}
-                  className="block text-sm font-medium text-[#4e7069]"
-                >
-                  Date *
-                </label>
-
-                <input
-                  id={`${formId}-date`}
-                  name="date"
-                  type="date"
-                  required
-                  className={fieldClass}
-                />
-              </div>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <label
-                  htmlFor={`${formId}-category`}
-                  className="block text-sm font-medium text-[#4e7069]"
-                >
-                  Category *
-                </label>
-
-                <select
-                  id={`${formId}-category`}
-                  name="category"
-                  defaultValue=""
-                  required
-                  className={fieldClass}
-                >
-                  <option value="" disabled>
-                    Select category
-                  </option>
-
-                  {incomeCategories.map((category) => (
-                    <option key={category.value} value={category.value}>
-                      {category.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label
-                  htmlFor={`${formId}-frequency`}
-                  className="block text-sm font-medium text-[#4e7069]"
-                >
-                  Frequency *
-                </label>
-
-                <select
-                  id={`${formId}-frequency`}
-                  name="frequency"
-                  defaultValue=""
-                  required
-                  className={fieldClass}
-                >
-                  <option value="" disabled>
-                    Select frequency
-                  </option>
-
-                  {frequencies.map((frequency) => (
-                    <option key={frequency.value} value={frequency.value}>
-                      {frequency.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label
-                htmlFor={`${formId}-notes`}
-                className="block text-sm font-medium text-[#4e7069]"
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => 
+                  {
+                    remove();
+                  }}
+                disabled={saving}
+                className="rounded-lg bg-[#d94c5c] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
               >
-                Notes (optional)
-              </label>
-
-              <textarea
-                id={`${formId}-notes`}
-                name="notes"
-                rows={3}
-                maxLength={500}
-                placeholder="Add any extra details..."
-                className={`${fieldClass} resize-y`}
-              />
+                {saving ? "Removing..." : "Remove"}
+              </button>
             </div>
           </div>
-
-          <div className="flex justify-end gap-3 border-t border-[#e5ebe8] bg-[#f7faf8] p-5">
-            <button
-              type="button"
-              onClick={() => setIsIncomeFormOpen(false)}
-              className="rounded-lg border border-[#dce7e2] bg-white px-4 py-2.5 text-sm font-semibold text-[#4e7069] hover:bg-[#e5efeb]"
-            >
-              Cancel
-            </button>
-
-            <button
-              type="submit"
-              className="rounded-lg bg-[#008f73] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#00765f]"
-            >
-              Save Income
-            </button>
-          </div>
-        </form>
+        ) : (
+        <form onSubmit={
+            (event) => 
+                        {
+                          //This will insert or update based on current panel mode.
+                          event.preventDefault();
+                          const formData = new FormData(event.currentTarget);
+                          
+                          submit(formData);
+                        }
+          } noValidate aria-busy={saving}
+          >
+            <fieldset disabled={saving} className="min-w-0 space-y-4 p-5">
+              <p className="text-xs text-[#7185a1]">
+                Fields marked * are required.
+              </p>
+              {Object.values(errors).some(Boolean) && (
+                <p
+                  ref={errorRef}
+                  role="alert"
+                  tabIndex={-1}
+                  className="rounded-lg bg-[#fce8eb] p-3 text-sm text-[#b53648]"
+                >
+                  Check the highlighted fields below.
+                </p>
+              )}
+              <div>
+                <label htmlFor={`${id}-name`} className={labelClass}>
+                  Income name / payer
+                </label>
+                <input
+                  ref={firstFieldRef}
+                  id={`${id}-name`}
+                  name="name"
+                  type="text"
+                  maxLength={100}
+                  required
+                  value={draft.name}
+                  onChange={(event) => update("name", event.target.value)}
+                  placeholder={`e.g., Paycheck`}
+                  className={fieldClass}
+                  {...errorProps("name")}
+                />
+                {fieldError("name")}
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label htmlFor={`${id}-amount`} className={labelClass}>
+                    Amount (USD) *
+                  </label>
+                  <input
+                    id={`${id}-amount`}
+                    name="amount"
+                    type="text"
+                    inputMode="decimal"
+                    required
+                    value={draft.amount}
+                    onChange={(event) => update("amount", event.target.value)}
+                    placeholder="0.00"
+                    className={fieldClass}
+                    {...errorProps("amount")}
+                  />
+                  {fieldError("amount")}
+                </div>
+                <div>
+                  <label htmlFor={`${id}-date`} className={labelClass}>
+                    Date *
+                  </label>
+                  <input
+                    id={`${id}-date`}
+                    name="date"
+                    type="date"
+                    required
+                    value={draft.date}
+                    onChange={(event) => update("date", event.target.value)}
+                    className={fieldClass}
+                    {...errorProps("date")}
+                  />
+                  {fieldError("date")}
+                </div>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label htmlFor={`${id}-category`} className={labelClass}>
+                    Category *
+                  </label>
+                  <select
+                    id={`${id}-category`}
+                    name="category"
+                    required
+                    value={draft.category}
+                    onChange={(event) => update("category", event.target.value)}
+                    className={fieldClass}
+                    {...errorProps("category")}
+                  >
+                    <option value="" disabled>
+                      Select category
+                    </option>
+                    {incomeCategories.map((item) => (
+                      <option key={item.value} value={item.value}>
+                        {item.name}
+                      </option>
+                    ))}
+                  </select>
+                  {fieldError("category")}
+                </div>
+                <div>
+                  <label htmlFor={`${id}-frequency`} className={labelClass}>
+                    Frequency *
+                  </label>
+                  <select
+                    id={`${id}-frequency`}
+                    name="frequency"
+                    required
+                    value={draft.frequency}
+                    onChange={(event) =>
+                      update("frequency", event.target.value)
+                    }
+                    className={fieldClass}
+                    {...errorProps("frequency")}
+                  >
+                    <option value="" disabled>
+                      Select frequency
+                    </option>
+                    {frequencies.map((item) => (
+                      <option key={item.value} value={item.value}>
+                        {item.label}
+                      </option>
+                    ))}
+                    {draft.frequency &&
+                      !frequencies.some(
+                        (item) => item.value === draft.frequency,
+                      ) && (
+                        <option value={draft.frequency}>
+                          {draft.frequency}
+                        </option>
+                      )}
+                  </select>
+                  {fieldError("frequency")}
+                </div>
+              </div>
+              <div>
+                <label htmlFor={`${id}-description`} className={labelClass}>
+                  Description (optional)
+                </label>
+                <textarea
+                  id={`${id}-notes`}//the name and id need to be consistent between pages or it will break the insert function; if you change this back to description, also change the others and the insert function.
+                  name="notes"
+                  rows={3}
+                  maxLength={500}
+                  value={draft.description}
+                  onChange={(event) =>
+                    update("description", event.target.value)
+                  }
+                  placeholder="Add any extra details..."
+                  className={`${fieldClass} resize-y`}
+                  {...errorProps("description")}
+                />
+                {fieldError("description")}
+              </div>
+              {actionError && (
+                <p role="alert" className="text-sm text-[#b53648]">
+                  {actionError}
+                </p>
+              )}
+            </fieldset>
+            <div className="flex justify-end gap-3 border-t border-[#e5ebe8] bg-[#f7faf8] p-5">
+              <button
+                type="button"
+                onClick={close}
+                disabled={saving}
+                className="rounded-lg border border-[#dce7e2] bg-white px-4 py-2.5 text-sm font-semibold text-[#4e7069] hover:bg-[#e5efeb]"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={saving}
+                className="rounded-lg bg-[#3f8068] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#326b56] disabled:opacity-50"
+              >
+                {saving
+                  ? "Saving..."
+                  : panel === "edit"
+                    ? "Save Changes"
+                    : "Add Income"}
+              </button>
+            </div>
+          </form>
+        )}
       </dialog>
     </section>
   );

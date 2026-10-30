@@ -460,7 +460,7 @@ export default function ExpenseList({searchDate, setSearchDate}: Props) {
         aria-live="polite"
         className="border-t border-[#e5ebe8] px-5 py-4 text-sm text-[#4e7069]"
       >
-        Showing {rows.length} of {transactionsArr.length} expenses
+        Showing {rows.length} expenses
       </div>
       {/* Add / Edit / Remove popups are included in this file. */}
       <dialog

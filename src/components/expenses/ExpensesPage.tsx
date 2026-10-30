@@ -66,20 +66,7 @@ export default function ExpensesPage() {
   const topCategory = Object.entries(categoryTotals).sort(
     (a, b) => b[1] - a[1]
   )
-  // const [month, setMonth] = useState(currentMonth);
-      // const expenses = expensesInMonth(transactionsArr, month);
-      // const total = expenses.reduce((sum, expense) => sum + expense.amount, 0);
-  // const priorTotal = expensesInMonth(
-  //   transactionsArr,
-  //   previousMonth(month),
-  // ).reduce((sum, expense) => sum + expense.amount, 0);
-  // const largest = expenses.reduce(
-  //   (max, expense) => Math.max(max, expense.amount),
-  //   0,
-  // );
-  // const topCategory = categoryBreakdown(expenses).sort(
-  //   (a, b) => b.amount - a.amount,
-  // )[0];
+
   const cards = [
     {
       label: "Total Expenses",
@@ -99,7 +86,7 @@ export default function ExpensesPage() {
     },
     {
       label: "Most-Spent Category",
-      value: topCategory ? topCategory[0] : "No expenses",//total > 0 ? topCategory.name : "No expenses",
+      value: topCategory ? topCategory?.[0]?.[0] : "No expenses",//total > 0 ? topCategory.name : "No expenses",
       note: currentMonthLabel,//total > 0 ? formatMoney(topCategory.amount) : monthLabel(month),
       icon: Tags,
       color: "text-[#8246c8]",
@@ -136,7 +123,7 @@ export default function ExpensesPage() {
               year: "numeric",
             }).format(new Date())}
           </p>
-            {/* <input //this shouldn't be an input should it?
+            {/* <input
             id="expense-month"
             type="month"
             value={new Intl.DateTimeFormat("sv-SE", {year: "numeric", month: "numeric"}).format(searchDate)}
