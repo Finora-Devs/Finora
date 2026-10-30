@@ -11,6 +11,7 @@ Required tables:
 | category\_budgets | Monthly limits for individual categories |
 | savings\_goals | Goal name, description, target, progress, and priority |
 | budget\_notification\_log | Records warning emails and enforces the one-week cooldown |
+| profiles | User name, last name and opening balance |
 
 \-        User management: we do not need an user’s table because supabase provides an internal auth.users table to securely handle sign-ups, logins, and password.
 
