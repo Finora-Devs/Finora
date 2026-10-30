@@ -3,18 +3,82 @@ import { ArrowUpRight, BriefcaseBusiness, GraduationCap, Wallet } from "lucide-r
 import { useState } from "react";
 import IncomeList from "./IncomeList";
 import IncomeBySource from "./IncomeBySource";
-import { formatMoney, incomeEntries, lastMonthIncome, totalIncome } from "./incomeData";
+import { useTransactionContext } from "@/app/(protected)/context";
+import { formatMoney } from "./incomeData";;
 
-const jobIncome = incomeEntries.filter((entry) => entry.category === "Employment").reduce((sum, entry) => sum + entry.amount, 0);
-const studentAid = incomeEntries.filter((entry) => entry.category === "Scholarships" || entry.category === "Financial Aid").reduce((sum, entry) => sum + entry.amount, 0);
-const summaryCards = [
-  { label: "Total Income", value: totalIncome, note: "September 2026", icon: Wallet, color: "text-[#16834b]", background: "bg-[#e5f3ec]" },
-  { label: "Job Income", value: jobIncome, note: "September 2026", icon: BriefcaseBusiness, color: "text-[#3173c9]", background: "bg-[#e8f1ff]" },
-  { label: "Financial Aid / Scholarships", value: studentAid, note: "September 2026", icon: GraduationCap, color: "text-[#c68a00]", background: "bg-[#fff5d9]" },
-  { label: "Last Month’s Income", value: lastMonthIncome, note: "August 2026", icon: ArrowUpRight, color: "text-[#8246c8]", background: "bg-[#f0e7fc]" },
-];
 
 export default function IncomePage() {
+
+  const { transactionsArr } = useTransactionContext();
+
+  const now = new Date();
+  const currentMonth = `${now.getFullYear()}-${String(
+    now.getMonth() + 1
+  ).padStart(2, "0")}`;
+
+  const previousDate = new Date(
+    now.getFullYear(),
+    now.getMonth() - 1,
+    1
+  );
+  const previousMonth = `${previousDate.getFullYear()}-${String(
+    previousDate.getMonth() + 1
+  ).padStart(2, "0")}`;
+
+  const currentMonthLabel = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    1
+  ).toLocaleDateString("en-US", {
+    month: "long",
+    year: "numeric",
+  });
+
+  const previousMonthLabel = previousDate.toLocaleDateString("en-US", {
+    month: "long",
+    year: "numeric",
+  });
+
+  const incomeTransactions = transactionsArr.filter(
+    (transaction) =>
+      transaction.categories.transaction_type === "income" &&
+      transaction.transaction_date.slice(0, 7) === currentMonth
+  );
+
+  const previousMonthTransactions = transactionsArr.filter(
+    (transaction) =>
+      transaction.categories.transaction_type === "income" &&
+      transaction.transaction_date.slice(0, 7) === previousMonth
+  );
+
+  const totalIncome = incomeTransactions.reduce(
+    (sum, transaction) => sum + Number(transaction.amount),
+    0
+  );
+
+  const jobIncome = incomeTransactions
+    .filter((transaction) => transaction.categories.name === "Employment")
+    .reduce((sum, transaction) => sum + Number(transaction.amount), 0);
+
+  const studentAid = incomeTransactions
+    .filter((transaction) =>
+      ["Scholarships", "Financial Aid"].includes(
+        transaction.categories.name
+      )
+    )
+    .reduce((sum, transaction) => sum + Number(transaction.amount), 0);
+
+  const lastMonthIncome = previousMonthTransactions.reduce(
+    (sum, transaction) => sum + Number(transaction.amount),
+    0
+  );
+
+  const summaryCards = [
+    { label: "Total Income", value: totalIncome, note: currentMonthLabel, icon: Wallet, color: "text-[#16834b]", background: "bg-[#e5f3ec]" },
+    { label: "Job Income", value: jobIncome, note: currentMonthLabel, icon: BriefcaseBusiness, color: "text-[#3173c9]", background: "bg-[#e8f1ff]" },
+    { label: "Financial Aid / Scholarships", value: studentAid, note: currentMonthLabel, icon: GraduationCap, color: "text-[#c68a00]", background: "bg-[#fff5d9]" },
+    { label: "Last Month’s Income", value: lastMonthIncome, note: previousMonthLabel, icon: ArrowUpRight, color: "text-[#8246c8]", background: "bg-[#f0e7fc]" },
+  ];
 
   const [searchDate, setSearch] = useState(new Date());
   const setSearchWrapper = (newDate: Date) => setSearch(newDate);
@@ -48,11 +112,11 @@ export default function IncomePage() {
       </div>
       <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(300px,1fr)]">
         <div className="min-w-0">
-          <IncomeList 
-            searchDate = {searchDate}
-            setSearchDate={setSearchWrapper}/></div>
-          <IncomeBySource />
-        </div>
-      </section>
+          <IncomeList
+            searchDate={searchDate}
+            setSearchDate={setSearchWrapper} /></div>
+        <IncomeBySource />
+      </div>
+    </section>
   );
 }
