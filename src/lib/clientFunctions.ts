@@ -446,3 +446,44 @@ export async function updateTransaction(formData: FormData, transactionID: numbe
         }
     }
 }
+
+
+
+/**
+ * DO NOT EXECUTE THIS FUNCTION!!!! There is no filter for the update yet.
+ * @param firstName 
+ * @param lastName 
+ */
+export async function updateUserName(firstName: string, lastName: string)//may need a setter for state later. depends on if I can get this working without state.
+{
+    const supabase = await createClient();
+
+    const currentDate = new Date();
+
+    const {data, error} = await supabase
+    .from("profiles")
+    .update(
+        {
+            first_name: firstName,
+            last_name: lastName,
+            updated_at: new Intl.DateTimeFormat("sv-SE").format(currentDate)//this will probably give the date time in local time. need to look into that.
+        }).select(`
+                    first_name,
+                    last_name
+                `);
+    //.eq() use userID from the context.
+
+    if(error)
+    {
+        console.error("User update error", error);
+        throw error;
+    }
+    else if(data)
+    {
+        //update local user first and last name.
+    }
+    else
+    {
+        console.error("There was no error or data returned by updateUserName");
+    }
+}
