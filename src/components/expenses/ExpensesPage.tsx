@@ -12,6 +12,60 @@ export default function ExpensesPage() {
   const [searchDate, setSearchDate] = useState(new Date());
 
   const setSearchDateWrapper = (newDate: Date) => setSearchDate(newDate);
+  const currentMonth = `${searchDate.getFullYear()}-${String(
+    searchDate.getMonth() + 1
+  ).padStart(2, "0")}`;
+
+  const currentMonthLabel = searchDate.toLocaleDateString("en-US", {
+    month: "long",
+    year: "numeric",
+  });
+
+  const previousDate = new Date(
+    searchDate.getFullYear(),
+    searchDate.getMonth() - 1,
+    1
+  );
+  const previousMonth = `${previousDate.getFullYear()}-${String(
+    previousDate.getMonth() + 1
+  ).padStart(2, "0")}`;
+  
+  const previousMonthLabel = previousDate.toLocaleDateString("en-US", {
+    month: "long",
+    year: "numeric",
+  });
+
+  const expenses = transactionsArr.filter(
+    (transaction) =>
+      transaction.categories.transaction_type === "expense" &&
+      transaction.transaction_date.slice(0, 7) === currentMonth
+  );
+  const previousMonthExpenses = transactionsArr.filter(
+    (transaction) =>
+      transaction.categories.transaction_type === "expense" &&
+      transaction.transaction_date.slice(0, 7) === previousMonth
+  );
+  const totalExpenses = expenses.reduce(
+      (sum, transaction) => sum + Number(transaction.amount),
+      0
+    );
+  const largestExpense = expenses.reduce(
+      (max, transaction) => Math.max(max, Number(transaction.amount)),
+      0
+    );
+  const previousMonthTotal = previousMonthExpenses.reduce(  
+      (sum, transaction) => sum + Number(transaction.amount),
+      0
+   );
+   const categoryTotals = expenses.reduce<Record<string, number>>((totals, transaction) => {
+    const categoryName = transaction.categories.name;
+    totals[categoryName] = totals[categoryName] || 0 + Number(transaction.amount);
+    return totals;
+  }, {});
+
+  const topCategory = Object.entries(categoryTotals).sort(
+    (a, b) => b[1] - a[1]
+  )
   // const [month, setMonth] = useState(currentMonth);
       // const expenses = expensesInMonth(transactionsArr, month);
       // const total = expenses.reduce((sum, expense) => sum + expense.amount, 0);
@@ -29,32 +83,32 @@ export default function ExpensesPage() {
   const cards = [
     {
       label: "Total Expenses",
-      value: 1_000_000, //formatMoney(total),
-      note: Intl.DateTimeFormat("en-us", {month: "long"}).format(searchDate),//monthLabel(month),
+      value: formatMoney(totalExpenses),
+      note: currentMonthLabel,
       icon: ArrowDownRight,
       color: "text-[#d94c5c]",
       background: "bg-[#fce8eb]",
     },
     {
       label: "Largest Expense",
-      value: 5_000,//formatMoney(largest),
-      note: Intl.DateTimeFormat("en-us", {month: "long"}).format(searchDate),//monthLabel(month),
+      value: formatMoney(largestExpense),
+      note: currentMonthLabel,
       icon: TrendingUp,
       color: "text-[#c58627]",
       background: "bg-[#fff3dc]",
     },
     {
       label: "Most-Spent Category",
-      value: "Housing",//total > 0 ? topCategory.name : "No expenses",
-      note: Intl.DateTimeFormat("en-us", {month: "long"}).format(searchDate),//total > 0 ? formatMoney(topCategory.amount) : monthLabel(month),
+      value: topCategory ? topCategory[0] : "No expenses",//total > 0 ? topCategory.name : "No expenses",
+      note: currentMonthLabel,//total > 0 ? formatMoney(topCategory.amount) : monthLabel(month),
       icon: Tags,
       color: "text-[#8246c8]",
       background: "bg-[#f0e7fc]",
     },
     {
       label: "Previous Month",
-      value: 999_999,//formatMoney(priorTotal),
-      note: Intl.DateTimeFormat("en-us", {month: "long"}).format(searchDate),//monthLabel(previousMonth(month)),
+      value: formatMoney(previousMonthTotal),
+      note: previousMonthLabel,//monthLabel(previousMonth(month)),
       icon: CalendarDays,
       color: "text-[#3173c9]",
       background: "bg-[#e8f1ff]",
