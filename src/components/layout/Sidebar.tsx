@@ -68,8 +68,14 @@ const navigationItems: NavigationItem[] =
             icon: BarChart3,
         }
     ];
-
-export default function Sidebar() {
+type SideBarProps = {
+    mobile?: boolean;
+    onNavigate?: () => void;
+};
+export default function Sidebar({
+    mobile = false,
+    onNavigate,
+}: SideBarProps) {
     const router = useRouter();
 
     const logout = async () => {
@@ -86,8 +92,14 @@ export default function Sidebar() {
     };
     const pathname = usePathname();
     return (
-        <aside className="fixed left-0 top-0 flex h-screen w-[270px] flex-col border-r border-[#dce7e2] bg-[#f7faf8] px-5 py-6">
-            <Link href="/dashboard" className="flex items-start gap-3 px-2">
+        <aside
+            className={`flex flex-col border-r border-[#dce7e2] bg-[#f7faf8] px-5 py-6 ${mobile
+                    ? "h-full w-full overflow-y-auto"
+                    : "fixed left-0 top-0 z-40 hidden h-dvh w-[270px] overflow-y-auto md:flex"}`}>
+            <Link
+                href="/dashboard"
+                onClick={onNavigate}
+                className="flex items-start gap-3 px-2">
                 <Leaf
                     className="mt-1 h-12 w-12 text-[#3f8068]"
                     strokeWidth={1.8}
@@ -115,9 +127,10 @@ export default function Sidebar() {
                         <Link
                             key={item.name}
                             href={item.href}
+                            onClick={onNavigate}
                             className={`flex items-center gap-4 rounded-xl px-4 py-3 text-sm font-medium transition-colors ${isActive
-                                ? "bg-[#3f8068] text-white"
-                                : "text-[#17324d] hover:bg-[#e5efeb]"
+                                    ? "bg-[#3f8068] text-white"
+                                    : "text-[#17324d] hover:bg-[#e5efeb]"
                                 }`}
                         >
                             <Icon className="h-5 w-5" strokeWidth={1.8} />
@@ -127,9 +140,10 @@ export default function Sidebar() {
                 })}
             </nav>
 
-            <div className="mt-auto flex flex-col gap-2">
+            <div className="mt-auto flex flex-col gap-2 pt-6">
                 <Link
                     href="/settings"
+                    onClick={onNavigate}
                     className="flex items-center gap-4 rounded-xl px-4 py-3 text-sm font-medium text-[#17324d] hover:bg-[#e5efeb]"
                 >
                     <Settings className="h-5 w-5" strokeWidth={1.8} />
