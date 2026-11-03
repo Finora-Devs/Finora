@@ -8,7 +8,7 @@
 import { Database } from "@/types/database.types";
 import {createClient} from "./server"
 import { SupabaseClient, User } from '@supabase/supabase-js'
-import {Transaction, recurringTransaction} from "./types_and_helpers";
+import {Transaction, monthlyBudget, recurringTransaction} from "./types_and_helpers";
 
 /**
  * Gets all transactions for the current user.
@@ -182,6 +182,72 @@ async function insertTransactions(recurring: recurringTransaction, dates: Date[]
         console.error("Supabase insert error (updateRecurringTransactions -> insertTransaction -> transactions table)", error)
         throw error;
     }
+}
+
+//if this function returns a null, it means that the user has never made a budget.
+//needs to be updated to handle the circumstance where the budget retrieved is from a prior month
+export async function getMonthlyBudget()
+{
+    const supabase = await createClient();
+    
+    //gets the most recent monthly budget.
+    const {data, error} = await supabase
+    .from("monthly_budgets")
+    .select(`
+            id,
+            budget_month,
+            budget_amount,
+            email_notifications_enabled,
+            last_approaching_email_at,
+            last_exceeded_email_at
+            `)
+    .order("budget_month", {ascending: false})//may need to flip this to true, dunno yet
+    .limit(1);
+
+    if (error)
+    {
+        console.error("Supabase select error (monthlyBudgets", error)
+        throw error;
+    } 
+    //if user has never made a budget, return null
+    if(!data)
+    {
+        return null;
+    }
+    //if there is a budget
+    let lastApproachingDate: Date | null;
+    let lastExceededDate: Date | null;
+
+    //if the user has been sent an email warning that they are approuching their budget, return that date
+    if(data[0].last_approaching_email_at)
+    {
+        lastApproachingDate = new Date(data[0].last_approaching_email_at);//will need to adjust for timezone weirdness.
+    }
+    //otherwise, set to null
+    else
+    {
+        lastApproachingDate = null;
+    }
+
+    //if the user has been sent an email warning because they have exceeded their budget, return that date.
+    if(data[0].last_exceeded_email_at)
+    {
+        lastExceededDate = new Date(data[0].last_exceeded_email_at);//will need to adjust for timezone weirdness.
+    }
+    //otherwise, return null
+    else
+    {
+        lastExceededDate = null;
+    }
+
+    return {
+                id: data[0].id,
+                month: new Date(data[0].budget_month),
+                amount: data[0].budget_amount,
+                emailsEnabled: data[0].email_notifications_enabled,
+                lastEmailForApproaching: lastApproachingDate,
+                lastEmailForExceeding: lastExceededDate,
+            } as monthlyBudget
 }
 
 export async function getUser(): Promise<{id: string, email: string}>

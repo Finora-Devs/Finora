@@ -6,6 +6,8 @@ import
     Percent,
 }from "lucide-react";
 
+import { useMonthlyBudgetContext } from "@/app/(protected)/context";
+
 const summaryCards = [
     {
     label: "Monthly Budget",
@@ -39,6 +41,9 @@ const summaryCards = [
 
 export default function BudgetSummaryCards()
 {
+  //will contain the most recent budget if it exists, or null if it doesn't. Has not been tested yet.
+  const {monthlyBudget, setMonthlyBudget} = useMonthlyBudgetContext();
+  
     return (
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
       {summaryCards.map((card) => {

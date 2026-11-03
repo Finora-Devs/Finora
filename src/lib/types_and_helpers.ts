@@ -6,19 +6,51 @@
  */
 
 export type Transaction =
- {
-    id: number,
-    name: string,
-    description: string | null,
-    amount: number,
-    category_id: number,
-    frequency: string,
-    transaction_date: string,
-    categories: {
-        name: string,
-        transaction_type: string,
-        };
- };
+{
+   id: number,
+   name: string,
+   description: string | null,
+   amount: number,
+   category_id: number,
+   frequency: string,
+   transaction_date: string,
+   categories: {
+       name: string,
+       transaction_type: string,
+       };
+};
+export type recurringTransaction = 
+{
+  id: number,
+  user_id: string,
+  name: string,
+  amount: number,
+  category_id: number,
+  frequency: string,
+  next_due_date: string,
+  description: string | null,
+  is_active: boolean,
+}
+
+export type monthlyBudget =
+{
+   id: number,
+   month: Date,
+   amount: number,
+   emailsEnabled: boolean,
+   lastEmailForApproaching: Date | null,
+   lastEmailForExceeding: Date | null
+}
+export type categoryBudget =
+{
+   id: number,
+   categoryId: number,
+   month: Date,
+   amount: number,
+   emailsEnabled: boolean,
+   lastEmailForApproaching: Date | null,
+   lastEmailForExceeding: Date | null
+}
 
 export type TransactionDraft = {
   name: string;
@@ -40,78 +72,61 @@ export const emptyTransactionDraft: TransactionDraft = {
 
 export type TransactionErrors = Partial<Record<keyof TransactionDraft, string>>;
 
-
- export type recurringTransaction = 
- {
-   id: number,
-   user_id: string,
-   name: string,
-   amount: number,
-   category_id: number,
-   frequency: string,
-   next_due_date: string,
-   description: string | null,
-   is_active: boolean,
- }
-
- export enum SORTING_ORDER
- {
-    DATE,
-    NAME,
-    AMOUNT,
-    CATEGORY,
-    FREQUENCY
- }
- export enum CATEGORY_NAME
- {
-   ALL = "All",
-   EXPENSE = "Expense",
-   INCOME = "Income",
-
-   FOOD = "Food",
-   HOUSING = "Housing",
-   TRANSPORTATION = "Transportation",
-   TUITION = "Tuition",
-   ENTERTAINMENT = "Entertainment",
-   UTILITIES = "Utilities",
-   SUBSCRIPTIONS = "Subscriptions",
-   OTHER = "Other",
-
-   EMPLOYMENT = "Employment",
-   SCHOLARSHIPS = "Scholarships",
-   FINANCIAL_AID = "Financial Aid",
-   ALLOWANCE = "Allowance",
-   SELF_EMPLOYMENT = "Self Employment",
-   OTHER_INCOME = "Other Income"
- }
- //enum to be used when sorting transactions by frequency.
- export enum FREQUENCY
- {
-   ONCE,
-   DAILY,
-   WEEKLY,
-   MONTHLY,
-   YEARLY
- }
-
- export const incomeCategories = [
-  { name: "Employment", value: CATEGORY_NAME.EMPLOYMENT ,color: "#5794f6" },
-  { name: "Scholarships", value: CATEGORY_NAME.SCHOLARSHIPS ,color: "#ffce32" },
-  { name: "Financial Aid", value: CATEGORY_NAME.FINANCIAL_AID ,color: "#b36af5" },
-  { name: "Allowance", value: CATEGORY_NAME.ALLOWANCE ,color: "#ff7b96" },
-  { name: "Self Employment", value: CATEGORY_NAME.SELF_EMPLOYMENT ,color: "#48c4ac" },
-  { name: "Other Income", value: CATEGORY_NAME.OTHER_INCOME ,color: "#7437ed" },
- ] as const;
-
- export const expenseCategories = [
-  { name: "Food", value: CATEGORY_NAME.FOOD, color: "#ff8963" },
-  { name: "Housing", value: CATEGORY_NAME.HOUSING, color: "#5794f6" },
-  { name: "Transportation", value: CATEGORY_NAME.TRANSPORTATION, color: "#ffce32" },
-  { name: "Tuition", value: CATEGORY_NAME.TUITION, color: "#48c4ac" },
-  { name: "Entertainment", value: CATEGORY_NAME.ENTERTAINMENT, color: "#c65be3" },
-  { name: "Utilities", value: CATEGORY_NAME.UTILITIES, color: "#7b6be8" },
-  { name: "Subscriptions", value: CATEGORY_NAME.SUBSCRIPTIONS, color: "#7437ed" },
-  { name: "Other", value: CATEGORY_NAME.OTHER, color: "#b978d9" },
+export enum SORTING_ORDER
+{
+   DATE,
+   NAME,
+   AMOUNT,
+   CATEGORY,
+   FREQUENCY
+}
+export enum CATEGORY_NAME
+{
+  ALL = "All",
+  EXPENSE = "Expense",
+  INCOME = "Income",
+  FOOD = "Food",
+  HOUSING = "Housing",
+  TRANSPORTATION = "Transportation",
+  TUITION = "Tuition",
+  ENTERTAINMENT = "Entertainment",
+  UTILITIES = "Utilities",
+  SUBSCRIPTIONS = "Subscriptions",
+  OTHER = "Other",
+  EMPLOYMENT = "Employment",
+  SCHOLARSHIPS = "Scholarships",
+  FINANCIAL_AID = "Financial Aid",
+  ALLOWANCE = "Allowance",
+  SELF_EMPLOYMENT = "Self Employment",
+  OTHER_INCOME = "Other Income"
+}
+//enum to be used when sorting transactions by frequency.
+export enum FREQUENCY
+{
+  ONCE,
+  DAILY,
+  WEEKLY,
+  MONTHLY,
+  YEARLY
+}
+//can probably use [...incomeCategories, ...expenseCatgories] to create an array of all categories, then use a category id to easily access category name
+export const incomeCategories = [
+ { name: "Employment", value: CATEGORY_NAME.EMPLOYMENT ,color: "#5794f6" },
+ { name: "Scholarships", value: CATEGORY_NAME.SCHOLARSHIPS ,color: "#ffce32" },
+ { name: "Financial Aid", value: CATEGORY_NAME.FINANCIAL_AID ,color: "#b36af5" },
+ { name: "Allowance", value: CATEGORY_NAME.ALLOWANCE ,color: "#ff7b96" },
+ { name: "Self Employment", value: CATEGORY_NAME.SELF_EMPLOYMENT ,color: "#48c4ac" },
+ { name: "Other Income", value: CATEGORY_NAME.OTHER_INCOME ,color: "#7437ed" },
+] as const;
+export const expenseCategories = [
+ { name: "Food", value: CATEGORY_NAME.FOOD, color: "#ff8963" },
+ { name: "Housing", value: CATEGORY_NAME.HOUSING, color: "#5794f6" },
+ { name: "Transportation", value: CATEGORY_NAME.TRANSPORTATION, color: "#ffce32" },
+ { name: "Tuition", value: CATEGORY_NAME.TUITION, color: "#48c4ac" },
+ { name: "Entertainment", value: CATEGORY_NAME.ENTERTAINMENT, color: "#c65be3" },
+ { name: "Utilities", value: CATEGORY_NAME.UTILITIES, color: "#7b6be8" },
+ { name: "Subscriptions", value: CATEGORY_NAME.SUBSCRIPTIONS, color: "#7437ed" },
+ { name: "Other Expense", value: CATEGORY_NAME.OTHER, color: "#b978d9" },
 ] as const;
  
  export const frequencies = [

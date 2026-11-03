@@ -2,8 +2,12 @@
 
 import {useEffect, useId, useRef, useState}from "react";
 import {Bell, Pencil, Plus, X} from "lucide-react";
+import { useMonthlyBudgetContext } from "@/app/(protected)/context";
 
 export default function MonthlyBudget() {
+
+  //will contain the most recent budget if it exists, or null if it doesn't. Has not been tested yet.
+  const {monthlyBudget, setMonthlyBudget} = useMonthlyBudgetContext();
  
   const [formMode, setFormMode] = useState<
     "create" | "edit" | null

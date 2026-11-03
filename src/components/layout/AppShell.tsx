@@ -7,6 +7,8 @@ import { X } from "lucide-react";
 import Sidebar from "./Sidebar";
 import TopBar from "./TopBar";
 import {
+    MonthlyBudgetContext,
+    MonthlyBudgetContextProvider,
     TransactionContextProvider,
     UserContextProvider,
 } from "../../app/(protected)/context";
@@ -70,7 +72,8 @@ export default function AppShell({ children }: AppShellProps) {
     }
 
     return (
-        <UserContextProvider> {/*Busted due to async nonsense. Gimme a little bit to find  the fix.*/}
+        <UserContextProvider>
+            <MonthlyBudgetContextProvider>
             <TransactionContextProvider>
                 <div className="min-h-screen bg-[#f3f7f5]">
                     {/* Desktop sidebar */}
@@ -127,6 +130,7 @@ export default function AppShell({ children }: AppShellProps) {
                     </div>
                 </div>
             </TransactionContextProvider>
+            </MonthlyBudgetContextProvider>
         </UserContextProvider>
     );
 }
