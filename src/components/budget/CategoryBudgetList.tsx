@@ -15,6 +15,7 @@ import {
     expenseCategories,
     fieldClass,
 } from "@/lib/types_and_helpers";
+import { useCategoryBudgetContext } from "@/app/(protected)/context";
 
 type CategoryBudget = {
     id: string;
@@ -101,6 +102,7 @@ const statusStyles = {
 };
 
 export default function CategoryBudgetList() {
+    const {categoryBudget, setCategoryBudget} = useCategoryBudgetContext();
 
     const [formMode, setFormMode] = useState<
         "create" | "edit" | "remove" | null

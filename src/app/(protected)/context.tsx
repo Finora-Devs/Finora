@@ -1,8 +1,8 @@
 "use client";
 import {createContext, useContext, useState, useEffect} from "react"//probably need to remember what each of these do in case dr. nicholson asks.
 import type { ReactNode, Dispatch, SetStateAction } from "react";
-import { monthlyBudget, Transaction } from "@/lib/types_and_helpers";
-import { getMonthlyBudget, getTransactions, getUser } from "@/lib/serverFunctions"
+import { categoryBudget, monthlyBudget, Transaction } from "@/lib/types_and_helpers";
+import { getCategoryBudgets, getMonthlyBudget, getTransactions, getUser } from "@/lib/serverFunctions"
 import { User } from "@supabase/supabase-js";
 import MonthlyBudget from "@/components/budget/MonthlyBudget";
 
@@ -200,4 +200,52 @@ export function useMonthlyBudgetContext(): {monthlyBudget: monthlyBudget | null,
     const {monthlyBudget, setMonthlyBudget} = context;
     
     return {monthlyBudget, setMonthlyBudget};
+}
+
+export const CategoryBudgetContext = createContext<{categoryBudget: categoryBudget[] | null , setCategoryBudget: Dispatch<SetStateAction<categoryBudget[] | null>>} | null>(null);
+
+export function CategoryBudgetContextProvider({children}: ProtectedLayoutProps)
+{
+    const [categoryBudget, setCategoryBudget] = useState<categoryBudget[] | null>(null);
+
+    useEffect(() =>
+    { 
+        const loadCategoryBudget = async () => 
+        {
+            try
+            {
+                setCategoryBudget(await getCategoryBudgets());
+            }
+            catch (error)
+            {
+                console.error("user retrieval failure", error);
+                throw error;
+            }
+        }
+        loadCategoryBudget();
+    }, []) //runs only once.
+
+    return(
+        <CategoryBudgetContext value={{categoryBudget, setCategoryBudget}}>
+            {children}
+        </CategoryBudgetContext>
+    );
+}
+
+/**
+ * This hook will return a state variable containing an array of categoryBudgets from the last month that had a budget. if they don't exist the variable will instead contain null..
+ */
+export function useCategoryBudgetContext(): {categoryBudget: categoryBudget[] | null, setCategoryBudget: Dispatch<SetStateAction<categoryBudget[] | null>>}
+{
+    const context = useContext(CategoryBudgetContext);
+
+    //does the context exist, even if the value of monthlyBudget is null. I think.
+    if(!context)
+    {
+        throw new Error("useCategoryBudgetContext must be use within a CategoryBudgetContext")
+    }
+
+    const {categoryBudget, setCategoryBudget} = context;
+    
+    return {categoryBudget, setCategoryBudget};
 }

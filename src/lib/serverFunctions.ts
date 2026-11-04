@@ -8,7 +8,7 @@
 import { Database } from "@/types/database.types";
 import {createClient} from "./server"
 import { SupabaseClient, User } from '@supabase/supabase-js'
-import {Transaction, monthlyBudget, recurringTransaction} from "./types_and_helpers";
+import {Transaction, monthlyBudget, categoryBudget, recurringTransaction} from "./types_and_helpers";
 
 /**
  * Gets all transactions for the current user.
@@ -215,39 +215,78 @@ export async function getMonthlyBudget()
         return null;
     }
     //if there is a budget
-    let lastApproachingDate: Date | null;
-    let lastExceededDate: Date | null;
-
-    //if the user has been sent an email warning that they are approuching their budget, return that date
-    if(data[0].last_approaching_email_at)
-    {
-        lastApproachingDate = new Date(data[0].last_approaching_email_at);//will need to adjust for timezone weirdness.
-    }
-    //otherwise, set to null
-    else
-    {
-        lastApproachingDate = null;
-    }
-
-    //if the user has been sent an email warning because they have exceeded their budget, return that date.
-    if(data[0].last_exceeded_email_at)
-    {
-        lastExceededDate = new Date(data[0].last_exceeded_email_at);//will need to adjust for timezone weirdness.
-    }
-    //otherwise, return null
-    else
-    {
-        lastExceededDate = null;
-    }
 
     return {
                 id: data[0].id,
                 month: new Date(data[0].budget_month),
                 amount: data[0].budget_amount,
                 emailsEnabled: data[0].email_notifications_enabled,
-                lastEmailForApproaching: lastApproachingDate,
-                lastEmailForExceeding: lastExceededDate,
+                lastEmailForApproaching: data[0].last_approaching_email_at ? new Date(data[0].last_approaching_email_at) : null,
+                lastEmailForExceeding: data[0].last_exceeded_email_at ? new Date(data[0].last_exceeded_email_at) : null,
             } as monthlyBudget
+}
+
+export async function getCategoryBudgets()
+{
+    const supabase = await createClient();
+    
+    //Gets the most recent month that has at least one budget, or null if there has never been a budget.
+    const {data: dateData, error: dateError} = await supabase
+    .from("category_budgets")
+    .select("budget_month")
+    .order("budget_month", {ascending: false})
+    .maybeSingle();
+
+    //if there is an error with retrieval
+    if(dateError)
+    {
+        //throw an error
+        console.error("Supabase select error (getCategoryBudgets)", dateError);
+        throw dateError;
+    }
+    //if there is no error, but the data does not exist
+    else if(!dateData)
+    {
+        //return null, indicating that there has never been a category budget.
+        return null;
+    }
+    
+    //retrieve all categoryBudgets with the most recent month (retrieved above)
+    const {data: categoryBudgets, error: categoryBudgetsError} = await supabase
+    .from("category_budgets")
+    .select(`
+            id,
+            category_id,
+            budget_month,
+            budget_amount,
+            email_notifications_enabled,
+            last_approaching_email_at,
+            last_exceeded_email_at
+            `)
+    .eq("budget_month", dateData.budget_month);
+
+    //If there was an error with retrieval
+    if(categoryBudgetsError)
+    {
+        //throw the error
+        console.log("Supabase select error (getCategoryBudgets)", categoryBudgetsError);
+        throw categoryBudgetsError;
+    }
+    //If the above code was able to find a result, there must be at least one object in the data, so no need to check if it is null or undefined.
+
+    //map all the date strings returned by supabase to actual dates, then return the resulting array as a categoryBudget array.
+    return categoryBudgets.map((prev) => 
+        {
+            return {
+                id: prev.id,
+                categoryId: prev.category_id,
+                month: new Date(prev.budget_month),
+                amount: prev.budget_amount,
+                emailsEnabled: prev.email_notifications_enabled,
+                lastEmailForApproaching: prev.last_approaching_email_at ? new Date(prev.last_approaching_email_at) : null,
+                lastEmailForExceeding: prev.last_exceeded_email_at ? new Date(prev.last_exceeded_email_at) : null,
+            } as categoryBudget
+        }) as categoryBudget[];
 }
 
 export async function getUser(): Promise<{id: string, email: string}>

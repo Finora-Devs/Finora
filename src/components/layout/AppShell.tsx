@@ -7,7 +7,7 @@ import { X } from "lucide-react";
 import Sidebar from "./Sidebar";
 import TopBar from "./TopBar";
 import {
-    MonthlyBudgetContext,
+    CategoryBudgetContextProvider,
     MonthlyBudgetContextProvider,
     TransactionContextProvider,
     UserContextProvider,
@@ -73,6 +73,7 @@ export default function AppShell({ children }: AppShellProps) {
 
     return (
         <UserContextProvider>
+            <CategoryBudgetContextProvider>
             <MonthlyBudgetContextProvider>
             <TransactionContextProvider>
                 <div className="min-h-screen bg-[#f3f7f5]">
@@ -131,6 +132,7 @@ export default function AppShell({ children }: AppShellProps) {
                 </div>
             </TransactionContextProvider>
             </MonthlyBudgetContextProvider>
+            </CategoryBudgetContextProvider>
         </UserContextProvider>
     );
 }
