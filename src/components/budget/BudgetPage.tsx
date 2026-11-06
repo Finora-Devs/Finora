@@ -1,3 +1,5 @@
+'use client';
+
 import BudgetSummaryCards from "./BudgetSummaryCards";
 import MonthlyBudget from "./MonthlyBudget";
 import CategoryBudgetList from "./CategoryBudgetList";
