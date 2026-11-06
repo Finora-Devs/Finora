@@ -2,7 +2,31 @@ import BudgetSummaryCards from "./BudgetSummaryCards";
 import MonthlyBudget from "./MonthlyBudget";
 import CategoryBudgetList from "./CategoryBudgetList";
 
+import {
+  getMonthlySpending,
+  getCategorySpending,
+  getBudgetPercentage, 
+  getBudgetStatus
+} from "@/lib/budgetHelpers";
+import {
+  useTransactionContext,
+  useMonthlyBudgetContext
+} from "@/app/(protected)/context";
+
 export default function BudgetPage(){
+
+  const { transactionsArr } = useTransactionContext();
+  const { monthlyBudget } = useMonthlyBudgetContext();
+
+  const currentDate = new Date();
+  const month = currentDate.getMonth() + 1; // getMonth() returns 0-11, so we add 1
+  const year = currentDate.getFullYear();
+
+  const monthlySpending = getMonthlySpending(transactionsArr, month, year);
+  const budgetAmount = monthlyBudget?.amount ?? 0;
+  const status = getBudgetStatus(monthlySpending, budgetAmount);
+
+
     return(
         <section className="space-y-6">
             <div className="flex flex-wrap items-start justify-between gap-4">
@@ -24,7 +48,7 @@ export default function BudgetPage(){
             {new Intl.DateTimeFormat("en-US", {
               month: "long",
               year: "numeric",
-            }).format(new Date())}
+            }).format(currentDate)}
           </p>
         </div>
       </div>
