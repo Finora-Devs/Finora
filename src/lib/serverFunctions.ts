@@ -8,7 +8,7 @@
 import { Database } from "@/types/database.types";
 import {createClient} from "./server"
 import { SupabaseClient, User } from '@supabase/supabase-js'
-import {Transaction, monthlyBudget, categoryBudget, recurringTransaction, getAsMonthlyBudget, getAsCategoryBudget} from "./types_and_helpers";
+import {Transaction, monthlyBudget, categoryBudget, recurringTransaction, getAsMonthlyBudget, getAsCategoryBudgets} from "./types_and_helpers";
 
 /**
  * Gets all transactions for the current user.
@@ -321,7 +321,7 @@ export async function getCategoryBudgets()
     if(currentDate.getMonth() === budgetDate.getMonth() && currentDate.getFullYear() === budgetDate.getFullYear()) //compare month and year of date, without the time.
     {
         //map all the date strings returned by supabase to date objcets, then return the resulting array as a categoryBudget array.
-        return getAsCategoryBudget(categoryBudgets);
+        return getAsCategoryBudgets(categoryBudgets);
     }
     else
     {
@@ -375,7 +375,7 @@ export async function getCategoryBudgets()
             throw insertError;
         }
 
-        return getAsCategoryBudget(newCategoryBudgets);
+        return getAsCategoryBudgets(newCategoryBudgets);
     }
 }
 
