@@ -356,7 +356,7 @@ export async function getCategoryBudgets()
         });
 
         //insert copies of previous month's data as current month and return the added records.
-        const {data: x, error: y} = await supabase
+        const {data: newCategoryBudgets, error: insertError} = await supabase
         .from("category_budgets")
         .insert(newVals)
         .select(`
@@ -367,7 +367,15 @@ export async function getCategoryBudgets()
             email_notifications_enabled,
             last_approaching_email_at,
             last_exceeded_email_at
-            `)
+            `);
+
+        if(insertError)
+        {
+            console.error("Supabase insert error (getCategoryBudgets)", insertError);
+            throw insertError;
+        }
+
+        return getAsCategoryBudget(newCategoryBudgets);
     }
 }
 

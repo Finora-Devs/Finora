@@ -4,7 +4,7 @@
  * for functions that initialize data in the browser using the database, go to serverFunctions.ts
  */
 import {createClient} from "./client";
-import {CATEGORY_NAME, Transaction, recurringTransaction, monthlyBudget, getAsMonthlyBudget} from "./types_and_helpers";
+import {CATEGORY_NAME, Transaction, recurringTransaction, monthlyBudget, getAsMonthlyBudget, categoryBudget, getAsCategoryBudget} from "./types_and_helpers";
 import type {Dispatch, SetStateAction } from "react";
 import { Database } from "@/types/database.types";
 import { SupabaseClient } from "@supabase/supabase-js";
@@ -488,6 +488,15 @@ export async function updateUserName(firstName: string, lastName: string)//may n
     }
 }
 
+export async function createMonthlyBudget(formData: FormData, setMonthlyBudget: Dispatch<SetStateAction<monthlyBudget | null>>)
+{
+    
+}
+export async function createCategoryBudget(formData: FormData, setCategoryBudget: Dispatch<SetStateAction<categoryBudget[] | null>>)
+{
+    
+}
+
 //untested. should update the given monthly budget with the FormData, then use the updated information to update the local monthlyBudgetContext variable.
 export async function updateMonthlyBudget(formData: FormData, monthlyBudgetID: number, setMonthlyBudget: Dispatch<SetStateAction<monthlyBudget | null>>)
 {
@@ -521,4 +530,61 @@ export async function updateMonthlyBudget(formData: FormData, monthlyBudgetID: n
         throw error;
     }
     setMonthlyBudget(getAsMonthlyBudget(data))
+}
+
+/**
+ * Takes a FormData object and a categoryBudget id, then uses a supabase update to update the budget with the given id. The changed
+ * record is then used to update the local categoryBudgetContext variable via @param setCategoryBudget.
+ * 
+ * @param formData 
+ * @param categoryBudgetID 
+ * @param setCategoryBudget 
+ */
+export async function updateCategoryBudget(formData: FormData, categoryBudgetID: number, setCategoryBudget: Dispatch<SetStateAction<categoryBudget[] | null>>)
+{
+    const supabase = await createClient();
+
+    const amount: number = parseFloat(formData.get("amount") as string);
+    const emailsEnabled: boolean = formData.get("emailNotifications") === "true" ? true : false;
+    const categoryName: string = formData.get("category") as string;
+
+    const categoryID: number = 0;//needs to be updated to get the category id from the name.
+
+    const {data, error} = await supabase
+    .from("category_budgets")
+    .update(
+        {
+            category_id: categoryID,
+            budget_amount: amount,
+            email_notifications_enabled: emailsEnabled,
+        })
+    .eq("id", categoryBudgetID)
+    .select(`
+            id,
+            category_id,
+            budget_month,
+            budget_amount,
+            email_notifications_enabled,
+            last_approaching_email_at,
+            last_exceeded_email_at
+            `)
+
+    if(error)
+    {
+        console.error("Supabase update error (updateCategoryBudget", error);
+        throw error;
+    }
+
+    // setCategoryBudget((prev) => {
+    //     return [];
+    // })
+}
+
+export async function deleteMonthlyBudget(monthlyBudgetID: number, setMonthlyBudget: Dispatch<SetStateAction<monthlyBudget | null>>)
+{
+
+}
+export async function deleteCategoryBudget(CategoryBudgetID: number, setCategoryBudget: Dispatch<SetStateAction<categoryBudget[] | null>>)
+{
+
 }
