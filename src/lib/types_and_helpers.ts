@@ -337,3 +337,58 @@ export function categoryBreakdown(records: Transaction[]) { //Does this already 
         }
 
 export const formatMoney = (value: number) => value.toLocaleString("en-US", { style: "currency", currency: "USD" });
+
+
+
+export function getAsMonthlyBudget(monthlyBudget: {
+   id: number;
+   budget_month: string;
+   budget_amount: number;
+   email_notifications_enabled: boolean;
+   last_approaching_email_at: string | null;
+   last_exceeded_email_at: string | null;
+} | null)
+{
+   if(!monthlyBudget)
+   {
+      return null;
+   }
+
+   return {
+            id: monthlyBudget.id,
+            month: new Date(monthlyBudget.budget_month),
+            amount: monthlyBudget.budget_amount,
+            emailsEnabled: monthlyBudget.email_notifications_enabled,
+            lastEmailForApproaching: monthlyBudget.last_approaching_email_at ? new Date(monthlyBudget.last_approaching_email_at) : null,
+            lastEmailForExceeding: monthlyBudget.last_exceeded_email_at ? new Date(monthlyBudget.last_exceeded_email_at) : null,
+            } as monthlyBudget
+}
+
+export function getAsCategoryBudget(categoryBudgets: {
+    id: number;
+    category_id: number;
+    budget_month: string;
+    budget_amount: number;
+    email_notifications_enabled: boolean;
+    last_approaching_email_at: string | null;
+    last_exceeded_email_at: string | null;
+}[] | null)
+{
+   if(!categoryBudgets)
+   {
+      return null;
+   }
+
+   return categoryBudgets.map((prev) => 
+        {
+            return {
+                id: prev.id,
+                categoryId: prev.category_id,
+                month: new Date(prev.budget_month),
+                amount: prev.budget_amount,
+                emailsEnabled: prev.email_notifications_enabled,
+                lastEmailForApproaching: prev.last_approaching_email_at ? new Date(prev.last_approaching_email_at) : null,
+                lastEmailForExceeding: prev.last_exceeded_email_at ? new Date(prev.last_exceeded_email_at) : null,
+            } as categoryBudget
+        }) as categoryBudget[];
+}

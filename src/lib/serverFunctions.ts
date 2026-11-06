@@ -8,7 +8,7 @@
 import { Database } from "@/types/database.types";
 import {createClient} from "./server"
 import { SupabaseClient, User } from '@supabase/supabase-js'
-import {Transaction, monthlyBudget, categoryBudget, recurringTransaction} from "./types_and_helpers";
+import {Transaction, monthlyBudget, categoryBudget, recurringTransaction, getAsMonthlyBudget, getAsCategoryBudget} from "./types_and_helpers";
 
 /**
  * Gets all transactions for the current user.
@@ -202,7 +202,8 @@ export async function getMonthlyBudget()
             last_exceeded_email_at
             `)
     .order("budget_month", {ascending: false})//may need to flip this to true, dunno yet
-    .limit(1);
+    .limit(1)
+    .maybeSingle();
 
     if (error)
     {
@@ -216,14 +217,54 @@ export async function getMonthlyBudget()
     }
     //if there is a budget
 
-    return {
-                id: data[0].id,
-                month: new Date(data[0].budget_month),
-                amount: data[0].budget_amount,
-                emailsEnabled: data[0].email_notifications_enabled,
-                lastEmailForApproaching: data[0].last_approaching_email_at ? new Date(data[0].last_approaching_email_at) : null,
-                lastEmailForExceeding: data[0].last_exceeded_email_at ? new Date(data[0].last_exceeded_email_at) : null,
-            } as monthlyBudget
+    //if the data is from the current month, just return it.
+    const currentDate = new Date();
+    const budgetDate = new Date(data.budget_month)
+    if(currentDate.getMonth() === budgetDate.getMonth() && currentDate.getFullYear() === budgetDate.getFullYear()) //compare month and year of date, without the time.
+    {
+        return getAsMonthlyBudget(data);
+    }
+    //otherwise, create a copy of the old data for the current month, insert it into the database, and return the result
+    else
+    {
+        const {data: { user }, error: userError} = await supabase.auth.getUser();//Replace later with user context
+        if(userError || user === null)
+        {
+            console.error("user authentication failed", userError);
+            throw userError;
+        }
+        const {data: insertResult, error: insertErrorResult} = await supabase
+        .from("monthly_budgets")
+        .insert(
+            {
+                user_id: user.id,
+                budget_amount: data.budget_amount,
+                budget_month: new Intl.DateTimeFormat("sv-SE", {timeZone: "UTC"}).format(currentDate), //current date as UTC, Year-Month-Day.
+                email_notifications_enabled: data.email_notifications_enabled,
+                last_approaching_email_at: null,
+                last_exceeded_email_at: null,
+            }
+        )
+        .select(`
+            id,
+            budget_month,
+            budget_amount,
+            email_notifications_enabled,
+            last_approaching_email_at,
+            last_exceeded_email_at
+            `)
+        .limit(1)
+        .maybeSingle();
+
+        if(insertErrorResult)
+        {
+            console.error("Supabase insert error (getMonthlyBudget)", insertErrorResult)
+            throw insertErrorResult;
+        }
+        
+        return getAsMonthlyBudget(insertResult);
+    }
+    
 }
 
 export async function getCategoryBudgets()
@@ -235,6 +276,7 @@ export async function getCategoryBudgets()
     .from("category_budgets")
     .select("budget_month")
     .order("budget_month", {ascending: false})
+    .limit(1)
     .maybeSingle();
 
     //if there is an error with retrieval
@@ -274,19 +316,59 @@ export async function getCategoryBudgets()
     }
     //If the above code was able to find a result, there must be at least one object in the data, so no need to check if it is null or undefined.
 
-    //map all the date strings returned by supabase to actual dates, then return the resulting array as a categoryBudget array.
-    return categoryBudgets.map((prev) => 
+    const currentDate = new Date();
+    const budgetDate = new Date(dateData.budget_month)
+    if(currentDate.getMonth() === budgetDate.getMonth() && currentDate.getFullYear() === budgetDate.getFullYear()) //compare month and year of date, without the time.
+    {
+        //map all the date strings returned by supabase to date objcets, then return the resulting array as a categoryBudget array.
+        return getAsCategoryBudget(categoryBudgets);
+    }
+    else
+    {
+
+        const {data: { user }, error: userError} = await supabase.auth.getUser();//Replace later with user context
+        if(userError || user === null)
         {
-            return {
-                id: prev.id,
-                categoryId: prev.category_id,
-                month: new Date(prev.budget_month),
-                amount: prev.budget_amount,
-                emailsEnabled: prev.email_notifications_enabled,
-                lastEmailForApproaching: prev.last_approaching_email_at ? new Date(prev.last_approaching_email_at) : null,
-                lastEmailForExceeding: prev.last_exceeded_email_at ? new Date(prev.last_exceeded_email_at) : null,
-            } as categoryBudget
-        }) as categoryBudget[];
+            console.error("user authentication failed", userError);
+            throw userError;
+        }
+        //build array of new values
+        const newVals: {
+            user_id: string,
+            category_id: number,
+            budget_month: string,
+            budget_amount: number,
+            email_notifications_enabled: boolean,
+            last_approaching_email_at: null,
+            last_exceeded_email_at: null
+        }[] = []
+
+        categoryBudgets.forEach((categoryBudget) => {
+            newVals.push({
+                user_id: user.id,
+                category_id: categoryBudget.category_id,
+                budget_month: new Intl.DateTimeFormat("sv-SE", {timeZone: "UTC"}).format(currentDate),
+                budget_amount: categoryBudget.budget_amount,
+                email_notifications_enabled: categoryBudget.email_notifications_enabled,
+                last_approaching_email_at: null,
+                last_exceeded_email_at: null
+            })
+        });
+
+        //insert copies of previous month's data as current month and return the added records.
+        const {data: x, error: y} = await supabase
+        .from("category_budgets")
+        .insert(newVals)
+        .select(`
+            id,
+            category_id,
+            budget_month,
+            budget_amount,
+            email_notifications_enabled,
+            last_approaching_email_at,
+            last_exceeded_email_at
+            `)
+    }
 }
 
 export async function getUser(): Promise<{id: string, email: string}>

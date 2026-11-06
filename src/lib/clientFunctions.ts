@@ -4,7 +4,7 @@
  * for functions that initialize data in the browser using the database, go to serverFunctions.ts
  */
 import {createClient} from "./client";
-import {CATEGORY_NAME, Transaction, recurringTransaction} from "./types_and_helpers";
+import {CATEGORY_NAME, Transaction, recurringTransaction, monthlyBudget, getAsMonthlyBudget} from "./types_and_helpers";
 import type {Dispatch, SetStateAction } from "react";
 import { Database } from "@/types/database.types";
 import { SupabaseClient } from "@supabase/supabase-js";
@@ -486,4 +486,39 @@ export async function updateUserName(firstName: string, lastName: string)//may n
     {
         console.error("There was no error or data returned by updateUserName");
     }
+}
+
+//untested. should update the given monthly budget with the FormData, then use the updated information to update the local monthlyBudgetContext variable.
+export async function updateMonthlyBudget(formData: FormData, monthlyBudgetID: number, setMonthlyBudget: Dispatch<SetStateAction<monthlyBudget | null>>)
+{
+    const supabase = await createClient();
+
+    const amount: number = parseFloat(formData.get("amount") as string);
+    const emailsEnabled: boolean = formData.get("emailNotifications") === "true" ? true : false;
+
+    const {data, error} = await supabase
+    .from("monthly_budgets")
+    .update(
+        {
+            budget_amount: amount,
+            email_notifications_enabled: emailsEnabled
+        })
+    .eq("id", monthlyBudgetID)
+    .select(`
+            id,
+            budget_month,
+            budget_amount,
+            email_notifications_enabled,
+            last_approaching_email_at,
+            last_exceeded_email_at
+            `)
+    .limit(1)
+    .maybeSingle();
+
+    if(error)
+    {
+        console.error("Supabase update error (updateMonthlyBudget", error);
+        throw error;
+    }
+    setMonthlyBudget(getAsMonthlyBudget(data))
 }
