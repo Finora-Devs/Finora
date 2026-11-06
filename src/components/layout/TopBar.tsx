@@ -1,15 +1,35 @@
 'use client'
 import { useUserContext } from "@/app/(protected)/context";
-import{Bell, ChevronDown, Search} from "lucide-react";
+import{Bell, ChevronDown, Menu, Search} from "lucide-react";
 
-export default function TopBar(){
+
+type TopBarProps = {
+    onOpenSidebar: () => void;
+    isSidebarOpen: boolean;
+};
+
+export default function TopBar({
+    onOpenSidebar,
+    isSidebarOpen,
+}: TopBarProps) {
 
     const {user, setUser} =  useUserContext();
 
     return(
-        <header className ="sticky top 0 z-30 flex h-[68px] w-full items-center gap-6 border-b border-[#dce7e2] bg-white px-6">
+        <header className="sticky top-0 z-30 flex h-[68px] w-full items-center gap-2 border-b border-[#dce7e2] bg-white px-3 sm:gap-4 sm:px-6">
+            {/* Mobile navigation button */}
+            <button
+                type="button"
+                onClick={onOpenSidebar}
+                aria-label="Open navigation"
+                aria-controls="mobile-sidebar"
+                aria-expanded={isSidebarOpen}
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-[#17324d] hover:bg-[#f3f7f5] md:hidden"
+            >
+                <Menu aria-hidden="true" className="h-6 w-6" />
+            </button>
            {/*Search field*/}
-            <div className="w-full max-w-[540px] flex-1">
+            <div className="min-w-0 flex-1 max-w-[540px]">
                <label className="relative block">
                 <span className="sr-only">Search Finora</span>
 

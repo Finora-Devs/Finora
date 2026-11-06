@@ -1,3 +1,4 @@
+'use client';
 import {
   ArrowDownRight,
   ArrowUpRight,
@@ -8,17 +9,19 @@ import {
 import TransactionList from "./TransactionList";
 import SpendingByCategory from "./SpendingByCategory";
 import { useTransactionContext } from "@/app/(protected)/context";
-import TransactionSummaryCards from "./TransactionSummaryCards";
+import { formatMoney } from "@/lib/types_and_helpers";
+import { useState } from "react";
 
-function formatMoney(amount: number) : string {
-  return amount.toLocaleString("en-US", {
-    style: "currency",
-    currency: "USD",
-  });
-}
 
 export default function TransactionsPage() {
   const { transactionsArr } = useTransactionContext();
+  const [searchDate, setSearchDate] = useState(new Date());
+  const setSearchDateWrapper = (newDate: Date) => setSearchDate(newDate);
+
+    const currentMonthLabel = searchDate.toLocaleDateString("en-US", {
+    month: "long",
+    year: "numeric",
+  });
 
   const totalTransactions = transactionsArr.length;
   const totalIncome = transactionsArr.reduce<number>(
@@ -49,12 +52,11 @@ export default function TransactionsPage() {
 
 const netAmount = totalIncome - totalExpenses;
 
-//should just need to pull information from the transaction list and stick it in these cards. May need to pull the state 
-//of the display list up here and pass it down to transaction list as a property.
 const summaryCards = [
   {
     label: "Total Transactions",
     value: totalTransactions.toLocaleString("en-US"),
+    note: currentMonthLabel,
     icon: List,
     color: "text-[#3f8068]",
     background: "bg-[#e5f3ec]",
@@ -62,6 +64,7 @@ const summaryCards = [
   {
     label: "Total Income",
     value: formatMoney(totalIncome),
+    note: currentMonthLabel,
     icon: ArrowUpRight,
     color: "text-[#16834b]",
     background: "bg-[#e5f3ec]",
@@ -69,6 +72,7 @@ const summaryCards = [
   {
     label: "Total Expenses",
     value: formatMoney(totalExpenses),
+    note: currentMonthLabel,
     icon: ArrowDownRight,
     color: "text-[#d94c5c]",
     background: "bg-[#fce8eb]",
@@ -76,6 +80,7 @@ const summaryCards = [
   {
     label: "Net Amount",
     value: formatMoney(netAmount),
+    note: currentMonthLabel,
     icon: Wallet,
     color: "text-[#3173c9]",
     background: "bg-[#e8f1ff]",
@@ -87,40 +92,49 @@ const summaryCards = [
       {/*Heading*/}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-[#123c35]">
-            Transactions
-          </h1>
+          <h1 className="text-3xl font-bold text-[#123c35]">Transactions</h1>
           <p className="mt-2 text-sm text-[#4e7069]">
-            View and manage income and expenses.
+            View and manage your income and expenses.
           </p>
         </div>
+        <div className="text-center sm:mr-4">
+    <p className="mb-1 text-xs text-[#4e7069]">
+      Month
+    </p>
+
+    <p className="rounded-lg bg-white px-3 py-2 text-sm text-[#17324d]">
+      {new Intl.DateTimeFormat("en-US", {
+        month: "long",
+        year: "numeric",
+      }).format(new Date())}
+    </p>
+  </div>
       </div>
 
       {/* Top cards */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {summaryCards.map((card) => {
           const Icon = card.icon;
-
           return (
             <div
               key={card.label}
               className="rounded-xl border border-[#dce7e2] bg-white p-5"
             >
               <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-sm text-[#4e7069]">
-                    {card.label}
-                  </p>
-                  <p className="mt-3 text-2xl font-bold text-[#17324d]">
+                <div className="min-w-0">
+                  <p className="text-sm text-[#4e7069]">{card.label}</p>
+                  <p className="mt-3 break-words text-2xl font-bold text-[#17324d]">
                     {card.value}
                   </p>
+                  <p className="mt-2 text-xs text-[#7185a1]">{card.note}</p>
                 </div>
-
                 <div
                   className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${card.background}`}
                 >
-                  <Icon aria-hidden="true"
-                  className={`h-5 w-5 ${card.color}`} />
+                  <Icon
+                    aria-hidden="true"
+                    className={`h-5 w-5 ${card.color}`}
+                  />
                 </div>
               </div>
             </div>
@@ -130,7 +144,10 @@ const summaryCards = [
 
      <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(300px,1fr)]">
   <div className="min-w-0">
-    <TransactionList />
+    <TransactionList 
+      searchDate = {searchDate}
+      setSearchDate={setSearchDateWrapper}
+      />
   </div>
 
   <SpendingByCategory />

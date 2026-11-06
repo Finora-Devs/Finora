@@ -4,7 +4,7 @@
  * for functions that initialize data in the browser using the database, go to serverFunctions.ts
  */
 import {createClient} from "./client";
-import {CATEGORY_NAME, Transaction, recurringTransaction} from "./types_and_helpers";
+import {CATEGORY_NAME, Transaction, recurringTransaction, monthlyBudget, getAsMonthlyBudget, categoryBudget, getAsCategoryBudget} from "./types_and_helpers";
 import type {Dispatch, SetStateAction } from "react";
 import { Database } from "@/types/database.types";
 import { SupabaseClient } from "@supabase/supabase-js";
@@ -324,13 +324,73 @@ export async function deleteTransaction(transactionID: number, setTransactionsAr
 }
 
 
-
+//need to switch to take a form, id, and setTransactionArr.
 //changes an existing transaction with new information. untested
-export async function updateTransaction(transactionID: number, amount: number, category_id: number, frequency: string, name: string, transaction_date: string, setTransactionArr: Dispatch<SetStateAction<Transaction[]>>)
+export async function updateTransaction(formData: FormData, transactionID: number, setTransactionArr: Dispatch<SetStateAction<Transaction[]>>)
 {
     const supabase = await createClient();
 
     //if transaction is repeating, also update recurring transaction and all related transactions.
+
+    const name = formData.get("name") as string;
+    const amount = formData.get("amount") as unknown as number;
+    const transaction_date = formData.get("date") as string; //updating this would probably break recurring transactions...
+    const frequency = formData.get("frequency") as string; 
+    let description = formData.get("notes") as string | null;
+    const category = formData.get("category") as string;
+
+    let category_id;
+    
+    switch(category)
+    {
+        case CATEGORY_NAME.EMPLOYMENT:
+            category_id = 1;
+            break;
+        case CATEGORY_NAME.FINANCIAL_AID:
+            category_id = 2;
+            break;
+        case CATEGORY_NAME.SCHOLARSHIPS:
+            category_id = 3;
+            break;
+        case CATEGORY_NAME.ALLOWANCE:
+            category_id = 4;
+            break;
+        case CATEGORY_NAME.SELF_EMPLOYMENT:
+            category_id = 5;
+            break;
+        case CATEGORY_NAME.OTHER_INCOME:
+            category_id = 6;
+            break;
+        case CATEGORY_NAME.FOOD:
+            category_id = 7;
+            break;
+        case CATEGORY_NAME.HOUSING:
+            category_id = 8;
+            break;
+        case CATEGORY_NAME.TRANSPORTATION:
+            category_id = 9;
+            break
+        case CATEGORY_NAME.TUITION:
+            category_id = 10;
+            break;
+        case CATEGORY_NAME.ENTERTAINMENT:
+            category_id = 11;
+            break;
+        case CATEGORY_NAME.UTILITIES:
+            category_id = 12;
+            break;
+        case CATEGORY_NAME.SUBSCRIPTIONS:
+            category_id = 13;
+            break;
+        default:
+            category_id = 14;
+            break;
+    } 
+
+    if(!description)
+    {
+        description = "";
+    }
 
     const {data: { user }, error: userError} = await supabase.auth.getUser();
     if(userError || user === null)
@@ -385,4 +445,146 @@ export async function updateTransaction(transactionID: number, amount: number, c
                 })
         }
     }
+}
+
+
+
+/**
+ * DO NOT EXECUTE THIS FUNCTION!!!! There is no filter for the update yet.
+ * @param firstName 
+ * @param lastName 
+ */
+export async function updateUserName(firstName: string, lastName: string)//may need a setter for state later. depends on if I can get this working without state.
+{
+    const supabase = await createClient();
+
+    const currentDate = new Date();
+
+    const {data, error} = await supabase
+    .from("profiles")
+    .update(
+        {
+            first_name: firstName,
+            last_name: lastName,
+            updated_at: new Intl.DateTimeFormat("sv-SE").format(currentDate)//this will probably give the date time in local time. need to look into that.
+        }).select(`
+                    first_name,
+                    last_name
+                `);
+    //.eq() use userID from the context.
+
+    if(error)
+    {
+        console.error("User update error", error);
+        throw error;
+    }
+    else if(data)
+    {
+        //update local user first and last name.
+    }
+    else
+    {
+        console.error("There was no error or data returned by updateUserName");
+    }
+}
+
+export async function createMonthlyBudget(formData: FormData, setMonthlyBudget: Dispatch<SetStateAction<monthlyBudget | null>>)
+{
+    
+}
+export async function createCategoryBudget(formData: FormData, setCategoryBudget: Dispatch<SetStateAction<categoryBudget[] | null>>)
+{
+    
+}
+
+//untested. should update the given monthly budget with the FormData, then use the updated information to update the local monthlyBudgetContext variable.
+export async function updateMonthlyBudget(formData: FormData, monthlyBudgetID: number, setMonthlyBudget: Dispatch<SetStateAction<monthlyBudget | null>>)
+{
+    const supabase = await createClient();
+
+    const amount: number = parseFloat(formData.get("amount") as string);
+    const emailsEnabled: boolean = formData.get("emailNotifications") === "true" ? true : false;
+
+    const {data, error} = await supabase
+    .from("monthly_budgets")
+    .update(
+        {
+            budget_amount: amount,
+            email_notifications_enabled: emailsEnabled
+        })
+    .eq("id", monthlyBudgetID)
+    .select(`
+            id,
+            budget_month,
+            budget_amount,
+            email_notifications_enabled,
+            last_approaching_email_at,
+            last_exceeded_email_at
+            `)
+    .limit(1)
+    .maybeSingle();
+
+    if(error)
+    {
+        console.error("Supabase update error (updateMonthlyBudget", error);
+        throw error;
+    }
+    setMonthlyBudget(getAsMonthlyBudget(data))
+}
+
+/**
+ * Takes a FormData object and a categoryBudget id, then uses a supabase update to update the budget with the given id. The changed
+ * record is then used to update the local categoryBudgetContext variable via @param setCategoryBudget.
+ * 
+ * @param formData 
+ * @param categoryBudgetID 
+ * @param setCategoryBudget 
+ */
+export async function updateCategoryBudget(formData: FormData, categoryBudgetID: number, setCategoryBudget: Dispatch<SetStateAction<categoryBudget[] | null>>)
+{
+    const supabase = await createClient();
+
+    const amount: number = parseFloat(formData.get("amount") as string);
+    const emailsEnabled: boolean = formData.get("emailNotifications") === "true" ? true : false;
+    const categoryName: string = formData.get("category") as string;
+
+    const categoryID: number = 0;//needs to be updated to get the category id from the name.
+
+    const {data, error} = await supabase
+    .from("category_budgets")
+    .update(
+        {
+            category_id: categoryID,
+            budget_amount: amount,
+            email_notifications_enabled: emailsEnabled,
+        })
+    .eq("id", categoryBudgetID)
+    .select(`
+            id,
+            category_id,
+            budget_month,
+            budget_amount,
+            email_notifications_enabled,
+            last_approaching_email_at,
+            last_exceeded_email_at
+            `)
+
+    if(error)
+    {
+        console.error("Supabase update error (updateCategoryBudget", error);
+        throw error;
+    }
+
+    // setCategoryBudget((prev) => {
+    //     return [];
+    // })
+}
+
+export async function deleteMonthlyBudget(monthlyBudgetID: number, setMonthlyBudget: Dispatch<SetStateAction<monthlyBudget | null>>)
+{
+
+}
+export async function deleteCategoryBudget(CategoryBudgetID: number, setCategoryBudget: Dispatch<SetStateAction<categoryBudget[] | null>>)
+{
+
 }

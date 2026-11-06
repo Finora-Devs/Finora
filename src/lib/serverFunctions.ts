@@ -8,7 +8,7 @@
 import { Database } from "@/types/database.types";
 import {createClient} from "./server"
 import { SupabaseClient, User } from '@supabase/supabase-js'
-import {Transaction, recurringTransaction} from "./types_and_helpers";
+import {Transaction, monthlyBudget, categoryBudget, recurringTransaction, getAsMonthlyBudget, getAsCategoryBudget} from "./types_and_helpers";
 
 /**
  * Gets all transactions for the current user.
@@ -184,6 +184,201 @@ async function insertTransactions(recurring: recurringTransaction, dates: Date[]
     }
 }
 
+//if this function returns a null, it means that the user has never made a budget.
+//needs to be updated to handle the circumstance where the budget retrieved is from a prior month
+export async function getMonthlyBudget()
+{
+    const supabase = await createClient();
+    
+    //gets the most recent monthly budget.
+    const {data, error} = await supabase
+    .from("monthly_budgets")
+    .select(`
+            id,
+            budget_month,
+            budget_amount,
+            email_notifications_enabled,
+            last_approaching_email_at,
+            last_exceeded_email_at
+            `)
+    .order("budget_month", {ascending: false})//may need to flip this to true, dunno yet
+    .limit(1)
+    .maybeSingle();
+
+    if (error)
+    {
+        console.error("Supabase select error (monthlyBudgets", error)
+        throw error;
+    } 
+    //if user has never made a budget, return null
+    if(!data)
+    {
+        return null;
+    }
+    //if there is a budget
+
+    //if the data is from the current month, just return it.
+    const currentDate = new Date();
+    const budgetDate = new Date(data.budget_month)
+    if(currentDate.getMonth() === budgetDate.getMonth() && currentDate.getFullYear() === budgetDate.getFullYear()) //compare month and year of date, without the time.
+    {
+        return getAsMonthlyBudget(data);
+    }
+    //otherwise, create a copy of the old data for the current month, insert it into the database, and return the result
+    else
+    {
+        const {data: { user }, error: userError} = await supabase.auth.getUser();//Replace later with user context
+        if(userError || user === null)
+        {
+            console.error("user authentication failed", userError);
+            throw userError;
+        }
+        const {data: insertResult, error: insertErrorResult} = await supabase
+        .from("monthly_budgets")
+        .insert(
+            {
+                user_id: user.id,
+                budget_amount: data.budget_amount,
+                budget_month: new Intl.DateTimeFormat("sv-SE", {timeZone: "UTC"}).format(currentDate), //current date as UTC, Year-Month-Day.
+                email_notifications_enabled: data.email_notifications_enabled,
+                last_approaching_email_at: null,
+                last_exceeded_email_at: null,
+            }
+        )
+        .select(`
+            id,
+            budget_month,
+            budget_amount,
+            email_notifications_enabled,
+            last_approaching_email_at,
+            last_exceeded_email_at
+            `)
+        .limit(1)
+        .maybeSingle();
+
+        if(insertErrorResult)
+        {
+            console.error("Supabase insert error (getMonthlyBudget)", insertErrorResult)
+            throw insertErrorResult;
+        }
+        
+        return getAsMonthlyBudget(insertResult);
+    }
+    
+}
+
+export async function getCategoryBudgets()
+{
+    const supabase = await createClient();
+    
+    //Gets the most recent month that has at least one budget, or null if there has never been a budget.
+    const {data: dateData, error: dateError} = await supabase
+    .from("category_budgets")
+    .select("budget_month")
+    .order("budget_month", {ascending: false})
+    .limit(1)
+    .maybeSingle();
+
+    //if there is an error with retrieval
+    if(dateError)
+    {
+        //throw an error
+        console.error("Supabase select error (getCategoryBudgets)", dateError);
+        throw dateError;
+    }
+    //if there is no error, but the data does not exist
+    else if(!dateData)
+    {
+        //return null, indicating that there has never been a category budget.
+        return null;
+    }
+    
+    //retrieve all categoryBudgets with the most recent month (retrieved above)
+    const {data: categoryBudgets, error: categoryBudgetsError} = await supabase
+    .from("category_budgets")
+    .select(`
+            id,
+            category_id,
+            budget_month,
+            budget_amount,
+            email_notifications_enabled,
+            last_approaching_email_at,
+            last_exceeded_email_at
+            `)
+    .eq("budget_month", dateData.budget_month);
+
+    //If there was an error with retrieval
+    if(categoryBudgetsError)
+    {
+        //throw the error
+        console.log("Supabase select error (getCategoryBudgets)", categoryBudgetsError);
+        throw categoryBudgetsError;
+    }
+    //If the above code was able to find a result, there must be at least one object in the data, so no need to check if it is null or undefined.
+
+    const currentDate = new Date();
+    const budgetDate = new Date(dateData.budget_month)
+    if(currentDate.getMonth() === budgetDate.getMonth() && currentDate.getFullYear() === budgetDate.getFullYear()) //compare month and year of date, without the time.
+    {
+        //map all the date strings returned by supabase to date objcets, then return the resulting array as a categoryBudget array.
+        return getAsCategoryBudget(categoryBudgets);
+    }
+    else
+    {
+
+        const {data: { user }, error: userError} = await supabase.auth.getUser();//Replace later with user context
+        if(userError || user === null)
+        {
+            console.error("user authentication failed", userError);
+            throw userError;
+        }
+        //build array of new values
+        const newVals: {
+            user_id: string,
+            category_id: number,
+            budget_month: string,
+            budget_amount: number,
+            email_notifications_enabled: boolean,
+            last_approaching_email_at: null,
+            last_exceeded_email_at: null
+        }[] = []
+
+        categoryBudgets.forEach((categoryBudget) => {
+            newVals.push({
+                user_id: user.id,
+                category_id: categoryBudget.category_id,
+                budget_month: new Intl.DateTimeFormat("sv-SE", {timeZone: "UTC"}).format(currentDate),
+                budget_amount: categoryBudget.budget_amount,
+                email_notifications_enabled: categoryBudget.email_notifications_enabled,
+                last_approaching_email_at: null,
+                last_exceeded_email_at: null
+            })
+        });
+
+        //insert copies of previous month's data as current month and return the added records.
+        const {data: newCategoryBudgets, error: insertError} = await supabase
+        .from("category_budgets")
+        .insert(newVals)
+        .select(`
+            id,
+            category_id,
+            budget_month,
+            budget_amount,
+            email_notifications_enabled,
+            last_approaching_email_at,
+            last_exceeded_email_at
+            `);
+
+        if(insertError)
+        {
+            console.error("Supabase insert error (getCategoryBudgets)", insertError);
+            throw insertError;
+        }
+
+        return getAsCategoryBudget(newCategoryBudgets);
+    }
+}
+
 export async function getUser(): Promise<{id: string, email: string}>
 {
     const supabase = await createClient();
@@ -197,4 +392,64 @@ export async function getUser(): Promise<{id: string, email: string}>
         }
         console.log("user successfully retrieved from supabase.")
     return {id: user.id, email: user.email};
+}
+
+//will eventually replace getUser. Leaving original getUser for now so avoid errors until I am ready to test
+export async function getUser2()
+{
+    const supabase = await createClient();
+
+    const {data: { user }, error: userError} = await supabase.auth.getUser();
+        if(userError || user === null || user.email === undefined)
+        {
+            console.error("user authentication failed", userError);
+            throw userError;
+        }
+        console.log("user successfully retrieved from supabase.");
+    const {data, error} = await supabase
+    .from("profiles")
+    .select(`
+            first_name,
+            last_name
+            `);
+    //may need to filter by userId
+
+    if(error)
+    {
+        console.error("Error in getUser", error);
+        throw error;
+    }
+    if(user && data)
+    {
+        const userData = {...user, ...data};
+        return 
+    }
+}
+
+/*
+Should retrieve user balance for storage in a context. That context can then be used to find current balance based
+total income and expenses.
+*/
+export async function getUserBalance()
+{
+    const supabase = await createClient();
+
+    const {data, error} = await supabase
+    .from("profiles")
+    .select(`opening_balance`);
+    //may need to filter by user id.
+
+    if(error)
+    {
+        console.error("Error retrieving user Balance", error)
+        throw error;
+    }
+    else if(data)
+    {
+        //return balance
+    }
+    else
+    {
+        console.log("There was no error or data returned by getUserBalance");
+    }
 }
