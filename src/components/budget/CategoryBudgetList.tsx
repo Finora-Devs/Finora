@@ -30,7 +30,7 @@ type CategoryBudget = {
     emailNotifications: boolean;
 };
 
-
+//need to replace this with the category budgets array
 const categoryBudgets: CategoryBudget[] = [
     {
         id: "food",
@@ -188,8 +188,9 @@ export default function CategoryBudgetList() {
                 {categoryBudgets.map((budget) => {
                     const styles = statusStyles[budget.status];
 
+                    //can use getBudgetStatus here
                     const StatusIcon =
-                        budget.status === "On track"
+                        budget.status === "On track" 
                             ? CheckCircle2
                             : AlertTriangle;
 
@@ -202,11 +203,11 @@ export default function CategoryBudgetList() {
                             <div className="flex items-start justify-between gap-3">
                                 <div className="min-w-0">
                                     <h3 className="text-lg font-semibold text-[#17324d]">
-                                        {budget.category}
+                                        {budget.category} {/*getCategoryName */}
                                     </h3>
 
                                     <p className="mt-1 text-sm text-[#4e7069]">
-                                        Budget: {budget.budgetLabel}
+                                        Budget: {budget.budgetLabel} {/*amount */}
                                     </p>
                                 </div>
 
@@ -214,7 +215,7 @@ export default function CategoryBudgetList() {
                                     <button
                                         type="button"
                                         onClick={() => openPopup("edit", budget)}
-                                        aria-label={`Edit ${budget.category} budget`}
+                                        aria-label={`Edit ${budget.category} budget`} //getCategoryName
                                         className="rounded-lg p-2 text-[#4e7069] hover:bg-[#e5efeb]"
                                     >
                                         <Pencil
@@ -226,7 +227,7 @@ export default function CategoryBudgetList() {
                                     <button
                                         type="button"
                                         onClick={() => openPopup("remove", budget)}
-                                        aria-label={`Remove ${budget.category} budget`}
+                                        aria-label={`Remove ${budget.category} budget`} //getCategoryName
                                         className="rounded-lg p-2 text-[#d94c5c] hover:bg-[#fce8eb]"
                                     >
                                         <Trash2
@@ -245,27 +246,27 @@ export default function CategoryBudgetList() {
                                     aria-hidden="true"
                                     className="h-3.5 w-3.5"
                                 />
-                                {budget.status}
+                                {budget.status} {/*getBudgetStatus */}
                             </span>
 
 
                             <div className="mt-4">
                                 <div className="mb-2 flex flex-wrap items-center justify-between gap-2 text-sm">
                                     <p className="text-[#4e7069]">
-                                        {budget.spentLabel} spent
+                                        {budget.spentLabel} spent {/*getMonthlySpending */}
                                     </p>
 
                                     <p className="font-semibold text-[#17324d]">
-                                        {budget.usedPercent}% used
+                                        {budget.usedPercent}% used {/*getBudgetPercentage */}
                                     </p>
                                 </div>
 
                                 <div
                                     role="progressbar"
-                                    aria-label={`${budget.category} budget used`}
+                                    aria-label={`${budget.category} budget used`} //getCategoryName
                                     aria-valuemin={0}
                                     aria-valuemax={100}
-                                    aria-valuenow={Math.min(
+                                    aria-valuenow={Math.min( //parseInt(getBudgetPercentage)
                                         budget.usedPercent,
                                         100,
                                     )}
@@ -276,7 +277,7 @@ export default function CategoryBudgetList() {
                                         className={`h-full rounded-full ${styles.bar}`}
                                         style={{
                                             width: `${Math.min(
-                                                budget.usedPercent,
+                                                budget.usedPercent, //`${parseInt(getBudgetPercentage)}%`
                                                 100,
                                             )}%`,
                                         }}
@@ -286,7 +287,7 @@ export default function CategoryBudgetList() {
                                 <p
                                     className={`mt-2 text-sm font-medium ${styles.text}`}
                                 >
-                                    {budget.remainingLabel}
+                                    {budget.remainingLabel} {/*`${getRemaining} remaining` */}
                                 </p>
                             </div>
 
@@ -295,7 +296,7 @@ export default function CategoryBudgetList() {
                                 <Bell aria-hidden="true" className="h-4 w-4" />
 
                                 <span>
-                                    {budget.emailNotifications
+                                    {budget.emailNotifications //replace with categoryBudget.emailNotifications enabled
                                         ? "Email notifications enabled"
                                         : "Email notifications off"}
                                 </span>

@@ -2,12 +2,15 @@
 
 import {useEffect, useId, useRef, useState}from "react";
 import {Bell, Pencil, Plus, X} from "lucide-react";
-import { useMonthlyBudgetContext } from "@/app/(protected)/context";
+import { useMonthlyBudgetContext, useTransactionContext } from "@/app/(protected)/context";
+import { formatMoney } from "@/lib/types_and_helpers";
+import { getBudgetPercentage, getBudgetStatus, getMonthlySpending, getRemainingBudget } from "@/lib/budgetHelpers";
 
 export default function MonthlyBudget() {
 
   //will contain the most recent budget if it exists, or null if it doesn't. Has not been tested yet.
   const {monthlyBudget, setMonthlyBudget} = useMonthlyBudgetContext();
+  const {transactionsArr} = useTransactionContext();
  
   const [formMode, setFormMode] = useState<
     "create" | "edit" | null
@@ -94,12 +97,15 @@ export default function MonthlyBudget() {
             </p>
 
             <p className="mt-2 text-3xl font-bold text-[#17324d]">
-              $2,000.00
+              {monthlyBudget ? formatMoney(monthlyBudget.amount) : "$0.00"}
             </p>
           </div>
 
           <span className="rounded-full bg-[#e5f3ec] px-3 py-1 text-xs font-semibold text-[#28664f]">
-            On track
+            {monthlyBudget ? 
+            getBudgetStatus(getMonthlySpending(transactionsArr, monthlyBudget.month.getMonth(), monthlyBudget.month.getFullYear()), monthlyBudget.amount)
+            : 
+            "No budget"}
           </span>
         </div>
 
@@ -107,11 +113,17 @@ export default function MonthlyBudget() {
         <div>
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2 text-sm">
             <p className="text-[#4e7069]">
-              $1,000.00 spent
+              {monthlyBudget ? 
+              `${formatMoney(getMonthlySpending(transactionsArr, monthlyBudget.month.getMonth(), monthlyBudget.month.getFullYear()))} spent`
+              :
+              ""}
             </p>
 
             <p className="font-semibold text-[#17324d]">
-              50% used
+              {monthlyBudget ? 
+              `${parseInt(String(getBudgetPercentage(getMonthlySpending(transactionsArr, monthlyBudget.month.getMonth(), monthlyBudget.month.getFullYear()), monthlyBudget.amount)))}% used`
+              :
+              ""}
             </p>
           </div>
 
@@ -125,13 +137,20 @@ export default function MonthlyBudget() {
           >
             <div
               className="h-full rounded-full bg-[#3f8068]"
-              style={{ width: "50%" }}
+              style={{ width: monthlyBudget ? 
+                `${parseInt(String(getBudgetPercentage(getMonthlySpending(transactionsArr, monthlyBudget.month.getMonth(), monthlyBudget.month.getFullYear()), monthlyBudget.amount)))}%`
+                :
+                "0%"
+               }}
             />
           </div>
 
           <p className="mt-2 text-sm text-[#4e7069]">
             <span className="font-semibold text-[#28664f]">
-              $1,000.00
+              {monthlyBudget ? 
+              formatMoney(getRemainingBudget(getMonthlySpending(transactionsArr, monthlyBudget.month.getMonth(), monthlyBudget.month.getFullYear()), monthlyBudget.amount))
+              :
+              "$0"}
             </span>{" "}
             remaining this month.
           </p>
@@ -145,7 +164,10 @@ export default function MonthlyBudget() {
           />
 
           <p className="text-sm text-[#4e7069]">
-            Email notifications are enabled for this budget.
+            {monthlyBudget ? 
+            monthlyBudget.emailsEnabled ? "Email notifications are enabled for this budget." : "Email notifications are not enabled for this budget."
+            :
+            ""}
           </p>
         </div>
       </div>

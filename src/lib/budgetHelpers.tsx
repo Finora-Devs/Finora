@@ -17,7 +17,7 @@ function isInMonth(
     const date = new Date(transactionDate);
     return (
         !Number.isNaN(date.getTime()) &&
-        date.getMonth() + 1 === month &&
+        date.getMonth() === month &&
         date.getFullYear() === year
     );
 }

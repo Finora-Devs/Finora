@@ -8,43 +8,77 @@ import
     Percent,
 }from "lucide-react";
 
-import { useMonthlyBudgetContext } from "@/app/(protected)/context";
+import { useMonthlyBudgetContext, useTransactionContext } from "@/app/(protected)/context";
+import { getBudgetPercentage, getMonthlySpending, getRemainingBudget } from "@/lib/budgetHelpers";
+import { formatMoney } from "@/lib/types_and_helpers";
 
-const summaryCards = [
+
+//moved the summary card array delcaration down so that I could use the monthly budget context in them
+export default function BudgetSummaryCards()
+{
+//will contain the most recent monthly budget if it exists, or null if it doesn't.
+const {monthlyBudget} = useMonthlyBudgetContext();
+const {transactionsArr} = useTransactionContext();
+
+//if monthly budget exists, create summary cards with budget data. else create empty array.
+const summaryCards = monthlyBudget ? [
     {
     label: "Monthly Budget",
-    value: "$2,000.00",
+    value: formatMoney((monthlyBudget.amount)),
     icon: Wallet,
     color: "text-[#3f8068]",
     background: "bg-[#e5f3ec]"
     },
     {
     label: "Amount Spent",
-    value: "$1,400.00",
+    value: formatMoney(getMonthlySpending(transactionsArr, monthlyBudget.month.getMonth(), monthlyBudget.month.getFullYear())), //an issue in the way transaction dates are handled can cause transactions on the first of the month to be ignored due to timezones.
     icon: ArrowDownRight,
     color: "text-[#d94c5c]",
     background: "bg-[#fce8eb]",
     },
     {
     label: "Amount Remaining",
-    value: "$600.00",
+    value: formatMoney(getRemainingBudget(getMonthlySpending(transactionsArr, monthlyBudget.month.getMonth(), monthlyBudget.month.getFullYear()), monthlyBudget.amount)),
     icon: PiggyBank,
     color: "text-[#3173c9]",
     background: "bg-[#e8f1ff]",
     },
     {
     label: "Budget Used",
-    value: "70%",
+    value: `${parseInt(String(getBudgetPercentage(getMonthlySpending(transactionsArr, monthlyBudget.month.getMonth(), monthlyBudget.month.getFullYear()), monthlyBudget.amount)), 10)}%`,
     icon: Percent,
     color: "text-[]",
     background: "bg-[#f0e7fc]",
     },
-];
-
-export default function BudgetSummaryCards()
-{
-  //will contain the most recent budget if it exists, or null if it doesn't. Has not been tested yet.
-  const {monthlyBudget, setMonthlyBudget} = useMonthlyBudgetContext();
+] :
+[{
+    label: "Monthly Budget",
+    value: "",
+    icon: Wallet,
+    color: "text-[#3f8068]",
+    background: "bg-[#e5f3ec]"
+    },
+    {
+    label: "Amount Spent",
+    value: "",
+    icon: ArrowDownRight,
+    color: "text-[#d94c5c]",
+    background: "bg-[#fce8eb]",
+    },
+    {
+    label: "Amount Remaining",
+    value: "",
+    icon: PiggyBank,
+    color: "text-[#3173c9]",
+    background: "bg-[#e8f1ff]",
+    },
+    {
+    label: "Budget Used",
+    value: "",
+    icon: Percent,
+    color: "text-[]",
+    background: "bg-[#f0e7fc]",
+    }];
   
     return (
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

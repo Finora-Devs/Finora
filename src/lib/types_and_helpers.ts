@@ -145,11 +145,19 @@ export const expenseCategories = [
 export const labelClass = "block text-sm font-medium text-[#4e7069]";
 
 /**
- * Takes a string @param categoryName and returns the id of that category
+ * Takes a string @param categoryName and returns the id which corrosponds to that name
  */
 export function getCategoryID(categoryName: string)
 {
    return [...incomeCategories, ...expenseCategories].findIndex((item) => categoryName.toLowerCase() === item.value.toLowerCase()) + 1 //indexes start at zero, but Ids start at one
+}
+/**
+ * 
+ * takes a number @param categoryID and return the category label which corrosponds to that name.
+ */
+export function getCategoryName(categoryID: number)
+{
+   return [...incomeCategories, ...expenseCategories].at(categoryID-1)?.name; //category ids start at one, but indexes start at zero.
 }
 
 /**
