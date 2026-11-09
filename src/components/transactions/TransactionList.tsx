@@ -163,7 +163,6 @@ export default function TransactionList({searchDate, setSearchDate}: Props) {
     async function submit(event: FormData) {
       if (busyRef.current) 
         {
-          console.log("busyRef.current false");
           return;
         }
       const nextErrors = validateTransaction(draft, isIncomeForm);

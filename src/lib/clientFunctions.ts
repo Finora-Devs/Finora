@@ -440,6 +440,7 @@ export async function createMonthlyBudget(formData: FormData, setMonthlyBudget: 
     }
     setMonthlyBudget(getAsMonthlyBudget(data));
 }
+
 export async function createCategoryBudget(formData: FormData, setCategoryBudget: Dispatch<SetStateAction<categoryBudget[] | null>>)
 {
     const supabase = await createClient();
@@ -483,7 +484,6 @@ export async function createCategoryBudget(formData: FormData, setCategoryBudget
     })
 }
 
-//untested. should update the given monthly budget with the FormData, then use the updated information to update the local monthlyBudgetContext variable.
 export async function updateMonthlyBudget(formData: FormData, monthlyBudgetID: number, setMonthlyBudget: Dispatch<SetStateAction<monthlyBudget | null>>)
 {
     const supabase = await createClient();
@@ -568,24 +568,36 @@ export async function updateCategoryBudget(formData: FormData, categoryBudgetID:
     setCategoryBudget((prev) => {
         //prev should never be null beacause this is an update function. if prev is null, update should not be called.
         return [...prev!, getAsCategoryBudget(data)] as categoryBudget[];
+        // return prev?.map((budget) => 
+        // {
+        //     if(budget.id === categoryBudgetID)
+        //     {
+        //         return getAsCategoryBudget(data);
+        //     }
+        //     else
+        //     {
+        //         return budget;
+        //     }
+        // })
     })
 }
 
-export async function deleteMonthlyBudget(monthlyBudgetID: number, setMonthlyBudget: Dispatch<SetStateAction<monthlyBudget | null>>)
-{
-    const supabase = await createClient();
+    //turns out we don't need this. don't even know why I wrote it.
+// export async function deleteMonthlyBudget(monthlyBudgetID: number, setMonthlyBudget: Dispatch<SetStateAction<monthlyBudget | null>>)
+// {
+//     const supabase = await createClient();   
 
-    const {error} = await supabase
-    .from("monthly_budgets")
-    .delete()
-    .eq("id", monthlyBudgetID);
+//     const {error} = await supabase
+//     .from("monthly_budgets")
+//     .delete()
+//     .eq("id", monthlyBudgetID);
 
-    if(error)
-    {
-        console.error("Supabase delete error (deleteMonthlyBudget)", error);
-        throw error;
-    }
-}
+//     if(error)
+//     {
+//         console.error("Supabase delete error (deleteMonthlyBudget)", error);
+//         throw error;
+//     }
+// }
 export async function deleteCategoryBudget(categoryBudgetID: number, setCategoryBudget: Dispatch<SetStateAction<categoryBudget[] | null>>)
 {
     const supabase = await createClient();
@@ -600,4 +612,9 @@ export async function deleteCategoryBudget(categoryBudgetID: number, setCategory
         console.error("Supabase delete error (deleteCategoryBudget)", error);
         throw error;
     }
+
+    setCategoryBudget((prev) =>
+    {
+        return prev?.filter((budget) => budget.id !== categoryBudgetID) ?? null;
+    })
 }
