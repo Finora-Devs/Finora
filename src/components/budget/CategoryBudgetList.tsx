@@ -12,97 +12,47 @@ import {
 } from "lucide-react";
 
 import {
+    categoryBudget,
     expenseCategories,
     fieldClass,
+    formatMoney,
+    getCategoryName,
+    incomeCategories,
 } from "@/lib/types_and_helpers";
-import { useCategoryBudgetContext } from "@/app/(protected)/context";
-
-type CategoryBudget = {
-    id: string;
-    category: string;
-    amount: string;
-    budgetLabel: string;
-    spentLabel: string;
-    remainingLabel: string;
-    usedPercent: number;
-    month: string;
-    status: "On track" | "Near limit" | "Over budget";
-    emailNotifications: boolean;
-};
-
-//need to replace this with the category budgets array
-const categoryBudgets: CategoryBudget[] = [
-    {
-        id: "food",
-        category: "Food",
-        amount: "300.00",
-        budgetLabel: "$300.00",
-        spentLabel: "$360.00",
-        remainingLabel: "$60.00 over budget",
-        usedPercent: 120,
-        month: "2026-10",
-        status: "Over budget",
-        emailNotifications: true,
-    },
-    {
-        id: "housing",
-        category: "Housing",
-        amount: "1000.00",
-        budgetLabel: "$1,000.00",
-        spentLabel: "$700.00",
-        remainingLabel: "$300.00 remaining",
-        usedPercent: 70,
-        month: "2026-10",
-        status: "On track",
-        emailNotifications: true,
-    },
-    {
-        id: "transportation",
-        category: "Transportation",
-        amount: "300.00",
-        budgetLabel: "$300.00",
-        spentLabel: "$240.00",
-        remainingLabel: "$60.00 remaining",
-        usedPercent: 80,
-        month: "2026-10",
-        status: "Near limit",
-        emailNotifications: false,
-    },
-    {
-        id: "other",
-        category: "Other",
-        amount: "400.00",
-        budgetLabel: "$400.00",
-        spentLabel: "$100.00",
-        remainingLabel: "$300.00 remaining",
-        usedPercent: 25,
-        month: "2026-10",
-        status: "On track",
-        emailNotifications: false,
-    },
-];
-
+import { useCategoryBudgetContext, useTransactionContext } from "@/app/(protected)/context";
+import { getBudgetPercentage, getBudgetStatus, getCategorySpending, getRemainingBudget } from "@/lib/budgetHelpers";
 
 const statusStyles = {
-    "On track": {
+    //"On track": {
+        "under_budget": {
         badge: "bg-[#e5f3ec] text-[#28664f]",
         bar: "bg-[#3f8068]",
         text: "text-[#28664f]",
     },
-    "Near limit": {
+    //"Near limit": {
+        "approaching_budget": {
         badge: "bg-[#fff3dc] text-[#9a6500]",
         bar: "bg-[#e5ab32]",
         text: "text-[#9a6500]",
     },
-    "Over budget": {
+    //"Over budget": {
+        "over_budget": {
         badge: "bg-[#fce8eb] text-[#b53648]",
         bar: "bg-[#d94c5c]",
         text: "text-[#b53648]",
     },
+
+
+        no_budget:{ //should not be possible to trigger this, just here to get around compiler errors.
+        badge: "bg-[#e5f3ec] text-[#28664f]",
+        bar: "bg-[#3f8068]",
+        text: "text-[#28664f]",
+    }
 };
 
 export default function CategoryBudgetList() {
     const {categoryBudget, setCategoryBudget} = useCategoryBudgetContext();
+    const {transactionsArr} = useTransactionContext();
 
     const [formMode, setFormMode] = useState<
         "create" | "edit" | "remove" | null
@@ -110,7 +60,7 @@ export default function CategoryBudgetList() {
 
 
     const [selectedBudget, setSelectedBudget] =
-        useState<CategoryBudget | null>(null);
+        useState<categoryBudget | null>(null);
 
     const dialogRef = useRef<HTMLDialogElement>(null);
     const formRef = useRef<HTMLFormElement>(null);
@@ -124,7 +74,7 @@ export default function CategoryBudgetList() {
 
     function openPopup(
         mode: "create" | "edit" | "remove",
-        budget: CategoryBudget | null = null,
+        budget: categoryBudget | null = null,
     ) {
         setSelectedBudget(budget);
         setFormMode(mode);
@@ -185,12 +135,11 @@ export default function CategoryBudgetList() {
             </div>
 
             <div className="grid gap-4 px-5 pb-5 md:grid-cols-2">
-                {categoryBudgets.map((budget) => {
-                    const styles = statusStyles[budget.status];
+                {categoryBudget ? categoryBudget.map((budget) => {
+                    const styles = statusStyles[getBudgetStatus(getCategorySpending(transactionsArr, budget.categoryId, budget.month.getMonth(), budget.month.getFullYear()), budget.amount)]
 
-                    //can use getBudgetStatus here
                     const StatusIcon =
-                        budget.status === "On track" 
+                        getBudgetStatus(getCategorySpending(transactionsArr, budget.categoryId, budget.month.getMonth(), budget.month.getFullYear()), budget.amount) === "under_budget" 
                             ? CheckCircle2
                             : AlertTriangle;
 
@@ -203,11 +152,11 @@ export default function CategoryBudgetList() {
                             <div className="flex items-start justify-between gap-3">
                                 <div className="min-w-0">
                                     <h3 className="text-lg font-semibold text-[#17324d]">
-                                        {budget.category} {/*getCategoryName */}
+                                        {getCategoryName(budget.categoryId)} 
                                     </h3>
 
                                     <p className="mt-1 text-sm text-[#4e7069]">
-                                        Budget: {budget.budgetLabel} {/*amount */}
+                                        Budget: {formatMoney(budget.amount)}
                                     </p>
                                 </div>
 
@@ -215,7 +164,7 @@ export default function CategoryBudgetList() {
                                     <button
                                         type="button"
                                         onClick={() => openPopup("edit", budget)}
-                                        aria-label={`Edit ${budget.category} budget`} //getCategoryName
+                                        aria-label={`Edit ${getCategoryName(budget.categoryId)} budget`}
                                         className="rounded-lg p-2 text-[#4e7069] hover:bg-[#e5efeb]"
                                     >
                                         <Pencil
@@ -227,7 +176,7 @@ export default function CategoryBudgetList() {
                                     <button
                                         type="button"
                                         onClick={() => openPopup("remove", budget)}
-                                        aria-label={`Remove ${budget.category} budget`} //getCategoryName
+                                        aria-label={`Remove ${getCategoryName(budget.categoryId)} budget`}
                                         className="rounded-lg p-2 text-[#d94c5c] hover:bg-[#fce8eb]"
                                     >
                                         <Trash2
@@ -246,38 +195,38 @@ export default function CategoryBudgetList() {
                                     aria-hidden="true"
                                     className="h-3.5 w-3.5"
                                 />
-                                {budget.status} {/*getBudgetStatus */}
+                                {getBudgetStatus(getCategorySpending(transactionsArr, budget.categoryId, budget.month.getMonth(), budget.month.getFullYear()), budget.amount)}
                             </span>
 
 
                             <div className="mt-4">
                                 <div className="mb-2 flex flex-wrap items-center justify-between gap-2 text-sm">
                                     <p className="text-[#4e7069]">
-                                        {budget.spentLabel} spent {/*getMonthlySpending */}
+                                        {formatMoney(getCategorySpending(transactionsArr, budget.categoryId, budget.month.getMonth(), budget.month.getFullYear()))} spent 
                                     </p>
 
                                     <p className="font-semibold text-[#17324d]">
-                                        {budget.usedPercent}% used {/*getBudgetPercentage */}
+                                        {parseInt(String(getBudgetPercentage(getCategorySpending(transactionsArr, budget.categoryId, budget.month.getMonth(), budget.month.getFullYear()), budget.amount)))}% used
                                     </p>
                                 </div>
 
                                 <div
                                     role="progressbar"
-                                    aria-label={`${budget.category} budget used`} //getCategoryName
+                                    aria-label={`${getCategoryName(budget.categoryId)} budget used`}
                                     aria-valuemin={0}
                                     aria-valuemax={100}
-                                    aria-valuenow={Math.min( //parseInt(getBudgetPercentage)
-                                        budget.usedPercent,
+                                    aria-valuenow={Math.min(
+                                        getBudgetPercentage(getCategorySpending(transactionsArr, budget.categoryId, budget.month.getMonth(), budget.month.getFullYear()), budget.amount),
                                         100,
                                     )}
-                                    aria-valuetext={`${budget.usedPercent}% used; ${budget.remainingLabel}`}
+                                    aria-valuetext={`${parseInt(String(getBudgetPercentage(getCategorySpending(transactionsArr, budget.categoryId, budget.month.getMonth(), budget.month.getFullYear()), budget.amount)))}% used; ${formatMoney(getRemainingBudget(getCategorySpending(transactionsArr, budget.categoryId, budget.month.getMonth(), budget.month.getFullYear()), budget.amount))}`}
                                     className="h-2.5 overflow-hidden rounded-full bg-[#edf3ef]"
                                 >
                                     <div
                                         className={`h-full rounded-full ${styles.bar}`}
                                         style={{
                                             width: `${Math.min(
-                                                budget.usedPercent, //`${parseInt(getBudgetPercentage)}%`
+                                                parseInt(String(getBudgetPercentage(getCategorySpending(transactionsArr, budget.categoryId, budget.month.getMonth(), budget.month.getFullYear()), budget.amount))),
                                                 100,
                                             )}%`,
                                         }}
@@ -287,7 +236,7 @@ export default function CategoryBudgetList() {
                                 <p
                                     className={`mt-2 text-sm font-medium ${styles.text}`}
                                 >
-                                    {budget.remainingLabel} {/*`${getRemaining} remaining` */}
+                                    {formatMoney(getRemainingBudget(getCategorySpending(transactionsArr, budget.categoryId, budget.month.getMonth(), budget.month.getFullYear()), budget.amount))}
                                 </p>
                             </div>
 
@@ -296,14 +245,16 @@ export default function CategoryBudgetList() {
                                 <Bell aria-hidden="true" className="h-4 w-4" />
 
                                 <span>
-                                    {budget.emailNotifications //replace with categoryBudget.emailNotifications enabled
+                                    {budget.emailsEnabled
                                         ? "Email notifications enabled"
                                         : "Email notifications off"}
                                 </span>
                             </div>
                         </article>
                     );
-                })}
+                })
+            :
+            "CategoryBudgetsNull"}
             </div>
 
 
@@ -344,7 +295,7 @@ export default function CategoryBudgetList() {
                         <p className="text-sm leading-6 text-[#4e7069]">
                             Are you sure you want to remove the budget for{" "}
                             <strong className="text-[#17324d]">
-                                {selectedBudget?.category}
+                                {getCategoryName(selectedBudget?.categoryId ?? 1)}
                             </strong>
                             ?
                         </p>
@@ -393,7 +344,7 @@ export default function CategoryBudgetList() {
                                     required
                                     defaultValue={
                                         isEditing
-                                            ? selectedBudget?.category ?? ""
+                                            ? [...expenseCategories, ...incomeCategories].at(selectedBudget?.categoryId ?? 1)?.value//doesn't work for some reason.
                                             : ""
                                     }
                                     className={fieldClass}
@@ -436,7 +387,7 @@ export default function CategoryBudgetList() {
                                 />
                             </div>
 
-                            <div>
+                            {/* <div>   This input should not be needed unless i'm misunderstanding how this is going to work. I'll leave the code in case I'm wrong.
                                 <label
                                     htmlFor={`${formId}-month`}
                                     className="block text-sm font-medium text-[#4e7069]"
@@ -451,12 +402,12 @@ export default function CategoryBudgetList() {
                                     required
                                     defaultValue={
                                         isEditing
-                                            ? selectedBudget?.month ?? ""
+                                            ? new Intl.DateTimeFormat("sv-SE", {year: "numeric", month: "2-digit"}).format(selectedBudget?.month ?? new Date("1970-01"))
                                             : ""
                                     }
                                     className={fieldClass}
                                 />
-                            </div>
+                            </div> */}
 
                             <div className="flex items-start gap-3">
                                 <input
@@ -465,7 +416,7 @@ export default function CategoryBudgetList() {
                                     type="checkbox"
                                     defaultChecked={
                                         isEditing
-                                            ? selectedBudget?.emailNotifications ?? false
+                                            ? selectedBudget?.emailsEnabled ?? false
                                             : false
                                     }
                                     className="mt-1 h-4 w-4 shrink-0 accent-[#3f8068]"
