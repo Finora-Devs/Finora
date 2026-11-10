@@ -5,7 +5,7 @@ import {Bell, Pencil, Plus, X} from "lucide-react";
 import { useMonthlyBudgetContext, useTransactionContext } from "@/app/(protected)/context";
 import { formatMoney } from "@/lib/types_and_helpers";
 import { getBudgetPercentage, getBudgetStatus, getMonthlySpending, getRemainingBudget } from "@/lib/budgetHelpers";
-import { updateMonthlyBudget } from "@/lib/clientFunctions";
+import { createMonthlyBudget, updateMonthlyBudget } from "@/lib/clientFunctions";
 
 export default function MonthlyBudget() {
 
@@ -38,10 +38,32 @@ export default function MonthlyBudget() {
       setActionError("Please enter a valid amount greater than 0.");
       return;
     }
-    setActionError(null);
+
+    setSaving(true);
+    setActionError("");
+    try
+    {
+      if(monthlyBudget)
+      {
+        await updateMonthlyBudget(formData, monthlyBudget.id, setMonthlyBudget);
+      }
+      else
+      {
+        await createMonthlyBudget(formData, setMonthlyBudget);
+      }
+    }
+    catch
+    {
+      setActionError("Unable to save this budget. Please try again")
+    }
+    finally
+    {
+      setFormMode(null);
+      setSaving(false);
+    }
   }
 
-  const monthlySending = monthlyBudget
+  const monthlySpending = monthlyBudget
     ? getMonthlySpending(
       transactionsArr,
       monthlyBudget.month.getMonth() + 1,
@@ -51,7 +73,7 @@ export default function MonthlyBudget() {
 
   const budgetPercentage = monthlyBudget
     ? getBudgetPercentage(
-      monthlySending,
+      monthlySpending,
       monthlyBudget.amount)
     : 0;
 

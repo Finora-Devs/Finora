@@ -16,11 +16,13 @@ import {
     expenseCategories,
     fieldClass,
     formatMoney,
+    getCategoryID,
     getCategoryName,
     incomeCategories,
 } from "@/lib/types_and_helpers";
 import { useCategoryBudgetContext, useTransactionContext } from "@/app/(protected)/context";
 import { getBudgetPercentage, getBudgetStatus, getCategorySpending, getRemainingBudget } from "@/lib/budgetHelpers";
+import { createCategoryBudget, deleteCategoryBudget, updateCategoryBudget } from "@/lib/clientFunctions";
 
 const statusStyles = {
     //"On track": {
@@ -78,6 +80,71 @@ export default function CategoryBudgetList() {
     ) {
         setSelectedBudget(budget);
         setFormMode(mode);
+    }
+
+    const [actionError, setActionError] = useState<string | null>(null);
+    const [saving, setSaving] = useState(false);
+
+    const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        if (saving) return;
+        const form = e.currentTarget
+        const formData = new FormData(form);
+        const amount = formData.get("amount");
+        if (!Number.isFinite(Number(amount)) || Number(amount) <= 0) {
+          setActionError("Please enter a valid amount greater than 0.");
+          return;
+        }
+    
+        setSaving(true);
+        setActionError("");
+        try
+        {
+            //if the user has selected a budget, update it.
+            if(selectedBudget)
+            {
+                await updateCategoryBudget(formData, selectedBudget.id, setCategoryBudget);
+            }
+            else
+            {
+                //if they have not selected a budget and try to enter a category they already have, update that budget. Otherwise, add a new budget.
+                const duplicateBudget = categoryBudget?.find((budget) => budget.categoryId === getCategoryID(formData.get("category") as string)) ?? null;
+
+                duplicateBudget ? 
+                    await updateCategoryBudget(formData, duplicateBudget.id, setCategoryBudget) 
+                    :
+                    await createCategoryBudget(formData, setCategoryBudget);
+            }
+        }
+        catch
+        {
+          setActionError("Unable to save this budget. Please try again.")
+        }
+        finally
+        {
+          setFormMode(null);
+          setSaving(false);
+        }
+      }
+
+    const handleRemove = async () => {
+        if(saving || !selectedBudget) return;
+
+        setSaving(true);
+        setActionError("");
+        try
+        {
+            await deleteCategoryBudget(selectedBudget.id, setCategoryBudget);
+        }
+        catch
+        {
+            setActionError("Unable to remove this budget. Please try again.")
+        }
+        finally
+        {
+            setSaving(false);
+            setFormMode(null);
+        }
     }
 
     useEffect(() => {
@@ -283,6 +350,7 @@ export default function CategoryBudgetList() {
                     <button
                         type="button"
                         onClick={() => setFormMode(null)}
+                        disabled={saving}
                         aria-label="Close category budget popup"
                         className="rounded-lg p-2 text-[#7185a1] hover:bg-[#f7faf8]"
                     >
@@ -304,6 +372,7 @@ export default function CategoryBudgetList() {
                             <button
                                 ref={cancelRef}
                                 type="button"
+                                disabled={saving}
                                 onClick={() => setFormMode(null)}
                                 className="rounded-lg border border-[#dce7e2] px-4 py-2.5 text-sm font-semibold text-[#4e7069] hover:bg-[#f7faf8]"
                             >
@@ -313,20 +382,20 @@ export default function CategoryBudgetList() {
                             {/* UI only.*/}
                             <button
                                 type="button"
+                                disabled={saving}
                                 className="rounded-lg bg-[#d94c5c] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#bd3c4b]"
+                                onClick={(e) => {
+                                    e.preventDefault; handleRemove()
+                                }}
                             >
-                                Remove Budget
+                                {saving ? "Removing..." : "Remove Budget"}
                             </button>
                         </div>
                     </div>
                 ) : (
                     <form
                         ref={formRef}
-                        onSubmit={(event) => {
-                            event.preventDefault();
-
-                            // UI only
-                        }}
+                        onSubmit={handleSubmit}
                     >
                         <div className="space-y-5 p-5">
                             <div>
@@ -341,10 +410,11 @@ export default function CategoryBudgetList() {
                                     ref={categoryRef}
                                     id={`${formId}-category`}
                                     name="category"
+                                    disabled={saving}
                                     required
                                     defaultValue={
                                         isEditing
-                                            ? [...expenseCategories, ...incomeCategories].at(selectedBudget?.categoryId ?? 1)?.value//doesn't work for some reason.
+                                            ? [...incomeCategories, ...expenseCategories][selectedBudget?.categoryId ?? 0].value //broken. Does not overwrite default value of "".
                                             : ""
                                     }
                                     className={fieldClass}
@@ -373,6 +443,7 @@ export default function CategoryBudgetList() {
                                     id={`${formId}-amount`}
                                     name="amount"
                                     type="number"
+                                    disabled={saving}
                                     inputMode="decimal"
                                     min="0.01"
                                     step="0.01"
@@ -414,6 +485,7 @@ export default function CategoryBudgetList() {
                                     id={`${formId}-notifications`}
                                     name="emailNotifications"
                                     type="checkbox"
+                                    disabled={saving}
                                     defaultChecked={
                                         isEditing
                                             ? selectedBudget?.emailsEnabled ?? false
@@ -435,6 +507,7 @@ export default function CategoryBudgetList() {
                         <div className="flex flex-wrap justify-end gap-3 border-t border-[#e5ebe8] bg-[#f7faf8] p-5">
                             <button
                                 type="button"
+                                disabled={saving}
                                 onClick={() => setFormMode(null)}
                                 className="rounded-lg border border-[#dce7e2] bg-white px-4 py-2.5 text-sm font-semibold text-[#4e7069] hover:bg-[#e5efeb]"
                             >
@@ -443,9 +516,11 @@ export default function CategoryBudgetList() {
 
                             <button
                                 type="submit"
+                                disabled={saving}
                                 className="rounded-lg bg-[#008f73] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#00765f]"
                             >
-                                {isEditing
+                                {saving ? "Saving..." : 
+                                    isEditing
                                     ? "Save Changes"
                                     : "Create Category Budget"}
                             </button>

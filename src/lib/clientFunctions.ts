@@ -401,7 +401,7 @@ export async function createMonthlyBudget(formData: FormData, setMonthlyBudget: 
     const supabase = await createClient();
 
     const amount = parseFloat(formData.get("amount") as string);
-    const emailsEnabled: boolean = formData.get("emailNotifications") as string === "true";
+    const emailsEnabled: boolean = formData.get("emailNotifications") as string === "on";
 
 
     const {data: { user }, error: userError} = await supabase.auth.getUser();//Replace later with user context
@@ -446,7 +446,7 @@ export async function createCategoryBudget(formData: FormData, setCategoryBudget
     const supabase = await createClient();
 
     const amount = parseFloat(formData.get("amount") as string);
-    const emailsEnabled: boolean = formData.get("emailNotifications") as string === "true";
+    const emailsEnabled: boolean = formData.get("emailNotifications") as string === "on";
     const category: string = formData.get("category") as string;
 
     const {data: { user }, error: userError} = await supabase.auth.getUser();//Replace later with user context
@@ -489,7 +489,7 @@ export async function updateMonthlyBudget(formData: FormData, monthlyBudgetID: n
     const supabase = await createClient();
 
     const amount: number = parseFloat(formData.get("amount") as string);
-    const emailsEnabled: boolean = formData.get("emailNotifications") === "true" ? true : false;
+    const emailsEnabled: boolean = formData.get("emailNotifications") as string === "on";
 
     const {data, error} = await supabase
     .from("monthly_budgets")
@@ -533,7 +533,7 @@ export async function updateCategoryBudget(formData: FormData, categoryBudgetID:
     const supabase = await createClient();
 
     const amount: number = parseFloat(formData.get("amount") as string);
-    const emailsEnabled: boolean = formData.get("emailNotifications") === "true";
+    const emailsEnabled: boolean = formData.get("emailNotifications") as string === "on";
     const categoryName: string = formData.get("category") as string;
 
     const categoryID: number = getCategoryID(categoryName);
@@ -567,18 +567,17 @@ export async function updateCategoryBudget(formData: FormData, categoryBudgetID:
 
     setCategoryBudget((prev) => {
         //prev should never be null beacause this is an update function. if prev is null, update should not be called.
-        return [...prev!, getAsCategoryBudget(data)] as categoryBudget[];
-        // return prev?.map((budget) => 
-        // {
-        //     if(budget.id === categoryBudgetID)
-        //     {
-        //         return getAsCategoryBudget(data);
-        //     }
-        //     else
-        //     {
-        //         return budget;
-        //     }
-        // })
+        return prev!.map((budget) => 
+        {
+            if(budget.id === categoryBudgetID)
+            {
+                return getAsCategoryBudget(data) as categoryBudget;
+            }
+            else
+            {
+                return budget;
+            }
+        })
     })
 }
 
