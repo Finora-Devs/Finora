@@ -5,6 +5,8 @@
  * for functions that initialize data in the browser using the database, go to serverFunctions.ts
  */
 
+import { getBudgetStatus, getCategorySpending, getMonthlySpending } from "./budgetHelpers";
+
 export type Transaction =
 {
    id: number,
@@ -434,4 +436,5 @@ return {
          lastEmailForApproaching: categoryBudget.last_approaching_email_at ? new Date(categoryBudget.last_approaching_email_at) : null,
          lastEmailForExceeding: categoryBudget.last_exceeded_email_at ? new Date(categoryBudget.last_exceeded_email_at) : null,
       } as categoryBudget
-   }
+}
+

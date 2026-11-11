@@ -4,7 +4,7 @@
  * for functions that initialize data in the browser using the database, go to serverFunctions.ts
  */
 import {createClient} from "./client";
-import {CATEGORY_NAME, Transaction, recurringTransaction, monthlyBudget, getAsMonthlyBudget, categoryBudget, getAsCategoryBudget, getCategoryID} from "./types_and_helpers";
+import {Transaction, recurringTransaction, monthlyBudget, getAsMonthlyBudget, categoryBudget, getAsCategoryBudget, getCategoryID} from "./types_and_helpers";
 import type {Dispatch, SetStateAction } from "react";
 import { Database } from "@/types/database.types";
 import { SupabaseClient } from "@supabase/supabase-js";

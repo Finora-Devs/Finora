@@ -368,6 +368,12 @@ export default function CategoryBudgetList() {
                             ?
                         </p>
 
+                        {actionError && (
+                        <p role="alert" className="mt-3 text-sm text-[#b53648]">
+                            {actionError}
+                        </p>
+                        )}
+
                         <div className="mt-6 flex flex-wrap justify-end gap-3">
                             <button
                                 ref={cancelRef}
@@ -501,6 +507,12 @@ export default function CategoryBudgetList() {
                                     Email me when spending approaches or exceeds
                                     this category budget.
                                 </label>
+
+                                {actionError && (
+                                    <p role="alert" className="text-sm text-[#b53648]">
+                                    {actionError}
+                                    </p>
+                                )}
                             </div>
                         </div>
 
