@@ -1,3 +1,5 @@
+import RecurringSummaryCards from "./RecurringSummaryCards";
+import RecurringExpenseList from "./RecurringExpenseList";
 export default function RecurringPage() {
     return (
         <section className="space-y-6">
@@ -29,8 +31,9 @@ export default function RecurringPage() {
             </div>
 
             {/* Recurring expense summary cards will go here */}
-
+                    <RecurringSummaryCards/>
             {/* Recurring expense list will go here */}
+                    <RecurringExpenseList />
         </section>
     );
 }
