@@ -40,8 +40,7 @@ export async function insertTransaction(formData: FormData, setTransactionsArr: 
     {
         if(frequency !== "once")
         {
-            //does not return null.
-            const recurringTransaction = await insertRecurringTransaction(name, amount, transaction_date, frequency, description, category_id, user, supabase, setTransactionsArr);//will be null in the event of an error.
+            const recurringTransaction = await insertRecurringTransaction(name, amount, transaction_date, frequency, description, category_id, user, supabase, setTransactionsArr);
             updateRecurringTransaction(recurringTransaction, supabase, user, setTransactionsArr);
         }
         else

@@ -114,14 +114,14 @@ export function checkForWarnings(/*monthlyBudget: monthlyBudget, categoryBudgets
         switch(getBudgetStatus(getMonthlySpending(transactionsArr, monthlyBudget.month.getMonth(), monthlyBudget.month.getFullYear()), monthlyBudget.amount))
         {
             case "over_budget":
-                if(monthlyBudget.lastEmailForExceeding && monthlyBudget.lastEmailForExceeding.getTime() - currentDate.getTime() > twoWeeksInMilli)
+                if((monthlyBudget.lastEmailForExceeding === null || monthlyBudget.lastEmailForExceeding.getTime() - currentDate.getTime() > twoWeeksInMilli) && monthlyBudget.emailsEnabled) //if the user has never recieved an email OR it has been two weeks since the last email AND emails are enabled
                 {
                     //send over budget email
                 }
                 //change warning state for monthly budget to over budget to trigger warning popup.
                 break;
             case "approaching_budget":
-                if(monthlyBudget.lastEmailForApproaching && monthlyBudget.lastEmailForApproaching.getTime() - currentDate.getTime() > twoWeeksInMilli)
+                if((monthlyBudget.lastEmailForApproaching === null || monthlyBudget.lastEmailForApproaching.getTime() - currentDate.getTime() > twoWeeksInMilli) && monthlyBudget.emailsEnabled)
                 {
                     //send approaching budget email
                 }
@@ -140,14 +140,14 @@ export function checkForWarnings(/*monthlyBudget: monthlyBudget, categoryBudgets
             switch(getBudgetStatus(getCategorySpending(transactionsArr, budget.categoryId, budget.month.getMonth(), budget.month.getFullYear()), budget.amount))
             {
                 case "over_budget":
-                    if(budget.lastEmailForExceeding && budget.lastEmailForExceeding.getTime() - currentDate.getTime() > twoWeeksInMilli)
+                    if((budget.lastEmailForExceeding === null || budget.lastEmailForExceeding.getTime() - currentDate.getTime() > twoWeeksInMilli) && budget.emailsEnabled) //if the user has never recieved an email OR it has been two weeks since the last email AND emails are enabled
                     {
                         //send over budget email
                     }
                     //change warning state for category budget to over budget to trigger warning popup.
                     break;
                 case "approaching_budget":
-                    if(budget.lastEmailForApproaching && budget.lastEmailForApproaching.getTime() - currentDate.getTime() > twoWeeksInMilli)
+                    if((budget.lastEmailForApproaching === null || budget.lastEmailForApproaching.getTime() - currentDate.getTime() > twoWeeksInMilli && budget.emailsEnabled)) //if the user has never recieved an email OR it has been two weeks since the last email AND emails are enabled
                     {
                         //send approaching budget email
                     }
