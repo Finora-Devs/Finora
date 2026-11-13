@@ -15,17 +15,17 @@ function isInMonth(
     month: number,
     year: number
 ): boolean {
-    const date = new Date(transactionDate);
+    const date = new Date(transactionDate + "T00:00:00"); //force interpret date as local
     return (
         !Number.isNaN(date.getTime()) &&
-        date.getMonth() === month &&
+        date.getMonth() === month && //ultimately comparing two Date objects getMonth result, no need to add or subtract anything.
         date.getFullYear() === year
     );
 }
 
 export function getMonthlySpending(
     transaction: Transaction[],
-    month: number,
+    month: number, //do not pass as getMonth() +1. months are 0 indexed, but if you are comparing the getMonth of two date objects that doesn't matter because they are both 0 indexed
     year: number
 ): number {
     return transaction

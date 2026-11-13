@@ -68,21 +68,14 @@ export async function insertTransaction(formData: FormData, setTransactionsArr: 
                         transaction_type
                         )
                         `)
-                if(data)
-                {
-                    setTransactionsArr(prev => [...prev, (data[0] as Transaction)]) //updates the local copy of the transaction list.
-                    console.log("updated local array");
-                    console.log(`new transaction category id: ${category_id}`);
-                }
-
                 if(error)
                 {
                     console.error("Supabase insert error: ", error);
                     throw error;
                 }
-                else
+                if(data)
                 {
-                    console.log("Insert Success");
+                    setTransactionsArr(prev => [...prev, (data[0] as Transaction)]) //updates the local copy of the transaction list.
                 }
         }
     }
@@ -178,15 +171,14 @@ async function insertRecurringTransaction(  name: string,
                     description,
                     is_active
                 `)
-        if(data)
-        {
-            console.log("not null")
-            return data[0];
-        }
-        else if(error)
+        if(error)
         {
             console.error("Supabase insert reccuring error: ", error);
             throw error;
+        }
+        else if(data)
+        {
+            return data[0];
         }
         else
         {
@@ -256,38 +248,32 @@ export async function deleteTransaction(transactionID: number, setTransactionsAr
 {
     const supabase = await createClient();
 
-    //if transaction is repeating, also delete all related transactions
-
     const error = await supabase
         .from('transactions')
         .delete()
-        .eq('id', transactionID)//should delete whatever transaction has the matching id.
+        .eq('id', transactionID); //should delete whatever transaction has the matching id.
 
     if(error.error)
     {
-        console.error("Supabase delete error: ", error); //may need to handle if the user tries to delete something twice before the first deletion goes through
+        console.error("Supabase delete error (deleteTransaction", error);
         throw error;
     }
      else
     {
-        console.log("delete Success");
         setTransactionsArr(prev =>
             prev.filter((transaction) => transaction.id !== transactionID)) //updates the transaction array to remove the deleted transaction.
     }
 }
 
 
-//need to switch to take a form, id, and setTransactionArr.
-//changes an existing transaction with new information. untested
+//changes an existing transaction with new information.
 export async function updateTransaction(formData: FormData, transactionID: number, setTransactionArr: Dispatch<SetStateAction<Transaction[]>>)
 {
     const supabase = await createClient();
 
-    //if transaction is repeating, also update recurring transaction and all related transactions.
-
     const name = formData.get("name") as string;
     const amount = formData.get("amount") as unknown as number;
-    const transaction_date = formData.get("date") as string; //updating this would probably break recurring transactions...
+    const transaction_date = formData.get("date") as string;
     const frequency = formData.get("frequency") as string; 
     let description = formData.get("notes") as string | null;
     const category = formData.get("category") as string;
@@ -336,7 +322,7 @@ export async function updateTransaction(formData: FormData, transactionID: numbe
         }
         else
         {
-            setTransactionArr(arr => //will (hopefully) update the transaction array to reflect the new state of the database.
+            setTransactionArr(arr => //updates the transaction array to reflect the new state of the database.
                 {
                     return arr.map(prev => 
                         {
@@ -373,7 +359,7 @@ export async function updateUserName(firstName: string, lastName: string)//may n
         {
             first_name: firstName,
             last_name: lastName,
-            updated_at: new Intl.DateTimeFormat("sv-SE").format(currentDate)//this will probably give the date time in local time. need to look into that.
+            updated_at: currentDate.toISOString() //This will return a timestamp of the current date.
         }).select(`
                     first_name,
                     last_name
@@ -415,7 +401,7 @@ export async function createMonthlyBudget(formData: FormData, setMonthlyBudget: 
     .insert(
         {
             user_id: user.id,
-            budget_month: new Intl.DateTimeFormat("sv-SE", {timeZone: "UTC"}).format(new Date()),
+            budget_month: new Intl.DateTimeFormat("sv-SE").format(new Date()), //returns local time
             budget_amount: amount,
             email_notifications_enabled: emailsEnabled,
             last_approaching_email_at: null,
@@ -461,7 +447,7 @@ export async function createCategoryBudget(formData: FormData, setCategoryBudget
         {
             user_id: user.id,
             category_id: getCategoryID(category),
-            budget_month: new Intl.DateTimeFormat("sv-SE", {timeZone: "UTC"}).format(new Date()),
+            budget_month: new Intl.DateTimeFormat("sv-SE").format(new Date()), //returns local time
             budget_amount: amount,
             email_notifications_enabled: emailsEnabled,
             last_approaching_email_at: null,

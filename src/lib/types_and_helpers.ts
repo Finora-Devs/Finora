@@ -196,7 +196,7 @@ export function getCategoryName(categoryID: number)
             matchCategory = true;
          }
 
-         const transactionDate = new Date(`${transaction.transaction_date}T00:00:00`);
+         const transactionDate = new Date(`${transaction.transaction_date}T00:00:00`); //force interpret date as local
 
          if(include)
          {
@@ -221,7 +221,7 @@ export function getCategoryName(categoryID: number)
                   {
                      return -1;
                   }
-                  else if(new Date(a.transaction_date) < new Date(b.transaction_date))
+                  else if(new Date(a.transaction_date +"T00:00:00") < new Date(b.transaction_date + "T00:00:00"))
                   {
                      return 1;
                   }
@@ -373,11 +373,11 @@ export function getAsMonthlyBudget(monthlyBudget: {
 
    return {
             id: monthlyBudget.id,
-            month: new Date(monthlyBudget.budget_month),
+            month: new Date(monthlyBudget.budget_month + "T00:00:00"), //force interpret date as local
             amount: monthlyBudget.budget_amount,
             emailsEnabled: monthlyBudget.email_notifications_enabled,
-            lastEmailForApproaching: monthlyBudget.last_approaching_email_at ? new Date(monthlyBudget.last_approaching_email_at) : null,
-            lastEmailForExceeding: monthlyBudget.last_exceeded_email_at ? new Date(monthlyBudget.last_exceeded_email_at) : null,
+            lastEmailForApproaching: monthlyBudget.last_approaching_email_at ? new Date(monthlyBudget.last_approaching_email_at + "T00:00:00") : null,
+            lastEmailForExceeding: monthlyBudget.last_exceeded_email_at ? new Date(monthlyBudget.last_exceeded_email_at + "T00:00:00") : null,
             } as monthlyBudget
 }
 
@@ -401,11 +401,11 @@ export function getAsCategoryBudgets(categoryBudgets: {
             return {
                 id: prev.id,
                 categoryId: prev.category_id,
-                month: new Date(prev.budget_month),
+                month: new Date(prev.budget_month + "T00:00:00"), //force interpret date as local
                 amount: prev.budget_amount,
                 emailsEnabled: prev.email_notifications_enabled,
-                lastEmailForApproaching: prev.last_approaching_email_at ? new Date(prev.last_approaching_email_at) : null,
-                lastEmailForExceeding: prev.last_exceeded_email_at ? new Date(prev.last_exceeded_email_at) : null,
+                lastEmailForApproaching: prev.last_approaching_email_at ? new Date(prev.last_approaching_email_at + "T00:00:00") : null, //force interpret date as local
+                lastEmailForExceeding: prev.last_exceeded_email_at ? new Date(prev.last_exceeded_email_at + "T00:00:00") : null, //force interpret date as local
             } as categoryBudget
         }) as categoryBudget[];
 }
@@ -430,11 +430,11 @@ export function getAsCategoryBudget(categoryBudget: {
 return {
          id: categoryBudget.id,
          categoryId: categoryBudget.category_id,
-         month: new Date(categoryBudget.budget_month),
+         month: new Date(categoryBudget.budget_month + "T00:00:00"),
          amount: categoryBudget.budget_amount,
          emailsEnabled: categoryBudget.email_notifications_enabled,
-         lastEmailForApproaching: categoryBudget.last_approaching_email_at ? new Date(categoryBudget.last_approaching_email_at) : null,
-         lastEmailForExceeding: categoryBudget.last_exceeded_email_at ? new Date(categoryBudget.last_exceeded_email_at) : null,
+         lastEmailForApproaching: categoryBudget.last_approaching_email_at ? new Date(categoryBudget.last_approaching_email_at + "T00:00:00") : null, //force interpret date as local
+         lastEmailForExceeding: categoryBudget.last_exceeded_email_at ? new Date(categoryBudget.last_exceeded_email_at + "T00:00:00") : null, //force interpret date as local
       } as categoryBudget
 }
 
