@@ -2,7 +2,7 @@
 import {createContext, useContext, useState, useEffect} from "react"//probably need to remember what each of these do in case dr. nicholson asks.
 import type { ReactNode, Dispatch, SetStateAction } from "react";
 import { categoryBudget, monthlyBudget, Transaction } from "@/lib/types_and_helpers";
-import { getCategoryBudgets, getMonthlyBudget, getTransactions, getUser } from "@/lib/serverFunctions"
+import { getCategoryBudgets, getMonthlyBudget, getSavingGoals, getTransactions, getUser } from "@/lib/serverFunctions"
 import { User } from "@supabase/supabase-js";
 import MonthlyBudget from "@/components/budget/MonthlyBudget";
 
@@ -248,4 +248,49 @@ export function useCategoryBudgetContext(): {categoryBudget: categoryBudget[] | 
     const {categoryBudget, setCategoryBudget} = context;
     
     return {categoryBudget, setCategoryBudget};
+}
+
+const SavingGoalsContext = createContext<{savingGoals: SavingGoal[], setSavingGoals: Dispatch<SetStateAction<SavingGoal[]>>} | null>(null);
+
+export function SavingGoalsContextProvider({children}: ProtectedLayoutProps)
+{
+    const [savingGoals, setSavingGoals] = useState<SavingGoal[]>([]);
+
+    useEffect(() =>
+    { 
+        const loadSavingGoals = async () => 
+        {
+            try
+            {
+                setSavingGoals(await getSavingGoals());
+            }
+            catch (error)
+            {
+                console.error("Saving goals retrieval failure", error);
+                throw error;
+            }
+        }
+        loadSavingGoals();
+    }, []) //runs only once.
+
+    return(
+        <SavingGoalsContext value={{savingGoals, setSavingGoals}}>
+            {children}
+        </SavingGoalsContext>
+    );
+}
+
+export function useSavingGoalsContext()
+{
+    const context = useContext(SavingGoalsContext);
+
+    //does the context exist, even if the value of monthlyBudget is null. I think.
+    if(!context)
+    {
+        throw new Error("useSavingGoalsContext must be use within a SavingGoalsContext")
+    }
+
+    const {savingGoals, setSavingGoals} = context;
+    
+    return {savingGoals, setSavingGoals};
 }

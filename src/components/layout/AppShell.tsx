@@ -9,6 +9,7 @@ import TopBar from "./TopBar";
 import {
     CategoryBudgetContextProvider,
     MonthlyBudgetContextProvider,
+    SavingGoalsContextProvider,
     TransactionContextProvider,
     UserContextProvider,
 } from "../../app/(protected)/context";
@@ -73,6 +74,7 @@ export default function AppShell({ children }: AppShellProps) {
 
     return (
         <UserContextProvider>
+            <SavingGoalsContextProvider>
             <CategoryBudgetContextProvider>
             <MonthlyBudgetContextProvider>
             <TransactionContextProvider>
@@ -133,6 +135,7 @@ export default function AppShell({ children }: AppShellProps) {
             </TransactionContextProvider>
             </MonthlyBudgetContextProvider>
             </CategoryBudgetContextProvider>
+            </SavingGoalsContextProvider>
         </UserContextProvider>
     );
 }
