@@ -4,7 +4,7 @@
  * for functions that initialize data in the browser using the database, go to serverFunctions.ts
  */
 import {createClient} from "./client";
-import {CATEGORY_NAME, Transaction, recurringTransaction, monthlyBudget, getAsMonthlyBudget, categoryBudget, getAsCategoryBudget} from "./types_and_helpers";
+import {Transaction, recurringTransaction, monthlyBudget, getAsMonthlyBudget, categoryBudget, getAsCategoryBudget, getCategoryID} from "./types_and_helpers";
 import type {Dispatch, SetStateAction } from "react";
 import { Database } from "@/types/database.types";
 import { SupabaseClient } from "@supabase/supabase-js";
@@ -23,53 +23,7 @@ export async function insertTransaction(formData: FormData, setTransactionsArr: 
     let description = formData.get("notes") as string | null;
     const category = formData.get("category") as string;
 
-    let category_id;
-    
-    switch(category)
-    {
-        case CATEGORY_NAME.EMPLOYMENT:
-            category_id = 1;
-            break;
-        case CATEGORY_NAME.FINANCIAL_AID:
-            category_id = 2;
-            break;
-        case CATEGORY_NAME.SCHOLARSHIPS:
-            category_id = 3;
-            break;
-        case CATEGORY_NAME.ALLOWANCE:
-            category_id = 4;
-            break;
-        case CATEGORY_NAME.SELF_EMPLOYMENT:
-            category_id = 5;
-            break;
-        case CATEGORY_NAME.OTHER_INCOME:
-            category_id = 6;
-            break;
-        case CATEGORY_NAME.FOOD:
-            category_id = 7;
-            break;
-        case CATEGORY_NAME.HOUSING:
-            category_id = 8;
-            break;
-        case CATEGORY_NAME.TRANSPORTATION:
-            category_id = 9;
-            break
-        case CATEGORY_NAME.TUITION:
-            category_id = 10;
-            break;
-        case CATEGORY_NAME.ENTERTAINMENT:
-            category_id = 11;
-            break;
-        case CATEGORY_NAME.UTILITIES:
-            category_id = 12;
-            break;
-        case CATEGORY_NAME.SUBSCRIPTIONS:
-            category_id = 13;
-            break;
-        default:
-            category_id = 14;
-            break;
-    } 
+    let category_id = getCategoryID(category);
 
     if(!description)
     {
@@ -86,8 +40,7 @@ export async function insertTransaction(formData: FormData, setTransactionsArr: 
     {
         if(frequency !== "once")
         {
-            //does not return null.
-            const recurringTransaction = await insertRecurringTransaction(name, amount, transaction_date, frequency, description, category_id, user, supabase, setTransactionsArr);//will be null in the event of an error.
+            const recurringTransaction = await insertRecurringTransaction(name, amount, transaction_date, frequency, description, category_id, user, supabase, setTransactionsArr);
             updateRecurringTransaction(recurringTransaction, supabase, user, setTransactionsArr);
         }
         else
@@ -339,53 +292,7 @@ export async function updateTransaction(formData: FormData, transactionID: numbe
     let description = formData.get("notes") as string | null;
     const category = formData.get("category") as string;
 
-    let category_id;
-    
-    switch(category)
-    {
-        case CATEGORY_NAME.EMPLOYMENT:
-            category_id = 1;
-            break;
-        case CATEGORY_NAME.FINANCIAL_AID:
-            category_id = 2;
-            break;
-        case CATEGORY_NAME.SCHOLARSHIPS:
-            category_id = 3;
-            break;
-        case CATEGORY_NAME.ALLOWANCE:
-            category_id = 4;
-            break;
-        case CATEGORY_NAME.SELF_EMPLOYMENT:
-            category_id = 5;
-            break;
-        case CATEGORY_NAME.OTHER_INCOME:
-            category_id = 6;
-            break;
-        case CATEGORY_NAME.FOOD:
-            category_id = 7;
-            break;
-        case CATEGORY_NAME.HOUSING:
-            category_id = 8;
-            break;
-        case CATEGORY_NAME.TRANSPORTATION:
-            category_id = 9;
-            break
-        case CATEGORY_NAME.TUITION:
-            category_id = 10;
-            break;
-        case CATEGORY_NAME.ENTERTAINMENT:
-            category_id = 11;
-            break;
-        case CATEGORY_NAME.UTILITIES:
-            category_id = 12;
-            break;
-        case CATEGORY_NAME.SUBSCRIPTIONS:
-            category_id = 13;
-            break;
-        default:
-            category_id = 14;
-            break;
-    } 
+    let category_id = getCategoryID(category);
 
     if(!description)
     {
@@ -490,20 +397,98 @@ export async function updateUserName(firstName: string, lastName: string)//may n
 
 export async function createMonthlyBudget(formData: FormData, setMonthlyBudget: Dispatch<SetStateAction<monthlyBudget | null>>)
 {
-    
-}
-export async function createCategoryBudget(formData: FormData, setCategoryBudget: Dispatch<SetStateAction<categoryBudget[] | null>>)
-{
-    
+    const supabase = await createClient();
+
+    const amount = parseFloat(formData.get("amount") as string);
+    const emailsEnabled: boolean = formData.get("emailNotifications") as string === "on";
+
+
+    const {data: { user }, error: userError} = await supabase.auth.getUser();//Replace later with user context
+    if(userError || user === null)
+    {
+        console.error("user authentication failed", userError);
+        throw userError;
+    }
+
+    const {data, error} = await supabase
+    .from("monthly_budgets")
+    .insert(
+        {
+            user_id: user.id,
+            budget_month: new Intl.DateTimeFormat("sv-SE", {timeZone: "UTC"}).format(new Date()),
+            budget_amount: amount,
+            email_notifications_enabled: emailsEnabled,
+            last_approaching_email_at: null,
+            last_exceeded_email_at: null,
+        })
+    .select(`
+            id,
+            budget_month,
+            budget_amount,
+            email_notifications_enabled,
+            last_approaching_email_at,
+            last_exceeded_email_at
+            `)
+    .limit(1)
+    .maybeSingle();
+
+    if(error)
+    {
+        console.error("Supabase insert error (createMonthlyBudget)", error);
+        throw error;
+    }
+    setMonthlyBudget(getAsMonthlyBudget(data));
 }
 
-//untested. should update the given monthly budget with the FormData, then use the updated information to update the local monthlyBudgetContext variable.
+export async function createCategoryBudget(formData: FormData, setCategoryBudget: Dispatch<SetStateAction<categoryBudget[] | null>>)
+{
+    const supabase = await createClient();
+
+    const amount = parseFloat(formData.get("amount") as string);
+    const emailsEnabled: boolean = formData.get("emailNotifications") as string === "on";
+    const category: string = formData.get("category") as string;
+
+    const {data: { user }, error: userError} = await supabase.auth.getUser();//Replace later with user context
+    if(userError || user === null)
+    {
+        console.error("user authentication failed", userError);
+        throw userError;
+    }
+
+    const {data, error} = await supabase
+    .from("category_budgets")
+    .insert(
+        {
+            user_id: user.id,
+            category_id: getCategoryID(category),
+            budget_month: new Intl.DateTimeFormat("sv-SE", {timeZone: "UTC"}).format(new Date()),
+            budget_amount: amount,
+            email_notifications_enabled: emailsEnabled,
+            last_approaching_email_at: null,
+            last_exceeded_email_at: null
+        })
+    .select()
+    .limit(1)
+    .maybeSingle();
+
+    if(error)
+    {
+        console.error("Supabase insert error (createCategoryBudget)", error)
+        throw error;
+    }
+
+    //getAsCategoryBudget cannot return null unless there was an insert error, which will terminate the function before reaching the return statement.
+    setCategoryBudget((prev) => {
+        return (prev ? [...prev, getAsCategoryBudget(data)!] : [getAsCategoryBudget(data)!]);
+    })
+}
+
 export async function updateMonthlyBudget(formData: FormData, monthlyBudgetID: number, setMonthlyBudget: Dispatch<SetStateAction<monthlyBudget | null>>)
 {
     const supabase = await createClient();
 
     const amount: number = parseFloat(formData.get("amount") as string);
-    const emailsEnabled: boolean = formData.get("emailNotifications") === "true" ? true : false;
+    const emailsEnabled: boolean = formData.get("emailNotifications") as string === "on";
 
     const {data, error} = await supabase
     .from("monthly_budgets")
@@ -536,6 +521,8 @@ export async function updateMonthlyBudget(formData: FormData, monthlyBudgetID: n
  * Takes a FormData object and a categoryBudget id, then uses a supabase update to update the budget with the given id. The changed
  * record is then used to update the local categoryBudgetContext variable via @param setCategoryBudget.
  * 
+ * DO NOT CALL THIS FUNCTION IF THE ARRAY IS NULL!!
+ * 
  * @param formData 
  * @param categoryBudgetID 
  * @param setCategoryBudget 
@@ -545,10 +532,10 @@ export async function updateCategoryBudget(formData: FormData, categoryBudgetID:
     const supabase = await createClient();
 
     const amount: number = parseFloat(formData.get("amount") as string);
-    const emailsEnabled: boolean = formData.get("emailNotifications") === "true" ? true : false;
+    const emailsEnabled: boolean = formData.get("emailNotifications") as string === "on";
     const categoryName: string = formData.get("category") as string;
 
-    const categoryID: number = 0;//needs to be updated to get the category id from the name.
+    const categoryID: number = getCategoryID(categoryName);
 
     const {data, error} = await supabase
     .from("category_budgets")
@@ -568,6 +555,8 @@ export async function updateCategoryBudget(formData: FormData, categoryBudgetID:
             last_approaching_email_at,
             last_exceeded_email_at
             `)
+    .limit(1)
+    .maybeSingle();
 
     if(error)
     {
@@ -575,16 +564,55 @@ export async function updateCategoryBudget(formData: FormData, categoryBudgetID:
         throw error;
     }
 
-    // setCategoryBudget((prev) => {
-    //     return [];
-    // })
+    setCategoryBudget((prev) => {
+        //prev should never be null beacause this is an update function. if prev is null, update should not be called.
+        return prev!.map((budget) => 
+        {
+            if(budget.id === categoryBudgetID)
+            {
+                return getAsCategoryBudget(data) as categoryBudget;
+            }
+            else
+            {
+                return budget;
+            }
+        })
+    })
 }
 
-export async function deleteMonthlyBudget(monthlyBudgetID: number, setMonthlyBudget: Dispatch<SetStateAction<monthlyBudget | null>>)
-{
+    //turns out we don't need this. don't even know why I wrote it.
+// export async function deleteMonthlyBudget(monthlyBudgetID: number, setMonthlyBudget: Dispatch<SetStateAction<monthlyBudget | null>>)
+// {
+//     const supabase = await createClient();   
 
-}
-export async function deleteCategoryBudget(CategoryBudgetID: number, setCategoryBudget: Dispatch<SetStateAction<categoryBudget[] | null>>)
-{
+//     const {error} = await supabase
+//     .from("monthly_budgets")
+//     .delete()
+//     .eq("id", monthlyBudgetID);
 
+//     if(error)
+//     {
+//         console.error("Supabase delete error (deleteMonthlyBudget)", error);
+//         throw error;
+//     }
+// }
+export async function deleteCategoryBudget(categoryBudgetID: number, setCategoryBudget: Dispatch<SetStateAction<categoryBudget[] | null>>)
+{
+    const supabase = await createClient();
+
+    const {error} = await supabase
+    .from("category_budgets")
+    .delete()
+    .eq("id", categoryBudgetID);
+
+    if(error)
+    {
+        console.error("Supabase delete error (deleteCategoryBudget)", error);
+        throw error;
+    }
+
+    setCategoryBudget((prev) =>
+    {
+        return prev?.filter((budget) => budget.id !== categoryBudgetID) ?? null;
+    })
 }

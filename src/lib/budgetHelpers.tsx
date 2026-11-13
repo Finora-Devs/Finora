@@ -1,4 +1,5 @@
-import type { Transaction } from "@/lib/types_and_helpers";
+import { useCategoryBudgetContext, useMonthlyBudgetContext, useTransactionContext } from "@/app/(protected)/context";
+import type { categoryBudget, monthlyBudget, Transaction } from "@/lib/types_and_helpers";
 
 export type BudgetAmounts = {
   amount: number;
@@ -17,7 +18,7 @@ function isInMonth(
     const date = new Date(transactionDate);
     return (
         !Number.isNaN(date.getTime()) &&
-        date.getMonth() + 1 === month &&
+        date.getMonth() === month &&
         date.getFullYear() === year
     );
 }
@@ -91,4 +92,71 @@ export function getRemainingBudget(
     budgetAmount: number
 ): number {
     return budgetAmount - spending;
+}
+
+
+/**
+ * Checks if any budgets have the approaching_budget or over_budget status, and if they do, triggers the appropriate warning.
+ */
+export function checkForWarnings(/*monthlyBudget: monthlyBudget, categoryBudgets: categoryBudget[], transactionsArr: Transaction[]*/)
+{
+
+    const {monthlyBudget} = useMonthlyBudgetContext()
+    const {categoryBudget: categoryBudgets} = useCategoryBudgetContext()
+    const {transactionsArr} = useTransactionContext()
+
+
+    const twoWeeksInMilli = 1_209_600_000;
+    const currentDate: Date = new Date();
+
+    if(monthlyBudget)
+    {
+        switch(getBudgetStatus(getMonthlySpending(transactionsArr, monthlyBudget.month.getMonth(), monthlyBudget.month.getFullYear()), monthlyBudget.amount))
+        {
+            case "over_budget":
+                if((monthlyBudget.lastEmailForExceeding === null || monthlyBudget.lastEmailForExceeding.getTime() - currentDate.getTime() > twoWeeksInMilli) && monthlyBudget.emailsEnabled) //if the user has never recieved an email OR it has been two weeks since the last email AND emails are enabled
+                {
+                    //send over budget email
+                }
+                //change warning state for monthly budget to over budget to trigger warning popup.
+                break;
+            case "approaching_budget":
+                if((monthlyBudget.lastEmailForApproaching === null || monthlyBudget.lastEmailForApproaching.getTime() - currentDate.getTime() > twoWeeksInMilli) && monthlyBudget.emailsEnabled)
+                {
+                    //send approaching budget email
+                }
+                //change warning state for monthly budget to over budget to trigger warning popup.
+                break;
+            default:
+                //change warning state for monthly budget to under budget.
+                break;
+        }
+    }
+
+    if(categoryBudgets)
+    {
+        categoryBudgets.forEach((budget) =>
+        {
+            switch(getBudgetStatus(getCategorySpending(transactionsArr, budget.categoryId, budget.month.getMonth(), budget.month.getFullYear()), budget.amount))
+            {
+                case "over_budget":
+                    if((budget.lastEmailForExceeding === null || budget.lastEmailForExceeding.getTime() - currentDate.getTime() > twoWeeksInMilli) && budget.emailsEnabled) //if the user has never recieved an email OR it has been two weeks since the last email AND emails are enabled
+                    {
+                        //send over budget email
+                    }
+                    //change warning state for category budget to over budget to trigger warning popup.
+                    break;
+                case "approaching_budget":
+                    if((budget.lastEmailForApproaching === null || budget.lastEmailForApproaching.getTime() - currentDate.getTime() > twoWeeksInMilli && budget.emailsEnabled)) //if the user has never recieved an email OR it has been two weeks since the last email AND emails are enabled
+                    {
+                        //send approaching budget email
+                    }
+                    //change warning state for category budget to over budget to trigger warning popup.
+                    break;
+                default:
+                    //change warning state for category budget to under budget.
+                    break;
+            }
+        })
+    }
 }

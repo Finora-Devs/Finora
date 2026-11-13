@@ -2,12 +2,16 @@
 
 import {useEffect, useId, useRef, useState}from "react";
 import {Bell, Pencil, Plus, X} from "lucide-react";
-import { useMonthlyBudgetContext } from "@/app/(protected)/context";
+import { useMonthlyBudgetContext, useTransactionContext } from "@/app/(protected)/context";
+import { formatMoney } from "@/lib/types_and_helpers";
+import { getBudgetPercentage, getBudgetStatus, getMonthlySpending, getRemainingBudget } from "@/lib/budgetHelpers";
+import { createMonthlyBudget, updateMonthlyBudget } from "@/lib/clientFunctions";
 
 export default function MonthlyBudget() {
 
   //will contain the most recent budget if it exists, or null if it doesn't. Has not been tested yet.
   const {monthlyBudget, setMonthlyBudget} = useMonthlyBudgetContext();
+  const {transactionsArr} = useTransactionContext();
  
   const [formMode, setFormMode] = useState<
     "create" | "edit" | null
@@ -18,13 +22,61 @@ export default function MonthlyBudget() {
   const formRef = useRef<HTMLFormElement>(null);
   const amountRef = useRef<HTMLInputElement>(null);
 
-  
   const formId = useId();
 
-  
   const isEditing = formMode === "edit";
 
- 
+  const [saving, setSaving] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (saving) return;
+    const form = e.currentTarget
+    const formData = new FormData(form);
+    const amount = formData.get("amount");
+    if (!Number.isFinite(Number(amount)) || Number(amount) <= 0) {
+      setActionError("Please enter a valid amount greater than 0.");
+      return;
+    }
+
+    setSaving(true);
+    setActionError("");
+    try
+    {
+      if(monthlyBudget)
+      {
+        await updateMonthlyBudget(formData, monthlyBudget.id, setMonthlyBudget);
+      }
+      else
+      {
+        await createMonthlyBudget(formData, setMonthlyBudget);
+      }
+    }
+    catch
+    {
+      setActionError("Unable to save this budget. Please try again")
+    }
+    finally
+    {
+      setFormMode(null);
+      setSaving(false);
+    }
+  }
+
+  const monthlySpending = monthlyBudget
+    ? getMonthlySpending(
+      transactionsArr,
+      monthlyBudget.month.getMonth() + 1,
+      monthlyBudget.month.getFullYear()
+    )
+    : 0;
+
+  const budgetPercentage = monthlyBudget
+    ? getBudgetPercentage(
+      monthlySpending,
+      monthlyBudget.amount)
+    : 0;
+
   useEffect(() => {
     if (!formMode) return;
 
@@ -94,12 +146,15 @@ export default function MonthlyBudget() {
             </p>
 
             <p className="mt-2 text-3xl font-bold text-[#17324d]">
-              $2,000.00
+              {monthlyBudget ? formatMoney(monthlyBudget.amount) : "$0.00"}
             </p>
           </div>
 
           <span className="rounded-full bg-[#e5f3ec] px-3 py-1 text-xs font-semibold text-[#28664f]">
-            On track
+            {monthlyBudget ? 
+            getBudgetStatus(getMonthlySpending(transactionsArr, monthlyBudget.month.getMonth() + 1, monthlyBudget.month.getFullYear()), monthlyBudget.amount)
+            : 
+            "No budget"}
           </span>
         </div>
 
@@ -107,11 +162,17 @@ export default function MonthlyBudget() {
         <div>
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2 text-sm">
             <p className="text-[#4e7069]">
-              $1,000.00 spent
+              {monthlyBudget ? 
+              `${formatMoney(getMonthlySpending(transactionsArr, monthlyBudget.month.getMonth(), monthlyBudget.month.getFullYear()))} spent`
+              :
+              ""}
             </p>
 
             <p className="font-semibold text-[#17324d]">
-              50% used
+              {monthlyBudget ? 
+              `${parseInt(String(getBudgetPercentage(getMonthlySpending(transactionsArr, monthlyBudget.month.getMonth(), monthlyBudget.month.getFullYear()), monthlyBudget.amount)))}% used`
+              :
+              ""}
             </p>
           </div>
 
@@ -120,18 +181,21 @@ export default function MonthlyBudget() {
             aria-label="Monthly budget used"
             aria-valuemin={0}
             aria-valuemax={100}
-            aria-valuenow={50}
+            aria-valuenow={Math.min(budgetPercentage, 100)}
             className="h-3 overflow-hidden rounded-full bg-[#edf3ef]"
           >
             <div
               className="h-full rounded-full bg-[#3f8068]"
-              style={{ width: "50%" }}
+              style={{ width: `${Math.min(100, budgetPercentage)}%` }}
             />
           </div>
 
           <p className="mt-2 text-sm text-[#4e7069]">
             <span className="font-semibold text-[#28664f]">
-              $1,000.00
+              {monthlyBudget ? 
+              formatMoney(getRemainingBudget(getMonthlySpending(transactionsArr, monthlyBudget.month.getMonth(), monthlyBudget.month.getFullYear()), monthlyBudget.amount))
+              :
+              "$0"}
             </span>{" "}
             remaining this month.
           </p>
@@ -145,7 +209,10 @@ export default function MonthlyBudget() {
           />
 
           <p className="text-sm text-[#4e7069]">
-            Email notifications are enabled for this budget.
+            {monthlyBudget ? 
+            monthlyBudget.emailsEnabled ? "Email notifications are enabled for this budget." : "Email notifications are not enabled for this budget."
+            :
+            ""}
           </p>
         </div>
       </div>
@@ -179,6 +246,7 @@ export default function MonthlyBudget() {
 
           <button
             type="button"
+            disabled={saving}
             onClick={() => setFormMode(null)}
             aria-label="Close budget form"
             className="rounded-lg p-2 text-[#7185a1] hover:bg-[#f7faf8]"
@@ -189,11 +257,7 @@ export default function MonthlyBudget() {
 
         <form
           ref={formRef}
-          onSubmit={(event) => {
-            event.preventDefault();
-
-          
-          }}
+          onSubmit={handleSubmit}
         >
           <div className="space-y-5 p-5">
             <div>
@@ -213,7 +277,8 @@ export default function MonthlyBudget() {
                 step="0.01"
                 inputMode="decimal"
                 required
-                defaultValue={isEditing ? "2000.00" : ""}
+                disabled={saving}
+                defaultValue={isEditing && monthlyBudget ? monthlyBudget.amount.toString() : ""}
                 placeholder="Enter budget amount"
                 className="mt-2 w-full rounded-lg border border-[#dce7e2] bg-[#f7faf8] px-3 py-2.5 text-sm text-[#17324d] placeholder:text-[#7185a1] focus:border-[#3f8068] focus:outline-none"
               />
@@ -224,7 +289,8 @@ export default function MonthlyBudget() {
                 id={`${formId}-notifications`}
                 name="emailNotifications"
                 type="checkbox"
-                defaultChecked={isEditing}
+                defaultChecked={isEditing && monthlyBudget ? monthlyBudget.emailsEnabled : false}
+                disabled={saving}
                 className="mt-1 h-4 w-4 shrink-0 accent-[#3f8068]"
               />
 
@@ -236,11 +302,17 @@ export default function MonthlyBudget() {
                 my monthly budget.
               </label>
             </div>
+
+            {actionError && (
+              <p role="alert" className="mx-5 mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">{actionError}</p>
+            )}
+
           </div>
 
           <div className="flex flex-wrap justify-end gap-3 border-t border-[#e5ebe8] bg-[#f7faf8] p-5">
             <button
               type="button"
+              disabled={saving}
               onClick={() => setFormMode(null)}
               className="rounded-lg border border-[#dce7e2] bg-white px-4 py-2.5 text-sm font-semibold text-[#4e7069] hover:bg-[#e5efeb]"
             >
@@ -249,9 +321,10 @@ export default function MonthlyBudget() {
 
             <button
               type="submit"
+              disabled={saving}
               className="rounded-lg bg-[#008f73] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#00765f]"
             >
-              {isEditing ? "Save Changes" : "Create Budget"}
+              {saving ? "Saving..." : isEditing ? "Save Changes" : "Create Budget"}
             </button>
           </div>
         </form>

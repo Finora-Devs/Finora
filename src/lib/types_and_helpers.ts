@@ -5,6 +5,8 @@
  * for functions that initialize data in the browser using the database, go to serverFunctions.ts
  */
 
+import { getBudgetStatus, getCategorySpending, getMonthlySpending } from "./budgetHelpers";
+
 export type Transaction =
 {
    id: number,
@@ -144,6 +146,21 @@ export const expenseCategories = [
    "focus:outline-none focus:ring-2 focus:ring-[#3f8068]/20";
 export const labelClass = "block text-sm font-medium text-[#4e7069]";
 
+/**
+ * Takes a string @param categoryName and returns the id which corrosponds to that name
+ */
+export function getCategoryID(categoryName: string)
+{
+   return [...incomeCategories, ...expenseCategories].findIndex((item) => categoryName.toLowerCase() === item.value.toLowerCase()) + 1 //indexes start at zero, but Ids start at one
+}
+/**
+ * 
+ * takes a number @param categoryID and return the category label which corrosponds to that name.
+ */
+export function getCategoryName(categoryID: number)
+{
+   return [...incomeCategories, ...expenseCategories].at(categoryID-1)?.name; //category ids start at one, but indexes start at zero.
+}
 
 /**
   * @param search a string. if not empty, only return transactions which have names that match the string
@@ -364,7 +381,7 @@ export function getAsMonthlyBudget(monthlyBudget: {
             } as monthlyBudget
 }
 
-export function getAsCategoryBudget(categoryBudgets: {
+export function getAsCategoryBudgets(categoryBudgets: {
     id: number;
     category_id: number;
     budget_month: string;
@@ -392,3 +409,32 @@ export function getAsCategoryBudget(categoryBudgets: {
             } as categoryBudget
         }) as categoryBudget[];
 }
+/**
+ * Does the same thing as getCategoryBudgets, but with a single object instead of an array.
+ */
+export function getAsCategoryBudget(categoryBudget: {
+    id: number;
+    category_id: number;
+    budget_month: string;
+    budget_amount: number;
+    email_notifications_enabled: boolean;
+    last_approaching_email_at: string | null;
+    last_exceeded_email_at: string | null;
+} | null)
+{
+   if(!categoryBudget)
+   {
+      return null;
+   }
+
+return {
+         id: categoryBudget.id,
+         categoryId: categoryBudget.category_id,
+         month: new Date(categoryBudget.budget_month),
+         amount: categoryBudget.budget_amount,
+         emailsEnabled: categoryBudget.email_notifications_enabled,
+         lastEmailForApproaching: categoryBudget.last_approaching_email_at ? new Date(categoryBudget.last_approaching_email_at) : null,
+         lastEmailForExceeding: categoryBudget.last_exceeded_email_at ? new Date(categoryBudget.last_exceeded_email_at) : null,
+      } as categoryBudget
+}
+

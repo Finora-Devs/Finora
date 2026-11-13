@@ -8,7 +8,7 @@
 import { Database } from "@/types/database.types";
 import {createClient} from "./server"
 import { SupabaseClient, User } from '@supabase/supabase-js'
-import {Transaction, monthlyBudget, categoryBudget, recurringTransaction, getAsMonthlyBudget, getAsCategoryBudget} from "./types_and_helpers";
+import {Transaction, monthlyBudget, categoryBudget, recurringTransaction, getAsMonthlyBudget, getAsCategoryBudgets} from "./types_and_helpers";
 
 /**
  * Gets all transactions for the current user.
@@ -293,6 +293,15 @@ export async function getCategoryBudgets()
         return null;
     }
     
+    //find the first of the latest budget month and the first of the following month.
+    const monthStart = `${dateData.budget_month.substring(0, 7)}-01`;
+    const nextMonthDate = new Date(`${dateData.budget_month.substring(0, 7)}-01T00:00:00`);
+
+    nextMonthDate.setMonth(nextMonthDate.getMonth() + 1);
+
+    const nextMonth = nextMonthDate.toISOString().substring(0, 10);
+
+
     //retrieve all categoryBudgets with the most recent month (retrieved above)
     const {data: categoryBudgets, error: categoryBudgetsError} = await supabase
     .from("category_budgets")
@@ -305,7 +314,9 @@ export async function getCategoryBudgets()
             last_approaching_email_at,
             last_exceeded_email_at
             `)
-    .eq("budget_month", dateData.budget_month);
+    //.eq("budget_month", dateData.budget_month);
+    .lt("budget_month", nextMonth)
+    .gte("budget_month", monthStart);
 
     //If there was an error with retrieval
     if(categoryBudgetsError)
@@ -321,7 +332,7 @@ export async function getCategoryBudgets()
     if(currentDate.getMonth() === budgetDate.getMonth() && currentDate.getFullYear() === budgetDate.getFullYear()) //compare month and year of date, without the time.
     {
         //map all the date strings returned by supabase to date objcets, then return the resulting array as a categoryBudget array.
-        return getAsCategoryBudget(categoryBudgets);
+        return getAsCategoryBudgets(categoryBudgets);
     }
     else
     {
@@ -375,7 +386,7 @@ export async function getCategoryBudgets()
             throw insertError;
         }
 
-        return getAsCategoryBudget(newCategoryBudgets);
+        return getAsCategoryBudgets(newCategoryBudgets);
     }
 }
 
