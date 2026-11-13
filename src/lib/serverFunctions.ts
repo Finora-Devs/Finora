@@ -460,3 +460,42 @@ export async function getUserBalance()
         console.log("There was no error or data returned by getUserBalance");
     }
 }
+
+/**
+ * Retrieves all saving goals from the database.
+ * @returns an array containing all saving goals as SavingGoal[].
+ */
+export async function getSavingGoals()
+{
+    const supabase = await createClient();
+
+    const {data, error} = await supabase
+    .from("savings_goals")
+    .select(`
+            id,
+            name,
+            target_amount,
+            current_amount,
+            target_date,
+            description,
+            priority
+            `);
+
+    if(error)
+    {
+        console.error("Error retrieving saving goals", error);
+        throw error;
+    }
+    return data.map((goal) => 
+    {
+        return {
+            id: goal.id,
+            name: goal.name,
+            targetAmount: goal.target_amount,
+            currentAmount: goal.current_amount,
+            targetDate: new Date(`${goal.target_date}T00:00:00`), //force use local time.
+            description: goal.description,
+            priority: goal.priority
+        } as SavingGoal;
+    }) as SavingGoal[];
+}

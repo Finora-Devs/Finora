@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 
 import { fieldClass } from "@/lib/types_and_helpers";
+import { useSavingGoalsContext } from "@/app/(protected)/context";
 
 type Goal = {
     id: string;
@@ -113,6 +114,9 @@ const goals: Goal[] = [
 ];
 
 export default function GoalList() {
+
+    const {savingGoals, setSavingGoals} = useSavingGoalsContext();
+
     const [view, setView] = useState<"Active" | "Completed">("Active");
     const [popupMode, setPopupMode] = useState<PopupMode | null>(null);
     const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null);
