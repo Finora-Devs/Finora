@@ -602,3 +602,81 @@ export async function deleteCategoryBudget(categoryBudgetID: number, setCategory
         return prev?.filter((budget) => budget.id !== categoryBudgetID) ?? null;
     })
 }
+
+/**
+ * DO NOT RUN YET. UNFINISHED.
+ */
+export async function updateSavingGoal(formData: FormData, savingGoalID: number, savingGoals: SavingGoal[], setSavingGoals: Dispatch<SetStateAction<SavingGoal[] | null>>)
+{
+    const name = formData.get("name") as string;
+    const description = formData.get("description") as string;
+    const targetAmount = Number(formData.get("targetAmount") as string);
+    const deadline = formData.get("deadline") as string;
+    const highestPriority = formData.get("highestPriority") as string === "on";
+
+    //if set highest priority, priority = the highest priority, otherwise, priority = current goal priority.
+    const priority = highestPriority ? 1 : savingGoals.find((goal) => {if (goal.id === savingGoalID) return goal;})?.priority;
+
+    //updateGoals() should update the priority of other goals that will be affected by the change the goal's priority. 
+
+    const supabase = await createClient();
+
+    //update goal with matching ID and return that goal as data.
+    const {data, error} = await supabase
+    .from("savings_goals")
+    .update(
+        {
+            name: name,
+            target_amount: targetAmount,
+            target_date: deadline,
+            description: description,
+            priority: priority,
+        }
+    )
+    .eq("id", savingGoalID)
+    .select(`
+            id,
+            name,
+            target_amount,
+            current_amount,
+            target_date,
+            description,
+            priority
+            `)
+    .limit(1)
+    .maybeSingle();
+
+    if(error)
+    {
+        console.error("Supabase update error (updateSavingGoal)")
+        throw error;
+    }
+
+    if(data)
+        {
+            //check all elements of prev; if the id matches, return the updated goal, otherwise return the previous goal. sort the array by priority.
+            setSavingGoals((prev) => 
+                {
+                    return prev!.map((goal) => 
+                    {
+                        if(goal.id === savingGoalID)
+                        {
+                            return {
+                                    id: data.id,
+                                    name: data.name,
+                                    targetAmount: data.target_amount,
+                                    currentAmount: data.current_amount,
+                                    targetDate: new Date(`${data.target_date}T00:00:00`),
+                                    description: data.description,
+                                    priority: data.priority
+                                } as SavingGoal;
+                        }
+                        else
+                        {
+                            return goal;
+                        }
+                    }).sort((a, b) => a.priority - b.priority); //should return the array with the updated value sorted by priority.
+                });
+        }
+    
+}
