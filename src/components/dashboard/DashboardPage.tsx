@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { Caveat } from "next/font/google";
+import DashboardSummaryCards from "./DashboardSummaryCards";
 
 const quoteFont = Caveat({
     subsets: ["latin"],
@@ -105,7 +106,7 @@ export default function DashboardPage() {
             </div>
 
             {/* Dashboard summary cards will go here */}
-
+                <DashboardSummaryCards />
             {/* Dashboard overview panels will go here */}
         </section>
     );
