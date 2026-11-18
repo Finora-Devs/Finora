@@ -12,23 +12,8 @@ import {
     X,
 } from "lucide-react";
 
-import { fieldClass } from "@/lib/types_and_helpers";
-
-type Goal = {
-    id: string;
-    name: string;
-    description: string;
-    targetAmount: string;
-    targetLabel: string;
-    savedLabel: string;
-    remainingLabel: string;
-    progress: number;
-    deadline: string;
-    deadlineLabel: string;
-    status: "Active" | "Completed";
-    highestPriority: boolean;
-    activity: string[];
-};
+import { fieldClass, formatMoney, type SavingGoal } from "@/lib/types_and_helpers";
+import { useSavingGoalsContext } from "@/app/(protected)/context";
 
 type PopupMode =
     | "create"
@@ -40,7 +25,7 @@ type PopupMode =
     | "remove";
 
 // Sample goals for the UI.
-const goals: Goal[] = [
+/* const goals: Goal[] = [
     {
         id: "laptop",
         name: "New Laptop",
@@ -110,12 +95,15 @@ const goals: Goal[] = [
             "Goal marked completed.",
         ],
     },
-];
+]; */
 
 export default function GoalList() {
+
+    const {savingGoals, setSavingGoals} = useSavingGoalsContext();
+
     const [view, setView] = useState<"Active" | "Completed">("Active");
     const [popupMode, setPopupMode] = useState<PopupMode | null>(null);
-    const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null);
+    const [selectedGoal, setSelectedGoal] = useState<SavingGoal | null>(null);
 
     const dialogRef = useRef<HTMLDialogElement>(null);
     const formRef = useRef<HTMLFormElement>(null);
@@ -125,17 +113,21 @@ export default function GoalList() {
     const isGoalForm = popupMode === "create" || isEditing;
 
     // Only controls which sample cards are visible.
-    const visibleGoals = goals.filter((goal) => goal.status === view);
+    const visibleGoals = savingGoals.filter((goal) => 
+        view === "Completed"
+            ? goal.currentAmount >= goal.targetAmount
+            : goal.currentAmount < goal.targetAmount
+        ).sort((a, b) => a.priority - b.priority);
 
     // Options shown when completing or removing the highest-priority goal.
-    const replacementGoals = goals.filter(
+    const replacementGoals = savingGoals.filter(
         (goal) =>
-            goal.status === "Active" &&
+            goal.currentAmount < goal.targetAmount &&
             goal.id !== selectedGoal?.id
     );
 
     const needsReplacement =
-        selectedGoal?.highestPriority === true &&
+        selectedGoal?.priority === 1 &&
         (popupMode === "complete" || popupMode === "remove") &&
         replacementGoals.length > 0;
 
@@ -159,7 +151,7 @@ export default function GoalList() {
         remove: "Remove Goal",
     };
 
-    function openPopup(mode: PopupMode, goal: Goal | null = null) {
+    function openPopup(mode: PopupMode, goal: SavingGoal | null = null) {
         setSelectedGoal(goal);
         setPopupMode(mode);
     }
@@ -241,25 +233,30 @@ export default function GoalList() {
 
             {/* Goal cards */}
             <div className="grid gap-4 px-5 pb-5 xl:grid-cols-2">
-                {visibleGoals.map((goal) => (
-                    <article
+                {visibleGoals.map((goal) => {
+                    const isCompleted = goal.currentAmount >= goal.targetAmount;
+                    const progress = Math.min(100, (goal.currentAmount / goal.targetAmount) * 100);
+                    const remainingAmount = Math.max(0, goal.targetAmount - goal.currentAmount);
+                    const isHighPriority = goal.priority === 1;
+                    return (
+                        <article
                         key={goal.id}
                         className="min-w-0 rounded-xl border border-[#dce7e2] p-4 sm:p-5"
                     >
                         {/* Goal status */}
                         <div className="flex flex-wrap items-center gap-2">
                             <span className="inline-flex items-center gap-1 rounded-full bg-[#e5f3ec] px-2.5 py-1 text-xs font-medium text-[#28664f]">
-                                {goal.status === "Completed" && (
+                                {isCompleted && (
                                     <CheckCircle2
                                         aria-hidden="true"
                                         className="h-3.5 w-3.5"
                                     />
                                 )}
 
-                                {goal.status}
+                                {isCompleted ? "Completed" : "Active"}
                             </span>
 
-                            {goal.highestPriority && (
+                            {isHighPriority && (
                                 <span className="inline-flex items-center gap-1 rounded-full bg-[#fff3dc] px-2.5 py-1 text-xs font-medium text-[#9a6500]">
                                     <Star
                                         aria-hidden="true"
@@ -286,7 +283,7 @@ export default function GoalList() {
                                     Target
                                 </dt>
                                 <dd className="mt-1 font-semibold text-[#17324d]">
-                                    {goal.targetLabel}
+                                    {formatMoney(goal.targetAmount)}
                                 </dd>
                             </div>
 
@@ -295,7 +292,7 @@ export default function GoalList() {
                                     Saved
                                 </dt>
                                 <dd className="mt-1 font-semibold text-[#16834b]">
-                                    {goal.savedLabel}
+                                    {formatMoney(goal.currentAmount)}
                                 </dd>
                             </div>
 
@@ -304,7 +301,7 @@ export default function GoalList() {
                                     Remaining
                                 </dt>
                                 <dd className="mt-1 font-semibold text-[#17324d]">
-                                    {goal.remainingLabel}
+                                    {formatMoney(remainingAmount)}
                                 </dd>
                             </div>
                         </dl>
@@ -313,7 +310,7 @@ export default function GoalList() {
                         <div className="mt-5">
                             <div className="mb-2 flex justify-between gap-3 text-sm text-[#4e7069]">
                                 <span>Progress</span>
-                                <span>{goal.progress}%</span>
+                                <span>{progress.toFixed(0)}%</span>
                             </div>
 
                             <div
@@ -321,12 +318,12 @@ export default function GoalList() {
                                 aria-label={`${goal.name} savings progress`}
                                 aria-valuemin={0}
                                 aria-valuemax={100}
-                                aria-valuenow={goal.progress}
+                                aria-valuenow={progress}
                                 className="h-2.5 overflow-hidden rounded-full bg-[#edf3ef]"
                             >
                                 <div
                                     className="h-full rounded-full bg-[#3f8068]"
-                                    style={{ width: `${goal.progress}%` }}
+                                    style={{ width: `${progress}%` }}
                                 />
                             </div>
                         </div>
@@ -337,14 +334,18 @@ export default function GoalList() {
                                 aria-hidden="true"
                                 className="h-4 w-4 shrink-0"
                             />
-                            {goal.deadline
-                                ? `Target date: ${goal.deadlineLabel}`
-                                : goal.deadlineLabel}
+                            {goal.targetDate
+                                ? `Target date: ${goal.targetDate.toLocaleDateString("en-US", {
+                                      year: "numeric",
+                                      month: "long",
+                                      day: "numeric",
+                                  })}`
+                                : "No deadline set"}
                         </p>
 
                         {/* Goal actions */}
                         <div className="mt-5 flex flex-wrap gap-2 border-t border-[#dce7e2] pt-4">
-                            {goal.status === "Active" ? (
+                            {!isCompleted ? (
                                 <>
                                     <button
                                         type="button"
@@ -372,7 +373,7 @@ export default function GoalList() {
                                         Edit
                                     </button>
 
-                                    {!goal.highestPriority && (
+                                    {!isHighPriority && (
                                         <button
                                             type="button"
                                             onClick={() =>
@@ -428,25 +429,11 @@ export default function GoalList() {
                                 Remove
                             </button>
                         </div>
-
-                        {/* Sample goal activity */}
-                        <details className="mt-4 border-t border-[#dce7e2] pt-4">
-                            <summary className="cursor-pointer text-sm font-medium text-[#4e7069]">
-                                Recent activity
-                            </summary>
-
-                            <ul className="mt-3 space-y-2 text-sm text-[#4e7069]">
-                                {goal.activity.map((entry, index) => (
-                                    <li key={`${goal.id}-${index}`}>
-                                        {entry}
-                                    </li>
-                                ))}
-                            </ul>
-                        </details>
                     </article>
-                ))}
+                    );
+                })}
             </div>
-
+                
             {/* Empty view */}
             {visibleGoals.length === 0 && (
                 <p className="px-5 pb-5 text-sm text-[#4e7069]">
@@ -510,8 +497,11 @@ export default function GoalList() {
                                         type="text"
                                         required
                                         defaultValue={
-                                            isEditing
-                                                ? selectedGoal?.name ?? ""
+                                            isEditing && selectedGoal?.targetDate
+                                                ? [selectedGoal.targetDate.getFullYear(),
+                                                    String(selectedGoal.targetDate.getMonth() + 1).padStart(2, "0"),
+                                                    String(selectedGoal.targetDate.getDate()).padStart(2, "0")
+                                                ].join("-")
                                                 : ""
                                         }
                                         placeholder="For example, New Laptop"
@@ -582,7 +572,7 @@ export default function GoalList() {
                                         type="date"
                                         defaultValue={
                                             isEditing
-                                                ? selectedGoal?.deadline ?? ""
+                                                ? selectedGoal?.name ?? ""
                                                 : ""
                                         }
                                         className={fieldClass}
@@ -595,7 +585,7 @@ export default function GoalList() {
                                         type="checkbox"
                                         defaultChecked={
                                             isEditing
-                                                ? selectedGoal?.highestPriority ?? false
+                                                ? selectedGoal?.priority === 1
                                                 : false
                                         }
                                         className="mt-1 h-4 w-4 shrink-0 accent-[#3f8068]"
@@ -607,7 +597,7 @@ export default function GoalList() {
                                     </span>
                                 </label>
 
-                                {isEditing && selectedGoal?.highestPriority && (
+                                {isEditing && selectedGoal?.priority === 1 && (
                                     <p className="text-xs leading-5 text-[#4e7069]">
                                         To choose a different priority goal, use
                                         Set Highest Priority on another active goal.
@@ -646,12 +636,6 @@ export default function GoalList() {
                                 </div>
 
                                 <div>
-                                    <label
-                                        htmlFor={`${formId}-date`}
-                                        className="mb-1 block text-sm font-medium text-[#4e7069]"
-                                    >
-                                        Contribution date *
-                                    </label>
 
                                     <input
                                         id={`${formId}-date`}
@@ -663,12 +647,6 @@ export default function GoalList() {
                                 </div>
 
                                 <div>
-                                    <label
-                                        htmlFor={`${formId}-note`}
-                                        className="mb-1 block text-sm font-medium text-[#4e7069]"
-                                    >
-                                        Note (optional)
-                                    </label>
 
                                     <textarea
                                         id={`${formId}-note`}
@@ -712,8 +690,7 @@ export default function GoalList() {
                         {popupMode === "remove" && (
                             <p className="text-sm leading-6 text-[#4e7069]">
                                 Remove <strong>{selectedGoal?.name}</strong>?
-                                This will remove the goal and its recorded
-                                contribution history.
+                                This will permanently delete the savings goal.
                             </p>
                         )}
 

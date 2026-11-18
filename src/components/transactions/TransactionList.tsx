@@ -333,7 +333,7 @@ export default function TransactionList({searchDate, setSearchDate}: Props) {
                 const date = event.target.value.split("-");
                 if (/^\d{4}-\d{2}$/.test(event.target.value))
                   {
-                    setSearchDate(new Date(Number(date[0]), Number(date[1]) - 1));
+                    setSearchDate(new Date(Number(date[0]), Number(date[1]) - 1)); //need to force this to local time probably
                   }
               }}
             />

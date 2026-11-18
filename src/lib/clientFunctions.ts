@@ -68,21 +68,14 @@ export async function insertTransaction(formData: FormData, setTransactionsArr: 
                         transaction_type
                         )
                         `)
-                if(data)
-                {
-                    setTransactionsArr(prev => [...prev, (data[0] as Transaction)]) //updates the local copy of the transaction list.
-                    console.log("updated local array");
-                    console.log(`new transaction category id: ${category_id}`);
-                }
-
                 if(error)
                 {
                     console.error("Supabase insert error: ", error);
                     throw error;
                 }
-                else
+                if(data)
                 {
-                    console.log("Insert Success");
+                    setTransactionsArr(prev => [...prev, (data[0] as Transaction)]) //updates the local copy of the transaction list.
                 }
         }
     }
@@ -178,15 +171,14 @@ async function insertRecurringTransaction(  name: string,
                     description,
                     is_active
                 `)
-        if(data)
-        {
-            console.log("not null")
-            return data[0];
-        }
-        else if(error)
+        if(error)
         {
             console.error("Supabase insert reccuring error: ", error);
             throw error;
+        }
+        else if(data)
+        {
+            return data[0];
         }
         else
         {
@@ -200,8 +192,6 @@ async function updateRecurringTransaction(  recurringTransaction: recurringTrans
                                             user: any,
                                             setTransactionArr: Dispatch<SetStateAction<Transaction[]>>)
 {
-    //const supabase = await createClient();
-
     if(recurringTransaction && (recurringTransaction.description !== null))//description litterally cannot be null, but the null checker disagrees so I had to put this here.
     {
         let nextDueDates: Date[] = [new Date(`${recurringTransaction.next_due_date}T00:00:00`)]//initially the transaction date entered by the user
@@ -256,38 +246,32 @@ export async function deleteTransaction(transactionID: number, setTransactionsAr
 {
     const supabase = await createClient();
 
-    //if transaction is repeating, also delete all related transactions
-
     const error = await supabase
         .from('transactions')
         .delete()
-        .eq('id', transactionID)//should delete whatever transaction has the matching id.
+        .eq('id', transactionID); //should delete whatever transaction has the matching id.
 
     if(error.error)
     {
-        console.error("Supabase delete error: ", error); //may need to handle if the user tries to delete something twice before the first deletion goes through
+        console.error("Supabase delete error (deleteTransaction", error);
         throw error;
     }
      else
     {
-        console.log("delete Success");
         setTransactionsArr(prev =>
             prev.filter((transaction) => transaction.id !== transactionID)) //updates the transaction array to remove the deleted transaction.
     }
 }
 
 
-//need to switch to take a form, id, and setTransactionArr.
-//changes an existing transaction with new information. untested
+//changes an existing transaction with new information.
 export async function updateTransaction(formData: FormData, transactionID: number, setTransactionArr: Dispatch<SetStateAction<Transaction[]>>)
 {
     const supabase = await createClient();
 
-    //if transaction is repeating, also update recurring transaction and all related transactions.
-
     const name = formData.get("name") as string;
     const amount = formData.get("amount") as unknown as number;
-    const transaction_date = formData.get("date") as string; //updating this would probably break recurring transactions...
+    const transaction_date = formData.get("date") as string;
     const frequency = formData.get("frequency") as string; 
     let description = formData.get("notes") as string | null;
     const category = formData.get("category") as string;
@@ -336,7 +320,7 @@ export async function updateTransaction(formData: FormData, transactionID: numbe
         }
         else
         {
-            setTransactionArr(arr => //will (hopefully) update the transaction array to reflect the new state of the database.
+            setTransactionArr(arr => //updates the transaction array to reflect the new state of the database.
                 {
                     return arr.map(prev => 
                         {
@@ -373,7 +357,7 @@ export async function updateUserName(firstName: string, lastName: string)//may n
         {
             first_name: firstName,
             last_name: lastName,
-            updated_at: new Intl.DateTimeFormat("sv-SE").format(currentDate)//this will probably give the date time in local time. need to look into that.
+            updated_at: currentDate.toISOString() //This will return a timestamp of the current date.
         }).select(`
                     first_name,
                     last_name
@@ -415,7 +399,7 @@ export async function createMonthlyBudget(formData: FormData, setMonthlyBudget: 
     .insert(
         {
             user_id: user.id,
-            budget_month: new Intl.DateTimeFormat("sv-SE", {timeZone: "UTC"}).format(new Date()),
+            budget_month: new Intl.DateTimeFormat("sv-SE").format(new Date()), //returns local time
             budget_amount: amount,
             email_notifications_enabled: emailsEnabled,
             last_approaching_email_at: null,
@@ -461,7 +445,7 @@ export async function createCategoryBudget(formData: FormData, setCategoryBudget
         {
             user_id: user.id,
             category_id: getCategoryID(category),
-            budget_month: new Intl.DateTimeFormat("sv-SE", {timeZone: "UTC"}).format(new Date()),
+            budget_month: new Intl.DateTimeFormat("sv-SE").format(new Date()), //returns local time
             budget_amount: amount,
             email_notifications_enabled: emailsEnabled,
             last_approaching_email_at: null,
@@ -615,4 +599,118 @@ export async function deleteCategoryBudget(categoryBudgetID: number, setCategory
     {
         return prev?.filter((budget) => budget.id !== categoryBudgetID) ?? null;
     })
+}
+
+/**
+ * DO NOT RUN YET. UNFINISHED.
+ */
+export async function updateSavingGoal(formData: FormData, savingGoalID: number, savingGoals: SavingGoal[], setSavingGoals: Dispatch<SetStateAction<SavingGoal[] | null>>)
+{
+    const name = formData.get("name") as string;
+    const description = formData.get("description") as string;
+    const targetAmount = Number(formData.get("targetAmount") as string);
+    const deadline = formData.get("deadline") as string;
+    const highestPriority = formData.get("highestPriority") as string === "on";
+
+    //if set highest priority, priority = the highest priority, otherwise, priority = current goal priority.
+    const priority = highestPriority ? 1 : savingGoals.find((goal) => {if (goal.id === savingGoalID) return goal;})?.priority;
+
+    //updateGoals() should update the priority of other goals that will be affected by the change the goal's priority. 
+
+    const supabase = await createClient();
+
+    //update goal with matching ID and return that goal as data.
+    const {data, error} = await supabase
+    .from("savings_goals")
+    .update(
+        {
+            name: name,
+            target_amount: targetAmount,
+            target_date: deadline,
+            description: description,
+            priority: priority,
+        }
+    )
+    .eq("id", savingGoalID)
+    .select(`
+            id,
+            name,
+            target_amount,
+            current_amount,
+            target_date,
+            description,
+            priority
+            `)
+    .limit(1)
+    .maybeSingle();
+
+    if(error)
+    {
+        console.error("Supabase update error (updateSavingGoal)")
+        throw error;
+    }
+
+    if(data) //always true; this is an  function, if something was updated there must be data.
+        {
+            //check all elements of prev; if the id matches, return the updated goal, otherwise return the previous goal. sort the array by priority.
+            setSavingGoals((prev) => 
+                {
+                    return prev!.map((goal) => 
+                    {
+                        if(goal.id === savingGoalID)
+                        {
+                            return {
+                                    id: data.id,
+                                    name: data.name,
+                                    targetAmount: data.target_amount,
+                                    currentAmount: data.current_amount,
+                                    targetDate: new Date(`${data.target_date}T00:00:00`),
+                                    description: data.description,
+                                    priority: data.priority
+                                } as SavingGoal;
+                        }
+                        else
+                        {
+                            return goal;
+                        }
+                    }).sort((a, b) => a.priority - b.priority); //should return the array with the updated value sorted by priority.
+                });
+        }
+    
+}
+
+/**
+ * VERY UNFINISHED! DO NOT USE!
+ */
+async function updateGoals(savingGoalPriority: number, inserting: boolean, savingGoalArr: SavingGoal[])
+{
+    const supabase = await createClient();
+
+    //returns an array of all saving goals with a priority higher then savingGoalPriority with all priorities increased by one.
+    const dataToMod: SavingGoal[] = savingGoalArr
+    .filter(goal => goal.priority > savingGoalPriority)
+    .map<SavingGoal>((goal) =>
+    {
+            return {
+                    id: goal.id,
+                    name: goal.name,
+                    targetAmount: goal.targetAmount,
+                    currentAmount: goal.currentAmount,
+                    targetDate: goal.targetDate,
+                    description: goal.description,
+                    priority: goal.priority + 1
+                }
+    })
+
+    let i = 0;
+    while(i < dataToMod.length)
+    {
+        const {data, error} = await supabase
+        .from("savings_goals")
+        .update({priority: dataToMod[0].priority})
+        .eq("id", dataToMod[0].id);
+
+        i++;
+    }
+    
 }

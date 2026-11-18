@@ -9,7 +9,6 @@ import { createMonthlyBudget, updateMonthlyBudget } from "@/lib/clientFunctions"
 
 export default function MonthlyBudget() {
 
-  //will contain the most recent budget if it exists, or null if it doesn't. Has not been tested yet.
   const {monthlyBudget, setMonthlyBudget} = useMonthlyBudgetContext();
   const {transactionsArr} = useTransactionContext();
  
@@ -66,7 +65,7 @@ export default function MonthlyBudget() {
   const monthlySpending = monthlyBudget
     ? getMonthlySpending(
       transactionsArr,
-      monthlyBudget.month.getMonth() + 1,
+      monthlyBudget.month.getMonth(),
       monthlyBudget.month.getFullYear()
     )
     : 0;
@@ -146,7 +145,7 @@ export default function MonthlyBudget() {
             </p>
 
             <p className="mt-2 text-3xl font-bold text-[#17324d]">
-              {monthlyBudget ? formatMoney(monthlyBudget.amount) : "$0.00"}
+              {monthlyBudget ? formatMoney(monthlyBudget.amount) : ""}
             </p>
           </div>
 
@@ -186,7 +185,7 @@ export default function MonthlyBudget() {
           >
             <div
               className="h-full rounded-full bg-[#3f8068]"
-              style={{ width: `${Math.min(100, budgetPercentage)}%` }}
+              style={{ width: `${Math.min(budgetPercentage, 100)}%` }}
             />
           </div>
 
@@ -195,7 +194,7 @@ export default function MonthlyBudget() {
               {monthlyBudget ? 
               formatMoney(getRemainingBudget(getMonthlySpending(transactionsArr, monthlyBudget.month.getMonth(), monthlyBudget.month.getFullYear()), monthlyBudget.amount))
               :
-              "$0"}
+              ""}
             </span>{" "}
             remaining this month.
           </p>

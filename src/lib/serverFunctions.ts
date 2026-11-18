@@ -8,7 +8,7 @@
 import { Database } from "@/types/database.types";
 import {createClient} from "./server"
 import { SupabaseClient, User } from '@supabase/supabase-js'
-import {Transaction, monthlyBudget, categoryBudget, recurringTransaction, getAsMonthlyBudget, getAsCategoryBudgets} from "./types_and_helpers";
+import {Transaction, monthlyBudget, categoryBudget, recurringTransaction, getAsMonthlyBudget, getAsCategoryBudgets, SavingGoal} from "./types_and_helpers";
 
 /**
  * Gets all transactions for the current user.
@@ -68,7 +68,7 @@ async function updateRecurringTransactions(supabase: SupabaseClient<Database>)
                 description,
                 is_active
             `)
-    .lt("next_due_date", new Intl.DateTimeFormat("sv-SE").format(currentDate)) //only get records which are overdue for an update.
+    .lte("next_due_date", new Intl.DateTimeFormat("sv-SE").format(currentDate)) //only get records which are overdue for an update.
 
     if(error)
     {
@@ -85,10 +85,6 @@ async function updateRecurringTransactions(supabase: SupabaseClient<Database>)
         }
         else
         {
-
-            const currentDate: Date = new Date();
-            currentDate.setHours(0,0,0,0);
-
             for(const recurring of data as recurringTransaction[])
             {
 
@@ -175,7 +171,7 @@ async function insertTransactions(recurring: recurringTransaction, dates: Date[]
 
     const {error} = await supabase
     .from("transactions")
-    .insert(newTransactions); //should insert as many transactions are necessary to catch up to the current date.
+    .insert(newTransactions); //should insert as many transactions as necessary to catch up to the current date.
 
     if(error)
     {
@@ -219,7 +215,7 @@ export async function getMonthlyBudget()
 
     //if the data is from the current month, just return it.
     const currentDate = new Date();
-    const budgetDate = new Date(data.budget_month)
+    const budgetDate = new Date(data.budget_month + "T00:00:00");//force interpret date as local
     if(currentDate.getMonth() === budgetDate.getMonth() && currentDate.getFullYear() === budgetDate.getFullYear()) //compare month and year of date, without the time.
     {
         return getAsMonthlyBudget(data);
@@ -239,7 +235,7 @@ export async function getMonthlyBudget()
             {
                 user_id: user.id,
                 budget_amount: data.budget_amount,
-                budget_month: new Intl.DateTimeFormat("sv-SE", {timeZone: "UTC"}).format(currentDate), //current date as UTC, Year-Month-Day.
+                budget_month: new Intl.DateTimeFormat("sv-SE").format(currentDate), //current date as local time, Year-Month-Day.
                 email_notifications_enabled: data.email_notifications_enabled,
                 last_approaching_email_at: null,
                 last_exceeded_email_at: null,
@@ -295,11 +291,11 @@ export async function getCategoryBudgets()
     
     //find the first of the latest budget month and the first of the following month.
     const monthStart = `${dateData.budget_month.substring(0, 7)}-01`;
-    const nextMonthDate = new Date(`${dateData.budget_month.substring(0, 7)}-01T00:00:00`);
+    const nextMonthDate = new Date(`${dateData.budget_month.substring(0, 7)}-01T00:00:00`); //first of next month at midnight local time
 
-    nextMonthDate.setMonth(nextMonthDate.getMonth() + 1);
+    nextMonthDate.setMonth(nextMonthDate.getMonth() + 1); //first of next month at midnight local time
 
-    const nextMonth = nextMonthDate.toISOString().substring(0, 10);
+    const nextMonth = nextMonthDate.toISOString().substring(0, 10); //first of next month
 
 
     //retrieve all categoryBudgets with the most recent month (retrieved above)
@@ -328,7 +324,7 @@ export async function getCategoryBudgets()
     //If the above code was able to find a result, there must be at least one object in the data, so no need to check if it is null or undefined.
 
     const currentDate = new Date();
-    const budgetDate = new Date(dateData.budget_month)
+    const budgetDate = new Date(dateData.budget_month + "T00:00:00") //force interpret date as local
     if(currentDate.getMonth() === budgetDate.getMonth() && currentDate.getFullYear() === budgetDate.getFullYear()) //compare month and year of date, without the time.
     {
         //map all the date strings returned by supabase to date objcets, then return the resulting array as a categoryBudget array.
@@ -358,7 +354,7 @@ export async function getCategoryBudgets()
             newVals.push({
                 user_id: user.id,
                 category_id: categoryBudget.category_id,
-                budget_month: new Intl.DateTimeFormat("sv-SE", {timeZone: "UTC"}).format(currentDate),
+                budget_month: new Intl.DateTimeFormat("sv-SE").format(currentDate),
                 budget_amount: categoryBudget.budget_amount,
                 email_notifications_enabled: categoryBudget.email_notifications_enabled,
                 last_approaching_email_at: null,
@@ -463,4 +459,43 @@ export async function getUserBalance()
     {
         console.log("There was no error or data returned by getUserBalance");
     }
+}
+
+/**
+ * Retrieves all saving goals from the database.
+ * @returns an array containing all saving goals as SavingGoal[].
+ */
+export async function getSavingGoals(): Promise<SavingGoal[]>
+{
+    const supabase = await createClient();
+
+    const {data, error} = await supabase
+    .from("savings_goals")
+    .select(`
+            id,
+            name,
+            target_amount,
+            current_amount,
+            target_date,
+            description,
+            priority
+            `).order("priority", {ascending: true});
+
+    if(error)
+    {
+        console.error("Error retrieving saving goals", error);
+        throw error;
+    }
+    return data.map((goal) => 
+    {
+        return {
+            id: goal.id,
+            name: goal.name,
+            targetAmount: goal.target_amount,
+            currentAmount: goal.current_amount,
+            targetDate: goal.target_date ? new Date(`${goal.target_date}T00:00:00`) : null, //force use local time.
+            description: goal.description,
+            priority: goal.priority
+        } as SavingGoal;
+    }) as SavingGoal[];
 }
