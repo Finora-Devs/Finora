@@ -479,7 +479,7 @@ export async function getSavingGoals()
             target_date,
             description,
             priority
-            `);
+            `); //add order by priority ascending here
 
     if(error)
     {

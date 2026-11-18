@@ -192,8 +192,6 @@ async function updateRecurringTransaction(  recurringTransaction: recurringTrans
                                             user: any,
                                             setTransactionArr: Dispatch<SetStateAction<Transaction[]>>)
 {
-    //const supabase = await createClient();
-
     if(recurringTransaction && (recurringTransaction.description !== null))//description litterally cannot be null, but the null checker disagrees so I had to put this here.
     {
         let nextDueDates: Date[] = [new Date(`${recurringTransaction.next_due_date}T00:00:00`)]//initially the transaction date entered by the user
@@ -652,7 +650,7 @@ export async function updateSavingGoal(formData: FormData, savingGoalID: number,
         throw error;
     }
 
-    if(data)
+    if(data) //always true; this is an  function, if something was updated there must be data.
         {
             //check all elements of prev; if the id matches, return the updated goal, otherwise return the previous goal. sort the array by priority.
             setSavingGoals((prev) => 
@@ -678,5 +676,41 @@ export async function updateSavingGoal(formData: FormData, savingGoalID: number,
                     }).sort((a, b) => a.priority - b.priority); //should return the array with the updated value sorted by priority.
                 });
         }
+    
+}
+
+/**
+ * VERY UNFINISHED! DO NOT USE!
+ */
+async function updateGoals(savingGoalPriority: number, inserting: boolean, savingGoalArr: SavingGoal[])
+{
+    const supabase = await createClient();
+
+    //returns an array of all saving goals with a priority higher then savingGoalPriority with all priorities increased by one.
+    const dataToMod: SavingGoal[] = savingGoalArr
+    .filter(goal => goal.priority > savingGoalPriority)
+    .map<SavingGoal>((goal) =>
+    {
+            return {
+                    id: goal.id,
+                    name: goal.name,
+                    targetAmount: goal.targetAmount,
+                    currentAmount: goal.currentAmount,
+                    targetDate: goal.targetDate,
+                    description: goal.description,
+                    priority: goal.priority + 1
+                }
+    })
+
+    let i = 0;
+    while(i < dataToMod.length)
+    {
+        const {data, error} = await supabase
+        .from("savings_goals")
+        .update({priority: dataToMod[0].priority})
+        .eq("id", dataToMod[0].id);
+
+        i++;
+    }
     
 }
