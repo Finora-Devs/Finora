@@ -479,7 +479,8 @@ export async function getSavingGoals(): Promise<SavingGoal[]>
             target_date,
             description,
             priority
-            `).order("priority", {ascending: true});
+            `)
+    .order("priority", {ascending: true});
 
     if(error)
     {
