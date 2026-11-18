@@ -8,7 +8,7 @@
 import { Database } from "@/types/database.types";
 import {createClient} from "./server"
 import { SupabaseClient, User } from '@supabase/supabase-js'
-import {Transaction, monthlyBudget, categoryBudget, recurringTransaction, getAsMonthlyBudget, getAsCategoryBudgets} from "./types_and_helpers";
+import {Transaction, monthlyBudget, categoryBudget, recurringTransaction, getAsMonthlyBudget, getAsCategoryBudgets, SavingGoal} from "./types_and_helpers";
 
 /**
  * Gets all transactions for the current user.
@@ -465,7 +465,7 @@ export async function getUserBalance()
  * Retrieves all saving goals from the database.
  * @returns an array containing all saving goals as SavingGoal[].
  */
-export async function getSavingGoals()
+export async function getSavingGoals(): Promise<SavingGoal[]>
 {
     const supabase = await createClient();
 
@@ -479,7 +479,7 @@ export async function getSavingGoals()
             target_date,
             description,
             priority
-            `);
+            `).order("priority", {ascending: true});
 
     if(error)
     {
@@ -493,7 +493,7 @@ export async function getSavingGoals()
             name: goal.name,
             targetAmount: goal.target_amount,
             currentAmount: goal.current_amount,
-            targetDate: new Date(`${goal.target_date}T00:00:00`), //force use local time.
+            targetDate: goal.target_date ? new Date(`${goal.target_date}T00:00:00`) : null, //force use local time.
             description: goal.description,
             priority: goal.priority
         } as SavingGoal;
