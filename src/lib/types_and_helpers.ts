@@ -72,6 +72,16 @@ export const emptyTransactionDraft: TransactionDraft = {
   description: "",
 };
 
+export type SavingGoal = {
+   id: number;
+   name:string;
+   targetAmount: number;
+   currentAmount: number;
+   targetDate: Date | null;
+   description: string | null;
+   priority: number;
+};
+
 export type TransactionErrors = Partial<Record<keyof TransactionDraft, string>>;
 
 export enum SORTING_ORDER
