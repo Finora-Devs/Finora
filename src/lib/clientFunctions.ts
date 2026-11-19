@@ -4,7 +4,7 @@
  * for functions that initialize data in the browser using the database, go to serverFunctions.ts
  */
 import {createClient} from "./client";
-import {Transaction, recurringTransaction, monthlyBudget, getAsMonthlyBudget, categoryBudget, getAsCategoryBudget, getCategoryID} from "./types_and_helpers";
+import {Transaction, recurringTransaction, monthlyBudget, getAsMonthlyBudget, categoryBudget, getAsCategoryBudget, getCategoryID, SavingGoal} from "./types_and_helpers";
 import type {Dispatch, SetStateAction } from "react";
 import { Database } from "@/types/database.types";
 import { SupabaseClient } from "@supabase/supabase-js";
@@ -602,7 +602,7 @@ export async function deleteCategoryBudget(categoryBudgetID: number, setCategory
 }
 
 /**
- * DO NOT RUN YET. UNFINISHED.
+ * need to test
  */
 export async function updateSavingGoal(formData: FormData, savingGoalID: number, savingGoals: SavingGoal[], setSavingGoals: Dispatch<SetStateAction<SavingGoal[] | null>>)
 {
@@ -613,9 +613,10 @@ export async function updateSavingGoal(formData: FormData, savingGoalID: number,
     const highestPriority = formData.get("highestPriority") as string === "on";
 
     //if set highest priority, priority = the highest priority, otherwise, priority = current goal priority.
-    const priority = highestPriority ? 1 : savingGoals.find((goal) => {if (goal.id === savingGoalID) return goal;})?.priority;
+    const priority = highestPriority ? 1 : savingGoals.find((goal) => {if (goal.id === savingGoalID) return goal;})!.priority;
 
-    //updateGoals() should update the priority of other goals that will be affected by the change the goal's priority. 
+    //if goal priority is being updated, update other goals priorities.
+    if(highestPriority) updateGoals(priority, true, savingGoals, setSavingGoals); //should update the priority of other goals that will be affected by the change the goal's priority. 
 
     const supabase = await createClient();
 
@@ -642,7 +643,7 @@ export async function updateSavingGoal(formData: FormData, savingGoalID: number,
             priority
             `)
     .limit(1)
-    .maybeSingle();
+    .single();
 
     if(error)
     {
@@ -650,47 +651,53 @@ export async function updateSavingGoal(formData: FormData, savingGoalID: number,
         throw error;
     }
 
-    if(data) //always true; this is an  function, if something was updated there must be data.
+    if(data) //always true; this is an update function, if something was updated there must be data.
+    {
+        //check all elements of prev; if the id matches, return the updated goal, otherwise return the previous goal. sort the array by priority.
+        setSavingGoals((prev) => 
         {
-            //check all elements of prev; if the id matches, return the updated goal, otherwise return the previous goal. sort the array by priority.
-            setSavingGoals((prev) => 
+            return prev!.map((goal) => 
+            {
+                if(goal.id === savingGoalID)
                 {
-                    return prev!.map((goal) => 
-                    {
-                        if(goal.id === savingGoalID)
-                        {
-                            return {
-                                    id: data.id,
-                                    name: data.name,
-                                    targetAmount: data.target_amount,
-                                    currentAmount: data.current_amount,
-                                    targetDate: new Date(`${data.target_date}T00:00:00`),
-                                    description: data.description,
-                                    priority: data.priority
-                                } as SavingGoal;
-                        }
-                        else
-                        {
-                            return goal;
-                        }
-                    }).sort((a, b) => a.priority - b.priority); //should return the array with the updated value sorted by priority.
-                });
-        }
+                    return {
+                            id: data.id,
+                            name: data.name,
+                            targetAmount: data.target_amount,
+                            currentAmount: data.current_amount,
+                             targetDate: data.target_date ? new Date(`${data.target_date}T00:00:00`) : null,
+                            description: data.description,
+                            priority: data.priority
+                        } as SavingGoal;
+                }
+                else
+                {
+                    return goal;
+                }
+            }).sort((a, b) => a.priority - b.priority); //Therer is definetly a way to do this without using sort, but for now this will work.
+        });
+    }
     
 }
 
 /**
- * VERY UNFINISHED! DO NOT USE!
+ * need to be test
  */
-async function updateGoals(savingGoalPriority: number, inserting: boolean, savingGoalArr: SavingGoal[])
+async function updateGoals(savingGoalPriority: number, inserting: boolean, savingGoalArr: SavingGoal[], setSavingGoals: Dispatch<SetStateAction<SavingGoal[] | null>>)
 {
     const supabase = await createClient();
 
-    //returns an array of all saving goals with a priority higher then savingGoalPriority with all priorities increased by one.
-    const dataToMod: SavingGoal[] = savingGoalArr
-    .filter(goal => goal.priority > savingGoalPriority)
-    .map<SavingGoal>((goal) =>
+    
+    let dataToMod: SavingGoal[] = [];
+
+    //if user is increasing the priority of an existing goal, or creating a completely new goal with highest priority.
+    if(inserting)
     {
+        //returns an array of all saving goals with a priority higher then savingGoalPriority with all priorities decreased (incremented) by one.
+        dataToMod = savingGoalArr
+        .filter(goal => goal.priority > savingGoalPriority)
+        .map<SavingGoal>((goal) =>
+        {
             return {
                     id: goal.id,
                     name: goal.name,
@@ -700,17 +707,78 @@ async function updateGoals(savingGoalPriority: number, inserting: boolean, savin
                     description: goal.description,
                     priority: goal.priority + 1
                 }
-    })
-
-    let i = 0;
-    while(i < dataToMod.length)
+        })
+    }
+    //if the user is deleting a goal
+    else
+    {
+        //returns an array of all saving goals with a priority lower then savingGoalPriority with all priorities increased (decremented) by one.
+        dataToMod = savingGoalArr
+        .filter(goal => goal.priority < savingGoalPriority)
+        .map<SavingGoal>((goal) =>
+        {
+            return {
+                    id: goal.id,
+                    name: goal.name,
+                    targetAmount: goal.targetAmount,
+                    currentAmount: goal.currentAmount,
+                    targetDate: goal.targetDate,
+                    description: goal.description,
+                    priority: goal.priority - 1
+                }
+        })
+    }
+    
+    //there may be a way to do some or all of this without a loop. may be worth looking into if we have time.
+    //updates all goal priorities affected by the user action
+    for(let i = 0; i < dataToMod.length; i++)
     {
         const {data, error} = await supabase
         .from("savings_goals")
-        .update({priority: dataToMod[0].priority})
-        .eq("id", dataToMod[0].id);
+        .update({priority: dataToMod[i].priority})
+        .eq("id", dataToMod[i].id)
+        .select(`
+            id,
+            name,
+            target_amount,
+            current_amount,
+            target_date,
+            description,
+            priority
+            `)
+        .limit(0)
+        .single();
 
-        i++;
+        if(error)
+        {
+            console.error("supabase update error (updateGoals)");
+            throw error;
+        }
+
+        if(data)
+        {
+            setSavingGoals((prev) => 
+            {
+                return prev!.map((goal) => 
+                {
+                    if(goal.id === data.id)
+                    {
+                        return {
+                                id: data.id,
+                                name: data.name,
+                                targetAmount: data.target_amount,
+                                currentAmount: data.current_amount,
+                                targetDate: data.target_date ? new Date(`${data.target_date}T00:00:00`) : null,
+                                description: data.description,
+                                priority: data.priority
+                            } as SavingGoal;
+                    }
+                    else
+                    {
+                        return goal;
+                    }
+                })//array should already be sorted at this point, so there should be no need to add an extra sort function here.
+            });
+        }
     }
-    
 }

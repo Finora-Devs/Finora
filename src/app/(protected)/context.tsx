@@ -1,7 +1,7 @@
 "use client";
 import {createContext, useContext, useState, useEffect} from "react"//probably need to remember what each of these do in case dr. nicholson asks.
 import type { ReactNode, Dispatch, SetStateAction } from "react";
-import { categoryBudget, monthlyBudget, Transaction } from "@/lib/types_and_helpers";
+import { categoryBudget, monthlyBudget, Transaction, SavingGoal} from "@/lib/types_and_helpers";
 import { getCategoryBudgets, getMonthlyBudget, getSavingGoals, getTransactions, getUser } from "@/lib/serverFunctions"
 import { User } from "@supabase/supabase-js";
 import MonthlyBudget from "@/components/budget/MonthlyBudget";
