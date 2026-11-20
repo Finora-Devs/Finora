@@ -601,10 +601,110 @@ export async function deleteCategoryBudget(categoryBudgetID: number, setCategory
     })
 }
 
+
+export async function createSavingGoal(formData: FormData, savingGoals: SavingGoal[], setSavingGoals: Dispatch<SetStateAction<SavingGoal[]>>)
+{
+    const name = formData.get("name") as string;
+    const description = formData.get("description") as string;
+    const targetAmount = Number(formData.get("targetAmount") as string);
+    const deadline = formData.get("deadline") as string;
+    const highestPriority = formData.get("highestPriority") as string === "on";
+
+    //sets the priority to insert to one if set highest priority is true, otherwise sets priority to be lowest.
+    const priority: number = highestPriority ? 1 : savingGoals[savingGoals.length-1].priority + 1; //last element of array should always be the lowest priority. May need to mess with this a little to handle completed goals.
+
+    if(highestPriority) updateGoals(savingGoals[savingGoals.length-1].priority + 1, true, savingGoals, setSavingGoals); //should lower the priority of all goals.
+
+    const supabase = await createClient();
+
+    const {data: { user }, error: userError} = await supabase.auth.getUser();
+    if(userError || user === null)
+    {
+        console.error("user authentication failed");
+        throw userError;
+    }
+
+    const {data, error} = await supabase
+    .from("savings_goals")
+    .insert(
+        {
+            user_id: user.id,
+            name: name,
+            target_amount: targetAmount,
+            current_amount: 0,
+            target_date: deadline,
+            description: description,
+            priority: priority
+        })
+    .select(`
+            id,
+            name,
+            target_amount,
+            current_amount,
+            target_date,
+            description,
+            priority
+            `)
+    .limit(1)
+    .single();
+
+    if(error)
+    {
+        console.error("Supabase insert error (createSavingGoal)")
+        throw error;
+    }
+
+    setSavingGoals((prev) => 
+    {
+        const newGoal = 
+        {
+            id: data.id,
+            name: data.name,
+            targetAmount: data.target_amount,
+            currentAmount: data.current_amount,
+            targetDate: data.target_date ? new Date(`${data.target_date}T00:00:00`): null,
+            description: data.description,
+            priority: data.priority
+        } as SavingGoal
+
+        if(highestPriority)
+        {
+            return [newGoal, ...prev ?? []] as SavingGoal[]; //not sure if this ?? will work
+        }
+        else
+        {
+            return [...prev ?? [], newGoal] as SavingGoal[];
+        }
+    })
+}
+
+export async function deleteGoal(savingGoalID: number, savingGoals: SavingGoal[], setSavingGoals: Dispatch<SetStateAction<SavingGoal[]>>)
+{
+    updateGoals(savingGoals.find((goal) => {if (goal.id === savingGoalID) return goal;})!.priority, false, savingGoals, setSavingGoals); //should increase the priority of all goals with a lower priority than the deleted goal.
+    
+    const supabase = await createClient();
+
+    const {error} = await supabase
+    .from("savings_goals")
+    .delete()
+    .eq("id", savingGoalID);//delete the goal with the matching id.
+
+    if(error)
+    {
+        console.error("Supabase delete error (deleteGoal)");
+        throw error;
+    }
+
+    setSavingGoals((prev) =>
+    {
+        return prev.filter((goal) => savingGoalID !== goal.id); //return array of all goals other than the deleted goal.
+    })
+}
+
 /**
- * need to test
+ * This function should be used when updating a goal normally through the form.
  */
-export async function updateSavingGoal(formData: FormData, savingGoalID: number, savingGoals: SavingGoal[], setSavingGoals: Dispatch<SetStateAction<SavingGoal[] | null>>)
+export async function updateSavingGoal(formData: FormData, savingGoalID: number, savingGoals: SavingGoal[], setSavingGoals: Dispatch<SetStateAction<SavingGoal[]>>)
 {
     const name = formData.get("name") as string;
     const description = formData.get("description") as string;
@@ -665,7 +765,7 @@ export async function updateSavingGoal(formData: FormData, savingGoalID: number,
                             name: data.name,
                             targetAmount: data.target_amount,
                             currentAmount: data.current_amount,
-                             targetDate: data.target_date ? new Date(`${data.target_date}T00:00:00`) : null,
+                            targetDate: data.target_date ? new Date(`${data.target_date}T00:00:00`) : null,
                             description: data.description,
                             priority: data.priority
                         } as SavingGoal;
@@ -677,17 +777,110 @@ export async function updateSavingGoal(formData: FormData, savingGoalID: number,
             }).sort((a, b) => a.priority - b.priority); //Therer is definetly a way to do this without using sort, but for now this will work.
         });
     }
+}
+
+export async function addContribution(formData: FormData, savingGoalID: number, savingGoals: SavingGoal[], setSavingGoals: Dispatch<SetStateAction<SavingGoal[]>>)
+{
+    const contribution = Number(formData.get("amount") as string);
+
+    const oldAmount = savingGoals.find((goal) => {if (goal.id === savingGoalID) return goal;})!.currentAmount;
+
+    const supabase = await createClient();
+
+    const {data, error} = await supabase
+    .from("savings_goals")
+    .update({current_amount: contribution + oldAmount})
+    .eq("id", savingGoalID)
+    .select(`
+            id,
+            name,
+            target_amount,
+            current_amount,
+            target_date,
+            description,
+            priority
+            `)
+    .limit(1)
+    .single();
+
+    if(error)
+    {
+        console.error("Supabase update error (addContribution");
+        throw error;
+    }
+
+    setSavingGoals((prev) => 
+    {
+        return prev.map((goal) => 
+        {
+            if(goal.id === savingGoalID)
+            {
+                return {    id: data!.id,
+                            name: data!.name,
+                            targetAmount: data!.target_amount,
+                            currentAmount: data!.current_amount,
+                            targetDate: data!.target_date ? new Date(`${data!.target_date}T00:00:00`) : null,
+                            description: data!.description,
+                            priority: data!.priority} as SavingGoal;
+            }
+            else
+            {
+                return goal;
+            }
+        })
+    })
+}
+export async function markHighestPriority(savingGoalID: number, savingGoals: SavingGoal[], setSavingGoals: Dispatch<SetStateAction<SavingGoal[]>>)
+{
+    const priority = savingGoals.find((goal) => {if (goal.id === savingGoalID) return goal;})!.priority;
+
+    updateGoals(priority, true, savingGoals, setSavingGoals);
     
+    const supabase = await createClient();
+
+    const {data, error} = await supabase
+    .from("savings_goals")
+    .update({priority: priority})
+    .eq("id", savingGoalID)
+    .select(`
+            id,
+            name,
+            target_amount,
+            current_amount,
+            target_date,
+            description,
+            priority
+            `)
+    .limit(1)
+    .single();
+
+    if(error)
+    {
+        console.error("Supabase update error (markHighestPriority");
+        throw error;
+    }
+
+    setSavingGoals((prev) => 
+    {
+        return [{   id: data.id,
+                    name: data.name,
+                    targetAmount: data.target_amount,
+                    currentAmount: data.current_amount,
+                    targetDate: data.target_date ? new Date(`${data.target_date}T00:00:00`) : null,
+                    description: data.description,
+                    priority: data.priority}, 
+                    
+                    ...prev.filter((goal) => goal.id !== savingGoalID)];
+    });
 }
 
 /**
  * need to be test
  */
-async function updateGoals(savingGoalPriority: number, inserting: boolean, savingGoalArr: SavingGoal[], setSavingGoals: Dispatch<SetStateAction<SavingGoal[] | null>>)
+async function updateGoals(savingGoalPriority: number, inserting: boolean, savingGoalArr: SavingGoal[], setSavingGoals: Dispatch<SetStateAction<SavingGoal[]>>)
 {
     const supabase = await createClient();
 
-    
     let dataToMod: SavingGoal[] = [];
 
     //if user is increasing the priority of an existing goal, or creating a completely new goal with highest priority.
@@ -759,7 +952,7 @@ async function updateGoals(savingGoalPriority: number, inserting: boolean, savin
         {
             setSavingGoals((prev) => 
             {
-                return prev!.map((goal) => 
+                return prev.map((goal) => 
                 {
                     if(goal.id === data.id)
                     {

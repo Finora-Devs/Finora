@@ -487,16 +487,21 @@ export async function getSavingGoals(): Promise<SavingGoal[]>
         console.error("Error retrieving saving goals", error);
         throw error;
     }
-    return data.map((goal) => 
+    if(data)
     {
-        return {
-            id: goal.id,
-            name: goal.name,
-            targetAmount: goal.target_amount,
-            currentAmount: goal.current_amount,
-            targetDate: goal.target_date ? new Date(`${goal.target_date}T00:00:00`) : null, //force use local time.
-            description: goal.description,
-            priority: goal.priority
-        } as SavingGoal;
-    }) as SavingGoal[];
+        return data.map((goal) => 
+        {
+            return {
+                id: goal.id,
+                name: goal.name,
+                targetAmount: goal.target_amount,
+                currentAmount: goal.current_amount,
+                targetDate: goal.target_date ? new Date(`${goal.target_date}T00:00:00`) : null, //force use local time.
+                description: goal.description,
+                priority: goal.priority
+            } as SavingGoal;
+        }) as SavingGoal[];
+    }
+    else
+        return [] as SavingGoal[];
 }
