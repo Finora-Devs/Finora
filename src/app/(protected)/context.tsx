@@ -1,7 +1,7 @@
 "use client";
 import {createContext, useContext, useState, useEffect} from "react"//probably need to remember what each of these do in case dr. nicholson asks.
 import type { ReactNode, Dispatch, SetStateAction } from "react";
-import { categoryBudget, monthlyBudget, Transaction, SavingGoal} from "@/lib/types_and_helpers";
+import { categoryBudget, monthlyBudget, Transaction, SavingGoal, checkContributions} from "@/lib/types_and_helpers";
 import { getCategoryBudgets, getMonthlyBudget, getSavingGoals, getTransactions, getUser } from "@/lib/serverFunctions"
 import { User } from "@supabase/supabase-js";
 import MonthlyBudget from "@/components/budget/MonthlyBudget";
@@ -20,32 +20,32 @@ export const TransactionContext = createContext<{transactionsArr: Transaction[],
  * This function creates a wrapper component that can be placed around the app shell (or any other component Steven makes) which 
  * makes the TransactionContext available to every child component. I have already wrapped the app shell, so don't worry about this.
  */
-export function TransactionContextProvider({children}: ProtectedLayoutProps)
-{
-    const [transactionsArr, setTransactionsArr] = useState<Transaction[]>([]);
+// export function TransactionContextProvider({children}: ProtectedLayoutProps)
+// {
+//     const [transactionsArr, setTransactionsArr] = useState<Transaction[]>([]);
 
-    useEffect(() => //Seems to run twice for some reason.
-    { 
-        const loadTransactions = async () => 
-        {
-            try
-            {
-                setTransactionsArr(await getTransactions());
-            }
-            catch (error)
-            {
-                console.error("Something went wrong", error);
-            }
-        }
-        loadTransactions();
-    }, []) //runs only once.
+//     useEffect(() => //Seems to run twice for some reason.
+//     { 
+//         const loadTransactions = async () => 
+//         {
+//             try
+//             {
+//                 setTransactionsArr(await getTransactions());
+//             }
+//             catch (error)
+//             {
+//                 console.error("Something went wrong", error);
+//             }
+//         }
+//         loadTransactions();
+//     }, []) //runs only once.
 
-    return(
-        <TransactionContext value={{transactionsArr, setTransactionsArr}}>
-            {children}
-        </TransactionContext>
-    );
-}
+//     return(
+//         <TransactionContext value={{transactionsArr, setTransactionsArr}}>
+//             {children}
+//         </TransactionContext>
+//     );
+// }
 
 
 /**
@@ -153,55 +153,6 @@ export function useUserContext():   {user: UserData, setUser: Dispatch<SetStateA
     return {user, setUser};
 }
 
-export const MonthlyBudgetContext = createContext<{monthlyBudget: monthlyBudget | null , setMonthlyBudget: Dispatch<SetStateAction<monthlyBudget | null>>} | null>(null);
-
-export function MonthlyBudgetContextProvider({children}: ProtectedLayoutProps)
-{
-    const [monthlyBudget, setMonthlyBudget] = useState<monthlyBudget | null>(null);
-
-    useEffect(() =>
-    { 
-        const loadMonthlyBudget = async () => 
-        {
-            try
-            {
-                setMonthlyBudget(await getMonthlyBudget());
-            }
-            catch (error)
-            {
-                console.error("user retrieval failure", error);
-                throw error;
-            }
-        }
-        loadMonthlyBudget();
-    }, []) //runs only once.
-
-    return(
-        <MonthlyBudgetContext value={{monthlyBudget, setMonthlyBudget}}>
-            {children}
-        </MonthlyBudgetContext>
-    );
-}
-
-/**
- * This hook will return a state variable holding the user's budget for the current month, if it exists. If there is no budget for the current month but there
- * was a budget previously, this will return a new budget with the same amount and emailsEnabled values. If the users has NEVER made a budget, the state will be null.
- */
-export function useMonthlyBudgetContext(): {monthlyBudget: monthlyBudget | null, setMonthlyBudget: Dispatch<SetStateAction<monthlyBudget | null>>}
-{
-    const context = useContext(MonthlyBudgetContext);
-
-    //does the context exist, even if the value of monthlyBudget is null. I think.
-    if(!context)
-    {
-        throw new Error("useMonthlyBudgetContext must be use within a MonthlyBudgetContext")
-    }
-
-    const {monthlyBudget, setMonthlyBudget} = context;
-    
-    return {monthlyBudget, setMonthlyBudget};
-}
-
 export const CategoryBudgetContext = createContext<{categoryBudget: categoryBudget[] | null , setCategoryBudget: Dispatch<SetStateAction<categoryBudget[] | null>>} | null>(null);
 
 export function CategoryBudgetContextProvider({children}: ProtectedLayoutProps)
@@ -250,33 +201,94 @@ export function useCategoryBudgetContext(): {categoryBudget: categoryBudget[] | 
     return {categoryBudget, setCategoryBudget};
 }
 
+export const MonthlyBudgetContext = createContext<{monthlyBudget: monthlyBudget[] | null , setMonthlyBudget: Dispatch<SetStateAction<monthlyBudget[] | null>>} | null>(null);
+
+// export function MonthlyBudgetContextProvider({children}: ProtectedLayoutProps)
+// {
+//     const [monthlyBudget, setMonthlyBudget] = useState<monthlyBudget[] | null>(null);
+
+//     useEffect(() =>
+//     { 
+//         const loadMonthlyBudget = async () => 
+//         {
+//             try
+//             {
+//                 setMonthlyBudget(await getMonthlyBudget());
+//             }
+//             catch (error)
+//             {
+//                 console.error("user retrieval failure", error);
+//                 throw error;
+//             }
+//         }
+//         loadMonthlyBudget();
+//     }, []) //runs only once.
+
+//     return(
+//         <MonthlyBudgetContext value={{monthlyBudget, setMonthlyBudget}}>
+//             {children}
+//         </MonthlyBudgetContext>
+//     );
+// }
+
+/**
+ * This hook will return a state variable holding the user's budget for the current month, if it exists. If there is no budget for the current month but there
+ * was a budget previously, this will return a new budget with the same amount and emailsEnabled values. If the users has NEVER made a budget, the state will be null.
+ */
+export function useMonthlyBudgetContext(): {monthlyBudget: monthlyBudget[] | null, setMonthlyBudget: Dispatch<SetStateAction<monthlyBudget[] | null>>}
+{
+    const context = useContext(MonthlyBudgetContext);
+
+    //does the context exist, even if the value of monthlyBudget is null. I think.
+    if(!context)
+    {
+        throw new Error("useMonthlyBudgetContext must be use within a MonthlyBudgetContext")
+    }
+
+    const {monthlyBudget, setMonthlyBudget} = context;
+    
+    return {monthlyBudget, setMonthlyBudget};
+}
+
 const SavingGoalsContext = createContext<{savingGoals: SavingGoal[], setSavingGoals: Dispatch<SetStateAction<SavingGoal[]>>} | null>(null);
 
-export function SavingGoalsContextProvider({children}: ProtectedLayoutProps)
+export function TGBProvider({children}: ProtectedLayoutProps)
 {
+    const [transactionsArr, setTransactionsArr] = useState<Transaction[]>([]);
     const [savingGoals, setSavingGoals] = useState<SavingGoal[]>([]);
+    const [monthlyBudget, setMonthlyBudget] = useState<monthlyBudget[] | null>(null);
 
     useEffect(() =>
     { 
-        const loadSavingGoals = async () => 
+        const loadData = async () => 
         {
             try
             {
-                setSavingGoals(await getSavingGoals());
+                const [transactionsTMP, savingGoalsTMP, monthlyBudgetTMP] = await Promise.all([getTransactions(), getSavingGoals(), getMonthlyBudget()]);
+
+                setMonthlyBudget(monthlyBudgetTMP);
+                setSavingGoals(savingGoalsTMP);
+                setTransactionsArr(transactionsTMP);
+
+                await checkContributions(monthlyBudgetTMP, setMonthlyBudget, transactionsTMP, savingGoalsTMP, setSavingGoals);
             }
             catch (error)
             {
-                console.error("Saving goals retrieval failure", error);
+                console.error("Data retrieval failure", error);
                 throw error;
             }
         }
-        loadSavingGoals();
+        loadData();
     }, []) //runs only once.
 
     return(
-        <SavingGoalsContext value={{savingGoals, setSavingGoals}}>
-            {children}
-        </SavingGoalsContext>
+        <TransactionContext value={{transactionsArr, setTransactionsArr}}>
+            <MonthlyBudgetContext value={{monthlyBudget, setMonthlyBudget}}>
+                <SavingGoalsContext value={{savingGoals, setSavingGoals}}>
+                    {children}
+                </SavingGoalsContext>
+            </MonthlyBudgetContext>
+        </TransactionContext>
     );
 }
 

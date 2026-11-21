@@ -182,7 +182,7 @@ async function insertTransactions(recurring: recurringTransaction, dates: Date[]
 
 //if this function returns a null, it means that the user has never made a budget.
 //needs to be updated to handle the circumstance where the budget retrieved is from a prior month
-export async function getMonthlyBudget()
+export async function getMonthlyBudget() : Promise<monthlyBudget[] | null>
 {
     const supabase = await createClient();
     
@@ -218,7 +218,7 @@ export async function getMonthlyBudget()
     const budgetDate = new Date(data.budget_month + "T00:00:00");//force interpret date as local
     if(currentDate.getMonth() === budgetDate.getMonth() && currentDate.getFullYear() === budgetDate.getFullYear()) //compare month and year of date, without the time.
     {
-        return getAsMonthlyBudget(data);
+        return [getAsMonthlyBudget(data)] as monthlyBudget[];
     }
     //otherwise, create a copy of the old data for the current month, insert it into the database, and return the result
     else
@@ -249,7 +249,7 @@ export async function getMonthlyBudget()
             last_approaching_email_at,
             last_exceeded_email_at
             `)
-        .limit(1)
+        .limit(2)
         .maybeSingle();
 
         if(insertErrorResult)
@@ -258,7 +258,7 @@ export async function getMonthlyBudget()
             throw insertErrorResult;
         }
         
-        return getAsMonthlyBudget(insertResult);
+        return [getAsMonthlyBudget(insertResult), getAsMonthlyBudget(data)] as monthlyBudget[];
     }
     
 }
@@ -401,37 +401,37 @@ export async function getUser(): Promise<{id: string, email: string}>
     return {id: user.id, email: user.email};
 }
 
-//will eventually replace getUser. Leaving original getUser for now so avoid errors until I am ready to test
-export async function getUser2()
-{
-    const supabase = await createClient();
+// //will eventually replace getUser. Leaving original getUser for now so avoid errors until I am ready to test
+// export async function getUser2()
+// {
+//     const supabase = await createClient();
 
-    const {data: { user }, error: userError} = await supabase.auth.getUser();
-        if(userError || user === null || user.email === undefined)
-        {
-            console.error("user authentication failed", userError);
-            throw userError;
-        }
-        console.log("user successfully retrieved from supabase.");
-    const {data, error} = await supabase
-    .from("profiles")
-    .select(`
-            first_name,
-            last_name
-            `);
-    //may need to filter by userId
+//     const {data: { user }, error: userError} = await supabase.auth.getUser();
+//         if(userError || user === null || user.email === undefined)
+//         {
+//             console.error("user authentication failed", userError);
+//             throw userError;
+//         }
+//         console.log("user successfully retrieved from supabase.");
+//     const {data, error} = await supabase
+//     .from("profiles")
+//     .select(`
+//             first_name,
+//             last_name
+//             `);
+//     //may need to filter by userId
 
-    if(error)
-    {
-        console.error("Error in getUser", error);
-        throw error;
-    }
-    if(user && data)
-    {
-        const userData = {...user, ...data};
-        return 
-    }
-}
+//     if(error)
+//     {
+//         console.error("Error in getUser", error);
+//         throw error;
+//     }
+//     if(user && data)
+//     {
+//         const userData = {...user, ...data};
+//         return 
+//     }
+// }
 
 /*
 Should retrieve user balance for storage in a context. That context can then be used to find current balance based

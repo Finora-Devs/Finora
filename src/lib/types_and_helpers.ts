@@ -5,7 +5,10 @@
  * for functions that initialize data in the browser using the database, go to serverFunctions.ts
  */
 
-import { getBudgetStatus, getCategorySpending, getMonthlySpending } from "./budgetHelpers";
+import { useMonthlyBudgetContext, useSavingGoalsContext, useTransactionContext } from "@/app/(protected)/context";
+import { getBudgetStatus, getCategorySpending, getMonthlySpending, getRemainingBudget } from "./budgetHelpers";
+import { addContributionWithOutForm, deleteMonthlyBudget } from "./clientFunctions";
+import { Dispatch, SetStateAction } from "react";
 
 export type Transaction =
 {
@@ -448,3 +451,69 @@ return {
       } as categoryBudget
 }
 
+export async function checkContributions( monthlyBudget: monthlyBudget[] | null, 
+                                    setMonthlyBudget: Dispatch<SetStateAction<monthlyBudget[] | null>>,
+                                    transactionsArr: Transaction[],
+                                    savingGoals: SavingGoal[],
+                                    setSavingGoals: Dispatch<SetStateAction<SavingGoal[]>>  
+                                 )
+{
+   
+    const incompleteGoals = savingGoals.filter((goal) =>
+    {
+        return goal.currentAmount < goal.targetAmount;
+    })
+    .sort((a,b) => a.priority - b.priority);
+
+    //only update contributions if there are two budgets and at least one goal.
+    if(monthlyBudget && monthlyBudget.length > 1 && incompleteGoals.length > 0)
+    {
+        //should get the amount under budget, or -amount over budget.
+        let amount = getRemainingBudget(getMonthlySpending(transactionsArr, monthlyBudget[1].month.getMonth(), monthlyBudget[1].month.getFullYear()), monthlyBudget[1].amount)
+
+        const amountIsPositive: boolean = amount > 0
+        amount = Math.abs(amount)
+
+        //goes through all the incomplete goals and adds the amount until the goal is complete, then moves to the next goal. break when amount = 0;
+        for(let i = 0; i<incompleteGoals.length; i++)
+        {
+            //if amount is negative, subtract amount from goal
+            if(!amountIsPositive && amount >= incompleteGoals[i].currentAmount)
+            {
+                await addContributionWithOutForm(-incompleteGoals[i].currentAmount, incompleteGoals[i].id, savingGoals, setSavingGoals);
+                amount -= incompleteGoals[i].currentAmount;
+            }
+            else if(!amountIsPositive)
+            {
+                await addContributionWithOutForm(-amount, incompleteGoals[i].id, savingGoals, setSavingGoals);
+                break;
+            }
+
+            //if amount is positive, add amount to goal
+            const diff = incompleteGoals[i].targetAmount - incompleteGoals[i].currentAmount;
+            if(amountIsPositive && amount >= diff)
+            {
+                await addContributionWithOutForm(diff, incompleteGoals[i].id, savingGoals, setSavingGoals);
+                amount -= diff;
+            }
+            else if(amountIsPositive)
+            {
+                await addContributionWithOutForm(amount, incompleteGoals[i].id, savingGoals, setSavingGoals);
+                break;
+            }
+
+            if(amount === 0) break;
+        }
+
+        deleteMonthlyBudget(monthlyBudget[1].id, setMonthlyBudget);
+    }
+    //delete the extra budget regardless of whether or not there were any goals to update.
+    else if(monthlyBudget && monthlyBudget.length > 1)
+    {
+        deleteMonthlyBudget(monthlyBudget[1].id, setMonthlyBudget);
+    }
+    else
+    {
+        return;
+    }
+}

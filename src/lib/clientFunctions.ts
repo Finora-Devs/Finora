@@ -379,7 +379,7 @@ export async function updateUserName(firstName: string, lastName: string)//may n
     }
 }
 
-export async function createMonthlyBudget(formData: FormData, setMonthlyBudget: Dispatch<SetStateAction<monthlyBudget | null>>)
+export async function createMonthlyBudget(formData: FormData, setMonthlyBudget: Dispatch<SetStateAction<monthlyBudget[] | null>>)
 {
     const supabase = await createClient();
 
@@ -421,7 +421,7 @@ export async function createMonthlyBudget(formData: FormData, setMonthlyBudget: 
         console.error("Supabase insert error (createMonthlyBudget)", error);
         throw error;
     }
-    setMonthlyBudget(getAsMonthlyBudget(data));
+    setMonthlyBudget([getAsMonthlyBudget(data)] as monthlyBudget[]);
 }
 
 export async function createCategoryBudget(formData: FormData, setCategoryBudget: Dispatch<SetStateAction<categoryBudget[] | null>>)
@@ -467,7 +467,7 @@ export async function createCategoryBudget(formData: FormData, setCategoryBudget
     })
 }
 
-export async function updateMonthlyBudget(formData: FormData, monthlyBudgetID: number, setMonthlyBudget: Dispatch<SetStateAction<monthlyBudget | null>>)
+export async function updateMonthlyBudget(formData: FormData, monthlyBudgetID: number, setMonthlyBudget: Dispatch<SetStateAction<monthlyBudget[] | null>>)
 {
     const supabase = await createClient();
 
@@ -498,7 +498,7 @@ export async function updateMonthlyBudget(formData: FormData, monthlyBudgetID: n
         console.error("Supabase update error (updateMonthlyBudget", error);
         throw error;
     }
-    setMonthlyBudget(getAsMonthlyBudget(data))
+    setMonthlyBudget([getAsMonthlyBudget(data)] as monthlyBudget[])
 }
 
 /**
@@ -564,22 +564,24 @@ export async function updateCategoryBudget(formData: FormData, categoryBudgetID:
     })
 }
 
-    //turns out we don't need this. don't even know why I wrote it.
-// export async function deleteMonthlyBudget(monthlyBudgetID: number, setMonthlyBudget: Dispatch<SetStateAction<monthlyBudget | null>>)
-// {
-//     const supabase = await createClient();   
+//deletes a given monthly budget; should never be triggered by the user
+export async function deleteMonthlyBudget(monthlyBudgetID: number, setMonthlyBudget: Dispatch<SetStateAction<monthlyBudget[] | null>>)
+{
+    const supabase = await createClient();   
 
-//     const {error} = await supabase
-//     .from("monthly_budgets")
-//     .delete()
-//     .eq("id", monthlyBudgetID);
+    const {error} = await supabase
+    .from("monthly_budgets")
+    .delete()
+    .eq("id", monthlyBudgetID);
 
-//     if(error)
-//     {
-//         console.error("Supabase delete error (deleteMonthlyBudget)", error);
-//         throw error;
-//     }
-// }
+    if(error)
+    {
+        console.error("Supabase delete error (deleteMonthlyBudget)", error);
+        throw error;
+    }
+
+    setMonthlyBudget((prev) => prev!.filter((budget) => budget.id !== monthlyBudgetID))
+}
 export async function deleteCategoryBudget(categoryBudgetID: number, setCategoryBudget: Dispatch<SetStateAction<categoryBudget[] | null>>)
 {
     const supabase = await createClient();
@@ -783,6 +785,57 @@ export async function addContribution(formData: FormData, savingGoalID: number, 
 {
     const contribution = Number(formData.get("amount") as string);
 
+    const oldAmount = savingGoals.find((goal) => {if (goal.id === savingGoalID) return goal;})!.currentAmount;
+
+    const supabase = await createClient();
+
+    const {data, error} = await supabase
+    .from("savings_goals")
+    .update({current_amount: contribution + oldAmount})
+    .eq("id", savingGoalID)
+    .select(`
+            id,
+            name,
+            target_amount,
+            current_amount,
+            target_date,
+            description,
+            priority
+            `)
+    .limit(1)
+    .single();
+
+    if(error)
+    {
+        console.error("Supabase update error (addContribution");
+        throw error;
+    }
+
+    setSavingGoals((prev) => 
+    {
+        return prev.map((goal) => 
+        {
+            if(goal.id === savingGoalID)
+            {
+                return {    id: data!.id,
+                            name: data!.name,
+                            targetAmount: data!.target_amount,
+                            currentAmount: data!.current_amount,
+                            targetDate: data!.target_date ? new Date(`${data!.target_date}T00:00:00`) : null,
+                            description: data!.description,
+                            priority: data!.priority} as SavingGoal;
+            }
+            else
+            {
+                return goal;
+            }
+        })
+    })
+}
+
+//this version of addContributions should be used in the backend for automatically updating goals.
+export async function addContributionWithOutForm(contribution: number, savingGoalID: number, savingGoals: SavingGoal[], setSavingGoals: Dispatch<SetStateAction<SavingGoal[]>>)
+{
     const oldAmount = savingGoals.find((goal) => {if (goal.id === savingGoalID) return goal;})!.currentAmount;
 
     const supabase = await createClient();
