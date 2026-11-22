@@ -28,7 +28,7 @@ import {
   labelClass
   } from "@/lib/types_and_helpers";
 
-import { useTransactionContext } from "@/app/(protected)/context";
+import { useRecurringTransactionContext, useTransactionContext } from "@/app/(protected)/context";
 import { useEffect, useId, useRef, useState } from "react";
 import { deleteTransaction, insertTransaction, updateTransaction } from "@/lib/clientFunctions";
 
@@ -40,7 +40,7 @@ type Props =
 
 export default function IncomeList({searchDate, setSearchDate}: Props) {
   const { transactionsArr, setTransactionsArr } = useTransactionContext();
-
+  const {setRecurringTransactions} = useRecurringTransactionContext();
   const [searchTerm, setSearchTerm] = useState("");
   const [sortingOrder, setSortingOrder] = useState(SORTING_ORDER.DATE);
   const [descending, setDescending] = useState(true);
@@ -160,7 +160,7 @@ export default function IncomeList({searchDate, setSearchDate}: Props) {
           }
           else
           {
-            await insertTransaction(event, setTransactionsArr);
+            await insertTransaction(event, setRecurringTransactions, setTransactionsArr);
           }
           setPanel(null);
         } catch {

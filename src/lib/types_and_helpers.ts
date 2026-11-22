@@ -24,15 +24,15 @@ export type Transaction =
        transaction_type: string,
        };
 };
+
 export type recurringTransaction = 
 {
   id: number,
-  user_id: string,
   name: string,
   amount: number,
   category_id: number,
   frequency: string,
-  next_due_date: string,
+  next_due_date: Date,
   description: string | null,
   is_active: boolean,
 }
@@ -516,4 +516,13 @@ export async function checkContributions( monthlyBudget: monthlyBudget[] | null,
     {
         return;
     }
+}
+
+export function formatDate(date: Date)
+{
+   const day = `${date.getDate()}`.padStart(2, "0");
+   const month = `${date.getMonth() + 1}`.padStart(2, "0");
+   const year = `${date.getFullYear()}`.padStart(4, "0");
+
+   return `${month}/${day}/${year}`
 }

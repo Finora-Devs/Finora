@@ -8,7 +8,7 @@ import Sidebar from "./Sidebar";
 import TopBar from "./TopBar";
 import {
     CategoryBudgetContextProvider,
-    TGBProvider,
+    ContextProvider,
     UserContextProvider,
 } from "../../app/(protected)/context";
 
@@ -72,7 +72,7 @@ export default function AppShell({ children }: AppShellProps) {
 
     return (
         <UserContextProvider>
-            <TGBProvider>
+            <ContextProvider>
             <CategoryBudgetContextProvider>
 
                 <div className="min-h-screen bg-[#f3f7f5]">
@@ -131,7 +131,7 @@ export default function AppShell({ children }: AppShellProps) {
                 </div>
             
             </CategoryBudgetContextProvider>
-            </TGBProvider>
+            </ContextProvider>
         </UserContextProvider>
     );
 }

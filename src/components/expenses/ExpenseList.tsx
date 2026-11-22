@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 
 
-import { useTransactionContext } from "@/app/(protected)/context";
+import { useRecurringTransactionContext, useTransactionContext } from "@/app/(protected)/context";
 import { 
   CATEGORY_NAME,
   sortTransactionList,
@@ -56,6 +56,7 @@ type Props =
 export default function ExpenseList({searchDate, setSearchDate}: Props) {
   // Search, sorting, and category controls.
   const {transactionsArr, setTransactionsArr} = useTransactionContext();
+  const {setRecurringTransactions} = useRecurringTransactionContext();
   const [search, setSearch] = useState("");
   const [sortField, setSortField] = useState<SORTING_ORDER>(SORTING_ORDER.DATE);
   const [reversed, setReversed] = useState(true);
@@ -174,7 +175,7 @@ export default function ExpenseList({searchDate, setSearchDate}: Props) {
       }
       else
       {
-        await insertTransaction(event, setTransactionsArr);
+        await insertTransaction(event, setRecurringTransactions, setTransactionsArr);
       }
       setPanel(null);
     } catch {

@@ -29,21 +29,9 @@ import {
   labelClass
   } from "@/lib/types_and_helpers";
 
-import { useTransactionContext } from "@/app/(protected)/context";
+import { useRecurringTransactionContext, useTransactionContext } from "@/app/(protected)/context";
 import { useEffect, useId, useRef, useState } from "react";
 import { deleteTransaction, insertTransaction, updateTransaction } from "@/lib/clientFunctions";
-//Sort by option box: complete
-//search bar: complete
-//Ascending/Descending toggle: complete.
-//category option box: complete
-//include/exclude toggle: complete
-//add income button: complete
-//add expense button: complete
-//more options button: incomplete
-  //remove button: incomplete, complete in expense page.
-  //edit button: incomplete, complete in expense page.
-
-//still need summary cards and chart
 
 type TransactionType = "income" | "expense";
 
@@ -55,7 +43,7 @@ type Props =
 
 export default function TransactionList({searchDate, setSearchDate}: Props) {
   const { transactionsArr, setTransactionsArr } = useTransactionContext();
-
+  const {setRecurringTransactions} = useRecurringTransactionContext();
   const [searchTerm, setSearchTerm] = useState("");
   const [sortingOrder, setSortingOrder] = useState(SORTING_ORDER.DATE);
   const [descending, setDescending] = useState(true);
@@ -168,7 +156,6 @@ export default function TransactionList({searchDate, setSearchDate}: Props) {
       const nextErrors = validateTransaction(draft, isIncomeForm);
       setErrors(nextErrors);
       if (Object.keys(nextErrors).length) {
-        console.log("Object.keys(nextErrors).length = 0")
         requestAnimationFrame(() => errorRef.current?.focus());
         return;
       }
@@ -183,7 +170,7 @@ export default function TransactionList({searchDate, setSearchDate}: Props) {
         }
         else
         {
-          await insertTransaction(event, setTransactionsArr);
+          await insertTransaction(event, setRecurringTransactions, setTransactionsArr);
         }
         setPanel(null);
       } catch {

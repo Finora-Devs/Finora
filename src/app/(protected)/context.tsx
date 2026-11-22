@@ -1,8 +1,8 @@
 "use client";
 import {createContext, useContext, useState, useEffect} from "react"//probably need to remember what each of these do in case dr. nicholson asks.
 import type { ReactNode, Dispatch, SetStateAction } from "react";
-import { categoryBudget, monthlyBudget, Transaction, SavingGoal, checkContributions} from "@/lib/types_and_helpers";
-import { getCategoryBudgets, getMonthlyBudget, getSavingGoals, getTransactions, getUser } from "@/lib/serverFunctions"
+import { categoryBudget, monthlyBudget, Transaction, SavingGoal, checkContributions, recurringTransaction} from "@/lib/types_and_helpers";
+import { getCategoryBudgets, getMonthlyBudget, getRecurringTransactions, getSavingGoals, getTransactions, getUser, updateRecurringTransactions } from "@/lib/serverFunctions"
 import { User } from "@supabase/supabase-js";
 import MonthlyBudget from "@/components/budget/MonthlyBudget";
 
@@ -252,11 +252,12 @@ export function useMonthlyBudgetContext(): {monthlyBudget: monthlyBudget[] | nul
 
 const SavingGoalsContext = createContext<{savingGoals: SavingGoal[], setSavingGoals: Dispatch<SetStateAction<SavingGoal[]>>} | null>(null);
 
-export function TGBProvider({children}: ProtectedLayoutProps)
+export function ContextProvider({children}: ProtectedLayoutProps)
 {
     const [transactionsArr, setTransactionsArr] = useState<Transaction[]>([]);
     const [savingGoals, setSavingGoals] = useState<SavingGoal[]>([]);
     const [monthlyBudget, setMonthlyBudget] = useState<monthlyBudget[] | null>(null);
+    const [recurringTransactions, setRecurringTransactions] = useState<recurringTransaction[]>([]);
 
     useEffect(() =>
     { 
@@ -264,11 +265,13 @@ export function TGBProvider({children}: ProtectedLayoutProps)
         {
             try
             {
-                const [transactionsTMP, savingGoalsTMP, monthlyBudgetTMP] = await Promise.all([getTransactions(), getSavingGoals(), getMonthlyBudget()]);
+                await updateRecurringTransactions()
+                const [transactionsTMP, savingGoalsTMP, monthlyBudgetTMP, recurringTransactionsTMP] = await Promise.all([getTransactions(), getSavingGoals(), getMonthlyBudget(), getRecurringTransactions()]);
 
                 setMonthlyBudget(monthlyBudgetTMP);
                 setSavingGoals(savingGoalsTMP);
                 setTransactionsArr(transactionsTMP);
+                setRecurringTransactions(recurringTransactionsTMP);
 
                 await checkContributions(monthlyBudgetTMP, setMonthlyBudget, transactionsTMP, savingGoalsTMP, setSavingGoals);
             }
@@ -282,13 +285,15 @@ export function TGBProvider({children}: ProtectedLayoutProps)
     }, []) //runs only once.
 
     return(
-        <TransactionContext value={{transactionsArr, setTransactionsArr}}>
-            <MonthlyBudgetContext value={{monthlyBudget, setMonthlyBudget}}>
-                <SavingGoalsContext value={{savingGoals, setSavingGoals}}>
-                    {children}
-                </SavingGoalsContext>
-            </MonthlyBudgetContext>
-        </TransactionContext>
+        <RecurringTransactionContext value={{recurringTransactions, setRecurringTransactions}}>
+            <TransactionContext value={{transactionsArr, setTransactionsArr}}>
+                <MonthlyBudgetContext value={{monthlyBudget, setMonthlyBudget}}>
+                    <SavingGoalsContext value={{savingGoals, setSavingGoals}}>
+                        {children}
+                    </SavingGoalsContext>
+                </MonthlyBudgetContext>
+            </TransactionContext>
+        </RecurringTransactionContext>
     );
 }
 
@@ -305,4 +310,19 @@ export function useSavingGoalsContext()
     const {savingGoals, setSavingGoals} = context;
     
     return {savingGoals, setSavingGoals};
+}
+
+const RecurringTransactionContext = createContext<{recurringTransactions: recurringTransaction[], setRecurringTransactions: Dispatch<SetStateAction<recurringTransaction[]>>} | undefined>(undefined);
+
+export function useRecurringTransactionContext()
+{
+    const context = useContext(RecurringTransactionContext);
+
+    if(!context)
+    {
+        throw new Error("useRecurringTransactionContext must be used within a RecurringTransactionContext");
+    }
+    const {recurringTransactions, setRecurringTransactions} = context;
+    
+    return {recurringTransactions, setRecurringTransactions};
 }
