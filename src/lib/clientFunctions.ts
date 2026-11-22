@@ -612,8 +612,11 @@ export async function createSavingGoal(formData: FormData, savingGoals: SavingGo
     const deadline = formData.get("deadline") as string;
     const highestPriority = formData.get("highestPriority") as string === "on";
 
+    console.log(deadline);
+
     //sets the priority to insert to one if set highest priority is true, otherwise sets priority to be lowest.
     const priority: number = highestPriority ? 1 : savingGoals[savingGoals.length-1].priority + 1; //last element of array should always be the lowest priority. May need to mess with this a little to handle completed goals.
+    const newDeadline = deadline ? deadline : null;
 
     if(highestPriority) updateGoals(savingGoals[savingGoals.length-1].priority + 1, true, savingGoals, setSavingGoals); //should lower the priority of all goals.
 
@@ -634,7 +637,7 @@ export async function createSavingGoal(formData: FormData, savingGoals: SavingGo
             name: name,
             target_amount: targetAmount,
             current_amount: 0,
-            target_date: deadline,
+            target_date: newDeadline,
             description: description,
             priority: priority
         })
@@ -669,14 +672,7 @@ export async function createSavingGoal(formData: FormData, savingGoals: SavingGo
             priority: data.priority
         } as SavingGoal
 
-        if(highestPriority)
-        {
-            return [newGoal, ...prev ?? []] as SavingGoal[]; //not sure if this ?? will work
-        }
-        else
-        {
-            return [...prev ?? [], newGoal] as SavingGoal[];
-        }
+        return [newGoal, ...prev].sort((a, b) => a.priority - b.priority) as SavingGoal[]; //not sure if this ?? will work
     })
 }
 
@@ -699,7 +695,7 @@ export async function deleteGoal(savingGoalID: number, savingGoals: SavingGoal[]
 
     setSavingGoals((prev) =>
     {
-        return prev.filter((goal) => savingGoalID !== goal.id); //return array of all goals other than the deleted goal.
+        return prev.filter((goal) => savingGoalID !== goal.id).sort((a, b) => a.priority - b.priority); //return array of all goals other than the deleted goal.
     })
 }
 
@@ -714,8 +710,11 @@ export async function updateSavingGoal(formData: FormData, savingGoalID: number,
     const deadline = formData.get("deadline") as string;
     const highestPriority = formData.get("highestPriority") as string === "on";
 
+    console.log(deadline);
+
     //if set highest priority, priority = the highest priority, otherwise, priority = current goal priority.
     const priority = highestPriority ? 1 : savingGoals.find((goal) => {if (goal.id === savingGoalID) return goal;})!.priority;
+    const newDeadline = deadline ? deadline : null;
 
     //if goal priority is being updated, update other goals priorities.
     if(highestPriority) updateGoals(priority, true, savingGoals, setSavingGoals); //should update the priority of other goals that will be affected by the change the goal's priority. 
@@ -729,7 +728,7 @@ export async function updateSavingGoal(formData: FormData, savingGoalID: number,
         {
             name: name,
             target_amount: targetAmount,
-            target_date: deadline,
+            target_date: newDeadline,
             description: description,
             priority: priority,
         }
@@ -883,17 +882,20 @@ export async function addContributionWithOutForm(contribution: number, savingGoa
         })
     })
 }
-export async function markHighestPriority(savingGoalID: number, savingGoals: SavingGoal[], setSavingGoals: Dispatch<SetStateAction<SavingGoal[]>>)
+export async function reopenGoal(savingGoalID: number, savingGoals: SavingGoal[], setSavingGoals: Dispatch<SetStateAction<SavingGoal[]>>)
 {
-    const priority = savingGoals.find((goal) => {if (goal.id === savingGoalID) return goal;})!.priority;
 
-    updateGoals(priority, true, savingGoals, setSavingGoals);
+    updateGoals(savingGoals.find((goal) => {if (goal.id === savingGoalID) return goal;})!.priority, false, savingGoals, setSavingGoals);
+
+    const priority = savingGoals.sort((a, b) => a.priority - b.priority)[savingGoals.length-1].priority;
     
     const supabase = await createClient();
 
     const {data, error} = await supabase
     .from("savings_goals")
-    .update({priority: priority})
+    .update({priority: priority,
+            current_amount: 0
+            })
     .eq("id", savingGoalID)
     .select(`
             id,
@@ -923,7 +925,50 @@ export async function markHighestPriority(savingGoalID: number, savingGoals: Sav
                     description: data.description,
                     priority: data.priority}, 
                     
-                    ...prev.filter((goal) => goal.id !== savingGoalID)];
+                    ...prev.filter((goal) => goal.id !== savingGoalID)].sort((a, b) => a.priority - b.priority);
+    });
+}
+export async function markHighestPriority(savingGoalID: number, savingGoals: SavingGoal[], setSavingGoals: Dispatch<SetStateAction<SavingGoal[]>>)
+{
+    const priority = savingGoals.find((goal) => {if (goal.id === savingGoalID) return goal;})!.priority;
+
+    updateGoals(priority, true, savingGoals, setSavingGoals);
+    
+    const supabase = await createClient();
+
+    const {data, error} = await supabase
+    .from("savings_goals")
+    .update({priority: 1})
+    .eq("id", savingGoalID)
+    .select(`
+            id,
+            name,
+            target_amount,
+            current_amount,
+            target_date,
+            description,
+            priority
+            `)
+    .limit(1)
+    .single();
+
+    if(error)
+    {
+        console.error("Supabase update error (markHighestPriority");
+        throw error;
+    }
+
+    setSavingGoals((prev) => 
+    {
+        return [{   id: data.id,
+                    name: data.name,
+                    targetAmount: data.target_amount,
+                    currentAmount: data.current_amount,
+                    targetDate: data.target_date ? new Date(`${data.target_date}T00:00:00`) : null,
+                    description: data.description,
+                    priority: data.priority}, 
+                    
+                    ...prev.filter((goal) => goal.id !== savingGoalID)].sort((a, b) => a.priority - b.priority);;
     });
 }
 
@@ -941,7 +986,7 @@ async function updateGoals(savingGoalPriority: number, inserting: boolean, savin
     {
         //returns an array of all saving goals with a priority higher then savingGoalPriority with all priorities decreased (incremented) by one.
         dataToMod = savingGoalArr
-        .filter(goal => goal.priority > savingGoalPriority)
+        .filter(goal => goal.priority < savingGoalPriority)
         .map<SavingGoal>((goal) =>
         {
             return {
@@ -960,7 +1005,7 @@ async function updateGoals(savingGoalPriority: number, inserting: boolean, savin
     {
         //returns an array of all saving goals with a priority lower then savingGoalPriority with all priorities increased (decremented) by one.
         dataToMod = savingGoalArr
-        .filter(goal => goal.priority < savingGoalPriority)
+        .filter(goal => goal.priority > savingGoalPriority)
         .map<SavingGoal>((goal) =>
         {
             return {
@@ -1023,8 +1068,9 @@ async function updateGoals(savingGoalPriority: number, inserting: boolean, savin
                     {
                         return goal;
                     }
-                })//array should already be sorted at this point, so there should be no need to add an extra sort function here.
+                });
             });
         }
     }
+    setSavingGoals(prev => prev.sort((a, b) => a.priority - b.priority));
 }

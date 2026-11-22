@@ -14,6 +14,7 @@ import {
 
 import { fieldClass, formatMoney, type SavingGoal } from "@/lib/types_and_helpers";
 import { useSavingGoalsContext } from "@/app/(protected)/context";
+import { addContribution, addContributionWithOutForm, createSavingGoal, deleteGoal, markHighestPriority, reopenGoal, updateSavingGoal } from "@/lib/clientFunctions";
 
 type PopupMode =
     | "create"
@@ -101,6 +102,8 @@ export default function GoalList() {
 
     const {savingGoals, setSavingGoals} = useSavingGoalsContext();
 
+    const [saving, setSaving] = useState(false);
+
     const [view, setView] = useState<"Active" | "Completed">("Active");
     const [popupMode, setPopupMode] = useState<PopupMode | null>(null);
     const [selectedGoal, setSelectedGoal] = useState<SavingGoal | null>(null);
@@ -184,6 +187,56 @@ export default function GoalList() {
             previousFocus?.focus();
         };
     }, [popupMode]);
+
+    async function submit(formData: FormData)
+    {
+        if(saving) return;
+
+        //error checking
+
+        setSaving(true);
+        //actionError
+        try
+        {
+            if(popupMode === "create")
+            {
+                await createSavingGoal(formData, savingGoals, setSavingGoals);
+            }
+            else if(popupMode === "edit" && selectedGoal)
+            {
+                await updateSavingGoal(formData, selectedGoal.id, savingGoals, setSavingGoals);
+            }
+            else if(popupMode === "contribute" && selectedGoal)
+            {
+                await addContribution(formData, selectedGoal.id, savingGoals, setSavingGoals);
+            }
+            else if(popupMode === "priority" && selectedGoal)
+            {
+                await markHighestPriority(selectedGoal.id, savingGoals, setSavingGoals);
+            }
+            else if(popupMode === "complete" && selectedGoal)
+            {
+                await addContributionWithOutForm(selectedGoal.targetAmount - selectedGoal.currentAmount, selectedGoal.id, savingGoals, setSavingGoals);
+            }
+            else if(popupMode === "reopen" && selectedGoal)
+            {
+                await reopenGoal(selectedGoal.id, savingGoals, setSavingGoals);
+            }
+            else if(popupMode === "remove" && selectedGoal)
+            {
+                await deleteGoal(selectedGoal.id, savingGoals, setSavingGoals);
+            }
+        }
+        catch
+        {
+            //action error
+        }
+        finally
+        {
+            setSaving(false);
+            closePopup();
+        }              
+    }
 
     return (
         <section className="min-w-0 rounded-xl border border-[#dce7e2] bg-white">
@@ -464,6 +517,7 @@ export default function GoalList() {
                         onClick={closePopup}
                         aria-label="Close popup"
                         className="rounded-lg p-2 hover:bg-[#f3f7f5]"
+                        disabled = {saving}
                     >
                         <X aria-hidden="true" className="h-5 w-5" />
                     </button>
@@ -475,7 +529,9 @@ export default function GoalList() {
                         ref={formRef}
                         onSubmit={(event) => {
                             event.preventDefault();
-
+                            const formData = new FormData(event.currentTarget);
+                          
+                            submit(formData);
                             // UI only. 
                         }}
                         className="space-y-4 p-5"
@@ -497,15 +553,13 @@ export default function GoalList() {
                                         type="text"
                                         required
                                         defaultValue={
-                                            isEditing && selectedGoal?.targetDate
-                                                ? [selectedGoal.targetDate.getFullYear(),
-                                                    String(selectedGoal.targetDate.getMonth() + 1).padStart(2, "0"),
-                                                    String(selectedGoal.targetDate.getDate()).padStart(2, "0")
-                                                ].join("-")
+                                            isEditing && selectedGoal?.name
+                                                ? selectedGoal.name
                                                 : ""
                                         }
                                         placeholder="For example, New Laptop"
                                         className={fieldClass}
+                                        disabled={saving}
                                     />
                                 </div>
 
@@ -529,6 +583,7 @@ export default function GoalList() {
                                         }
                                         placeholder="What are you saving for?"
                                         className={`${fieldClass} resize-y`}
+                                        disabled={saving}
                                     />
                                 </div>
 
@@ -555,6 +610,7 @@ export default function GoalList() {
                                         }
                                         placeholder="0.00"
                                         className={fieldClass}
+                                        disabled={saving}
                                     />
                                 </div>
 
@@ -571,11 +627,16 @@ export default function GoalList() {
                                         name="deadline"
                                         type="date"
                                         defaultValue={
-                                            isEditing
-                                                ? selectedGoal?.name ?? ""
+                                             isEditing && selectedGoal?.targetDate
+                                                ? [selectedGoal.targetDate.getFullYear(),
+                                                    String(selectedGoal.targetDate.getMonth() + 1).padStart(2, "0"),
+                                                    String(selectedGoal.targetDate.getDate()).padStart(2, "0")
+                                                ].join("-")
                                                 : ""
+                                                
                                         }
                                         className={fieldClass}
+                                        disabled={saving}
                                     />
                                 </div>
 
@@ -589,6 +650,7 @@ export default function GoalList() {
                                                 : false
                                         }
                                         className="mt-1 h-4 w-4 shrink-0 accent-[#3f8068]"
+                                        disabled={saving}
                                     />
 
                                     <span>
@@ -632,10 +694,11 @@ export default function GoalList() {
                                         inputMode="decimal"
                                         placeholder="0.00"
                                         className={fieldClass}
+                                        disabled={saving}
                                     />
                                 </div>
 
-                                <div>
+                                {/* <div>
 
                                     <input
                                         id={`${formId}-date`}
@@ -643,6 +706,7 @@ export default function GoalList() {
                                         type="date"
                                         required
                                         className={fieldClass}
+                                        disabled={saving}
                                     />
                                 </div>
 
@@ -654,8 +718,9 @@ export default function GoalList() {
                                         rows={3}
                                         placeholder="Add a short note"
                                         className={`${fieldClass} resize-y`}
+                                        disabled={saving}
                                     />
-                                </div>
+                                </div> */}
                             </>
                         )}
 
@@ -710,6 +775,7 @@ export default function GoalList() {
                                     required
                                     defaultValue=""
                                     className={fieldClass}
+                                    disabled={saving}
                                 >
                                     <option value="" disabled>
                                         Select an active goal
@@ -730,6 +796,7 @@ export default function GoalList() {
                                 type="button"
                                 onClick={closePopup}
                                 className="min-h-11 rounded-lg border border-[#dce7e2] px-4 py-2 text-sm font-medium text-[#17324d] hover:bg-[#f7faf8]"
+                                disabled={saving}
                             >
                                 Cancel
                             </button>
@@ -740,8 +807,9 @@ export default function GoalList() {
                                         ? "bg-[#b53648] hover:bg-[#982d3c]"
                                         : "bg-[#008f73] hover:bg-[#007c64]"
                                     }`}
+                                disabled={saving}
                             >
-                                {submitLabels[popupMode]}
+                                {saving ? "Saving..." : submitLabels[popupMode]}
                             </button>
                         </div>
                     </form>
