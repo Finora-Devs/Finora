@@ -12,7 +12,9 @@ import {
     Utensils,
 } from "lucide-react";
 
-import { expenseCategories } from "@/lib/types_and_helpers";
+import { expenseCategories, formatMoney, getCategoryName } from "@/lib/types_and_helpers";
+import { useCategoryBudgetContext, useMonthlyBudgetContext, useTransactionContext } from "@/app/(protected)/context";
+import { getBudgetPercentage, getBudgetStatus, getCategorySpending, getMonthlySpending, getRemainingBudget } from "@/lib/budgetHelpers";
 
 
 const spendingFigures: Record<
@@ -335,6 +337,14 @@ function RecentTransactions() {
 }
 
 function BudgetStatus() {
+
+    const {monthlyBudget} = useMonthlyBudgetContext();
+    const {categoryBudget} = useCategoryBudgetContext();
+    const {transactionsArr} = useTransactionContext();
+    const currentDate = new Date(0);
+
+    getMonthlySpending(transactionsArr, currentDate.getMonth(), currentDate.getFullYear());
+
     return (
         <section className="min-w-0 rounded-xl border border-[#dce7e2] bg-white p-5">
             {/* Panel heading and related page link */}
@@ -359,55 +369,61 @@ function BudgetStatus() {
                 </p>
 
                 <p className="mt-1 text-xl font-bold text-[#17324d]">
-                    $519.75
+                    {monthlyBudget ? formatMoney(getRemainingBudget(getMonthlySpending(transactionsArr, monthlyBudget[0].month.getMonth(), monthlyBudget[0].month.getFullYear()), monthlyBudget[0].amount)) : "Loading..."}
                 </p>
 
                 <p className="mt-1 text-xs leading-5 text-[#4e7069]">
-                    $1,480.25 spent of a $2,000.00 budget.
+                    {monthlyBudget ? `${formatMoney(getMonthlySpending(transactionsArr, monthlyBudget[0].month.getMonth(), monthlyBudget[0].month.getFullYear()))} spent of a ${formatMoney(monthlyBudget[0].amount)} budget.` : "Loading..."}
                 </p>
             </div>
 
             {/* Category budget previews */}
             <ul className="mt-5 space-y-5">
-                {categoryBudgets.map((budget) => {
-                    const Icon = budget.icon;
+                {categoryBudget?.map((budget) => {
+                    const Icon = Utensils; //replace with something else
+                    const spending = getCategorySpending(transactionsArr,budget.categoryId, budget.month.getMonth(), budget.month.getFullYear());
+                    const percentage = getBudgetPercentage(spending, budget.amount);
+                    const budgetStatus = getBudgetStatus(spending, budget.amount);
+
+                    console.log(Math.round(percentage));
+
 
                     return (
-                        <li key={budget.name}>
+                        <li key={budget.categoryId}>
                             <div className="flex flex-wrap items-center justify-between gap-2">
                                 <span className="inline-flex items-center gap-2 text-sm text-[#17324d]">
                                     <Icon
                                         aria-hidden="true"
                                         className="h-4 w-4 shrink-0"
                                     />
-                                    {budget.name}
+                                    {getCategoryName(budget.categoryId)}
                                 </span>
 
                                 <span className="text-xs tabular-nums text-[#4e7069]">
-                                    {budget.amounts}
+                                    {formatMoney(budget.amount)}
                                 </span>
                             </div>
 
                             <div
                                 role="progressbar"
-                                aria-label={`${budget.name} budget used`}
+                                aria-label={`${getCategoryName(budget.categoryId)} budget used`}
                                 aria-valuemin={0}
                                 aria-valuemax={100}
-                                aria-valuenow={budget.percent}
-                                aria-valuetext={`${budget.percent}% used; ${budget.status}`}
+                                aria-valuenow={percentage}
+                                aria-valuetext={`${percentage}% used; ${budgetStatus}`}
                                 className="mt-2 h-2.5 overflow-hidden rounded-full bg-[#e8eeeb]"
                             >
                                 <div
-                                    className={`h-full rounded-full ${budget.barColor}`}
-                                    style={{ width: `${budget.percent}%` }}
+                                    className={`h-full rounded-full bg-[#3f8068]`} //replace bg color
+                                    style={{ width: `${percentage}%` }}
                                 />
                             </div>
 
                             <div
-                                className={`mt-1 flex justify-between gap-2 text-xs ${budget.textColor}`}
+                                className={`mt-1 flex justify-between gap-2 text-xs text-[#28664f]`} //text color
                             >
-                                <span>{budget.status}</span>
-                                <span>{budget.percent}% used</span>
+                                <span>{budgetStatus}</span>
+                                <span>{Math.round(percentage)}% used</span>
                             </div>
                         </li>
                     );
