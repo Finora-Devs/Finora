@@ -13,7 +13,7 @@ export default function SpendingByCategory({
     .map((category) => {
       const start = position;
       position += total > 0 ? (category.amount / total) * 100 : 0;
-      return `${category.color} ${start}% ${position}%`;
+      return `${category.textColor.substring(category.textColor.indexOf("#"), category.textColor.indexOf("]"))} ${start}% ${position}%`;
     })
     .join(", ");
   return (
@@ -57,7 +57,7 @@ export default function SpendingByCategory({
             <span
               aria-hidden="true"
               className="h-3 w-3 shrink-0 rounded-full"
-              style={{ backgroundColor: category.color }}
+              style={{ backgroundColor: category.textColor.substring(category.textColor.indexOf("#"), category.textColor.indexOf("]")) }}
             />
             <span className="min-w-0 flex-1">{category.name}</span>
             <span className="font-medium">{formatMoney(category.amount)}</span>

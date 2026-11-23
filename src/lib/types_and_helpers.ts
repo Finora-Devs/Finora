@@ -9,6 +9,8 @@ import { useMonthlyBudgetContext, useSavingGoalsContext, useTransactionContext }
 import { getBudgetStatus, getCategorySpending, getMonthlySpending, getRemainingBudget } from "./budgetHelpers";
 import { addContributionWithOutForm, deleteMonthlyBudget } from "./clientFunctions";
 import { Dispatch, SetStateAction } from "react";
+import { ArrowUpRight, Award, BanknoteArrowUp, BriefcaseBusiness, Car, DollarSign, Faucet, Gamepad2, GraduationCap, House, LucideIcon, ShoppingBag, University, Utensils } from "lucide-react";
+import { getTotalOfType } from "./transactionHelpers";
 
 export type Transaction =
 {
@@ -126,22 +128,22 @@ export enum FREQUENCY
 }
 //can probably use [...incomeCategories, ...expenseCatgories] to create an array of all categories, then use a category id to easily access category name
 export const incomeCategories = [
- { name: "Employment", value: CATEGORY_NAME.EMPLOYMENT ,color: "#5794f6" },
- { name: "Scholarships", value: CATEGORY_NAME.SCHOLARSHIPS ,color: "#ffce32" },
- { name: "Financial Aid", value: CATEGORY_NAME.FINANCIAL_AID ,color: "#b36af5" },
- { name: "Allowance", value: CATEGORY_NAME.ALLOWANCE ,color: "#ff7b96" },
- { name: "Self Employment", value: CATEGORY_NAME.SELF_EMPLOYMENT ,color: "#48c4ac" },
- { name: "Other Income", value: CATEGORY_NAME.OTHER_INCOME ,color: "#7437ed" },
+ { name: "Employment", value: CATEGORY_NAME.EMPLOYMENT ,textColor: "text-[#16834b]", backgroundColor: "bg-[#e5f3ec]" },
+ { name: "Scholarships", value: CATEGORY_NAME.SCHOLARSHIPS ,textColor: "text-[#ffce32]", backgroundColor: "bg-[#fff6da]" },
+ { name: "Financial Aid", value: CATEGORY_NAME.FINANCIAL_AID ,textColor: "text-[#b36af5]", backgroundColor: "bg-[#fcf9ff]" },
+ { name: "Allowance", value: CATEGORY_NAME.ALLOWANCE ,textColor: "text-[#ff7b96]", backgroundColor: "bg-[#ffbfcb]" },
+ { name: "Self Employment", value: CATEGORY_NAME.SELF_EMPLOYMENT ,textColor: "text-[#48c4ac]", backgroundColor: "bg-[#dee6e5]" },
+ { name: "Other Income", value: CATEGORY_NAME.OTHER_INCOME ,textColor: "text-[#7437ed]", backgroundColor: "bg-[#d5c6f0]" },
 ] as const;
 export const expenseCategories = [
- { name: "Food", value: CATEGORY_NAME.FOOD, color: "#ff8963" },
- { name: "Housing", value: CATEGORY_NAME.HOUSING, color: "#5794f6" },
- { name: "Transportation", value: CATEGORY_NAME.TRANSPORTATION, color: "#ffce32" },
- { name: "Tuition", value: CATEGORY_NAME.TUITION, color: "#48c4ac" },
- { name: "Entertainment", value: CATEGORY_NAME.ENTERTAINMENT, color: "#c65be3" },
- { name: "Utilities", value: CATEGORY_NAME.UTILITIES, color: "#7b6be8" },
- { name: "Subscriptions", value: CATEGORY_NAME.SUBSCRIPTIONS, color: "#7437ed" },
- { name: "Other Expense", value: CATEGORY_NAME.OTHER, color: "#b978d9" },
+ { name: "Food", value: CATEGORY_NAME.FOOD, textColor: "text-[#16834b]", backgroundColor: "bg-[#e5f3ec]" },
+ { name: "Housing", value: CATEGORY_NAME.HOUSING, textColor: "text-[#8246c8]", backgroundColor: "bg-[#f0e7fc]" },
+ { name: "Transportation", value: CATEGORY_NAME.TRANSPORTATION, textColor: "text-[#d94c5c]", backgroundColor: "bg-[#f4dadd]" },
+ { name: "Tuition", value: CATEGORY_NAME.TUITION, textColor: "text-[#48c4ac]", backgroundColor: "bg-[#dee6e5]" },
+ { name: "Entertainment", value: CATEGORY_NAME.ENTERTAINMENT, textColor: "text-[#c65be3]", backgroundColor: "bg-[#fbf7fc]" },
+ { name: "Utilities", value: CATEGORY_NAME.UTILITIES, textColor: "text-[#7b6be8]", backgroundColor: "bg-[#f8f7fd]" },
+ { name: "Subscriptions", value: CATEGORY_NAME.SUBSCRIPTIONS, textColor: "text-[#7437ed]", backgroundColor: "bg-[#d5c6f0]" },
+ { name: "Other Expense", value: CATEGORY_NAME.OTHER, textColor: "text-[#3173c9]", backgroundColor: "bg-[#e8f1ff]" },
 ] as const;
  
  export const frequencies = [
@@ -355,15 +357,40 @@ export function validateTransaction(draft: TransactionDraft, isIncomeForm: boole
   return errors;
 }
 
-export function categoryBreakdown(records: Transaction[]) { //Does this already exist somewhere?
-          return expenseCategories.map((category) => ({
-            ...category,
-            amount: records
-              .filter(
-                (record) => record.categories.name === category.value,
-              )
-              .reduce((sum, record) => sum + record.amount, 0),
-          }));
+export function categoryBreakdown(records: Transaction[]) 
+{
+   let position = 0;
+   const total = getTotalOfType("expense", records);
+   ;
+   return expenseCategories.map((category) => 
+   {
+      const amount = records
+         .filter(
+            (record) => record.categories.name === category.value,
+         )
+         .reduce((sum, record) => sum + record.amount, 0);
+
+      return {
+      ...category,
+      amount: amount,
+      percent: Math.max(0, amount / total * 100),
+      }
+});
+}
+export function incomeCategoryBreakdown(records: Transaction[]) {
+         return incomeCategories.map((category) => 
+   {
+      const amount = records
+         .filter(
+            (record) => record.categories.name === category.value,
+         )
+         .reduce((sum, record) => sum + record.amount, 0);
+      return {
+      ...category,
+      amount: amount,
+      percent: amount / getTotalOfType("expense", records)
+      }
+});
         }
 
 export const formatMoney = (value: number) => value.toLocaleString("en-US", { style: "currency", currency: "USD" });
@@ -525,4 +552,58 @@ export function formatDate(date: Date)
    const year = `${date.getFullYear()}`.padStart(4, "0");
 
    return `${month}/${day}/${year}`
+}
+
+export function getIcon(categoryID: number)
+{
+   switch(categoryID)
+   {
+       case 1:
+           return ArrowUpRight;
+           break;
+       case 2:
+           return Award;
+           break;
+       case 3:
+           return GraduationCap;
+           break;
+       case 4:
+           return DollarSign;
+           break;
+       case 5:
+           return BriefcaseBusiness;
+           break;
+       case 6:
+           return ShoppingBag;
+           break;
+       case 7:
+           return Utensils;
+           break;
+       case 8:
+           return House;
+           break;
+       case 9:
+           return Car;
+           break;
+       case 10:
+           return University;
+           break;
+       case 11:
+           return Gamepad2;
+           break;
+       case 12:
+           return Faucet;
+           break;
+       case 13:
+           return DollarSign;
+           break;
+       case 14:
+           return ShoppingBag;
+           break;
+         default :
+            return Utensils;
+            break;
+   }
+
+
 }

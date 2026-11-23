@@ -144,7 +144,7 @@ export default function IncomePage() {
           <IncomeList 
             searchDate = {searchDate}
             setSearchDate={setSearchWrapper}/></div>
-          <IncomeBySource />
+          <IncomeBySource periodLabel={Intl.DateTimeFormat("en-us", {month: "long", year: "numeric"}).format(searchDate)}/>
         </div>
       </section>
   );

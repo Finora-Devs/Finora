@@ -42,7 +42,7 @@ export function getRemainingContributions(savingGoalArr: SavingGoal[])
 
 
 
-function isActive(savingGoal: SavingGoal)
+export function isActive(savingGoal: SavingGoal)
 {
     return savingGoal.currentAmount < savingGoal.targetAmount;
 }
