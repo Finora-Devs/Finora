@@ -265,7 +265,7 @@ export function ContextProvider({children}: ProtectedLayoutProps)
         {
             try
             {
-                await updateRecurringTransactions()
+                await updateRecurringTransactions();
                 const [transactionsTMP, savingGoalsTMP, monthlyBudgetTMP, recurringTransactionsTMP] = await Promise.all([getTransactions(), getSavingGoals(), getMonthlyBudget(), getRecurringTransactions()]);
 
                 setMonthlyBudget(monthlyBudgetTMP);

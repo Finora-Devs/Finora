@@ -54,7 +54,7 @@ export function getAmountDueNextWeek(recurringTransactions: recurringTransaction
     .filter((rt) => currentDate <= rt.next_due_date && rt.next_due_date <= nextWeek && rt.category_id >= 7)
     .forEach((rt) => 
     {
-        const nextDate = rt.next_due_date;
+        const nextDate = new Date(rt.next_due_date);
         while(currentDate <= nextDate && nextDate <= nextWeek)
         {
             amount += rt.amount;
@@ -76,6 +76,7 @@ export function getAmountDueNextWeek(recurringTransactions: recurringTransaction
             }
         }
     });
+
     return amount;
 }
 
@@ -86,11 +87,11 @@ export function getAmountNextPayment(recurringTransactions: recurringTransaction
 
     const sorted = recurringTransactions.filter((rt) => rt.category_id >= 7).sort((a, b) =>
     {
-        if(new Date(a.next_due_date) > new Date(b.next_due_date))
+        if(a.next_due_date > b.next_due_date)
         {
            return 1;
         }
-        else if(new Date(a.next_due_date +"T00:00:00") < new Date(b.next_due_date + "T00:00:00"))
+        else if(a.next_due_date < b.next_due_date )
         {
            return -1;
         }
@@ -100,7 +101,7 @@ export function getAmountNextPayment(recurringTransactions: recurringTransaction
         }
     })
 
-    for(let i = 0; i < sorted.length-1; i++)
+    for(let i = 0; i < sorted.length; i++)
     {
         if(sorted[i].next_due_date >= currentDate)
         {

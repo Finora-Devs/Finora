@@ -644,7 +644,6 @@ export async function createSavingGoal(formData: FormData, savingGoals: SavingGo
     const deadline = formData.get("deadline") as string;
     const highestPriority = formData.get("highestPriority") as string === "on";
 
-    console.log(deadline);
 
     //sets the priority to insert to one if set highest priority is true, otherwise sets priority to be lowest.
     const priority: number = highestPriority ? 1 : savingGoals[savingGoals.length-1].priority + 1; //last element of array should always be the lowest priority. May need to mess with this a little to handle completed goals.
@@ -741,8 +740,6 @@ export async function updateSavingGoal(formData: FormData, savingGoalID: number,
     const targetAmount = Number(formData.get("targetAmount") as string);
     const deadline = formData.get("deadline") as string;
     const highestPriority = formData.get("highestPriority") as string === "on";
-
-    console.log(deadline);
 
     //if set highest priority, priority = the highest priority, otherwise, priority = current goal priority.
     const priority = highestPriority ? 1 : savingGoals.find((goal) => {if (goal.id === savingGoalID) return goal;})!.priority;
@@ -1116,8 +1113,6 @@ export async function createRecurringTransaction(formData: FormData, setRecurrin
     const nextDueDate = formData.get("date") as string;
 
     const categoryID = getCategoryID(category);
-
-    console.log("formDate = "+new Intl.DateTimeFormat("en-US").format(new Date(nextDueDate + "T00:00:00")));
 
     const {newNextDueDate, nextDueDates} = await findTransactionDates(nextDueDate, frequency);
 

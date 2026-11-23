@@ -15,7 +15,6 @@ import {
 export default function RecurringSummaryCards() {
 
     const {recurringTransactions} = useRecurringTransactionContext();
-    console.log(recurringTransactions.map((rt) => `${new Intl.DateTimeFormat("en-US").format(rt.next_due_date)}\n`))
     const nextTransaction = getAmountNextPayment(recurringTransactions);
 
     // Sample values for the UI

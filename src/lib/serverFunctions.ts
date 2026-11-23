@@ -350,7 +350,7 @@ export async function getCategoryBudgets()
     if(categoryBudgetsError)
     {
         //throw the error
-        console.log("Supabase select error (getCategoryBudgets)", categoryBudgetsError);
+        console.error("Supabase select error (getCategoryBudgets)", categoryBudgetsError);
         throw categoryBudgetsError;
     }
     //If the above code was able to find a result, there must be at least one object in the data, so no need to check if it is null or undefined.
