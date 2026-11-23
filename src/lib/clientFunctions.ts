@@ -646,10 +646,15 @@ export async function createSavingGoal(formData: FormData, savingGoals: SavingGo
 
 
     //sets the priority to insert to one if set highest priority is true, otherwise sets priority to be lowest.
-    const priority: number = highestPriority ? 1 : savingGoals[savingGoals.length-1].priority + 1; //last element of array should always be the lowest priority. May need to mess with this a little to handle completed goals.
+    const priority: number = highestPriority
+        ? 1
+        : Math.max(0, ...savingGoals.map(goal => goal.priority)) + 1; //last element of array should always be the lowest priority. May need to mess with this a little to handle completed goals.
     const newDeadline = deadline ? deadline : null;
 
-    if(highestPriority) updateGoals(savingGoals[savingGoals.length-1].priority + 1, true, savingGoals, setSavingGoals); //should lower the priority of all goals.
+    if(highestPriority && savingGoals.length > 0) {
+        await updateGoals(
+            Math.max(...savingGoals.map(goal => goal.priority)) + 1, true, savingGoals, setSavingGoals); //should lower the priority of all goals.
+    }
 
     const supabase = await createClient();
 
