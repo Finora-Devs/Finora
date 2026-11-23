@@ -227,9 +227,10 @@ export default function GoalList() {
                 await deleteGoal(selectedGoal.id, savingGoals, setSavingGoals);
             }
         }
-        catch
+        catch (error)
         {
-            //action error
+            console.error("Error during submission:", error);
+            alert("An error occurred while processing your request. Please try again.");
         }
         finally
         {
