@@ -195,7 +195,7 @@ function SpendingBreakdown() {
             </div>
 
             <p className="mt-1 text-xs text-[#4e7069]">
-                {`spending for previous month`}
+                Spending for previous month
             </p>
 
             <div className="mt-6 flex flex-col items-center gap-6 2xl:flex-row">
@@ -228,11 +228,11 @@ function SpendingBreakdown() {
                                     cy="60"
                                     r="45"
                                     fill="none"
-                                    stroke={category.textColor.substring(category.textColor.indexOf("#"), category.textColor.indexOf("]"))}
+                                    stroke={category.textColor}
                                     strokeWidth="20"
                                     pathLength={100}
                                     strokeDasharray={`${category.percent} ${100 - category.percent}`}
-                                    strokeDashoffset={-offset}
+                                    strokeDashoffset={`${-offset}`}
                                  />
                                 )
                         })}
@@ -261,7 +261,7 @@ function SpendingBreakdown() {
                                 <span
                                     aria-hidden="true"
                                     className="h-2.5 w-2.5 shrink-0 rounded-full"
-                                    style={{ backgroundColor: category.textColor.substring(category.textColor.indexOf("#"), category.textColor.indexOf("]")) }}
+                                    style={{ backgroundColor: category.textColor }}
                                 />
 
                                 <span className="break-words">
@@ -321,11 +321,11 @@ function RecentTransactions() {
                             className="flex items-center gap-3 py-4"
                         >
                             <div
-                                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${[...incomeCategories, ...expenseCategories][transaction.category_id-1].backgroundColor}`}
+                                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[${[...incomeCategories, ...expenseCategories][transaction.category_id-1]?.backgroundColor ?? "#3aa561"}]`}
                             >
                                 <Icon
                                     aria-hidden="true"
-                                    className={`h-5 w-5 ${[...incomeCategories, ...expenseCategories][transaction.category_id-1].textColor}`}
+                                    className={`h-5 w-5 text-[${[...incomeCategories, ...expenseCategories][transaction.category_id-1]?.textColor ?? "#3aa561"}]`}
                                 />
                             </div>
 

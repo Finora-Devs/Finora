@@ -23,9 +23,9 @@ export async function insertTransaction(formData: FormData, setRecurringTransact
     let description = formData.get("notes") as string | null;
     const category = formData.get("category") as string;
 
-    let category_id = getCategoryID(category);
+    const category_id = getCategoryID(category);
 
-    if(!description)
+    if(!description)//prevents null description
     {
         description = "";
     }
@@ -44,38 +44,39 @@ export async function insertTransaction(formData: FormData, setRecurringTransact
         }
         else
         {
-                const {data,  error} = await supabase
-                .from('transactions')
-                .insert(
-                    { 
-                        amount: amount,
-                        category_id: category_id,
-                        frequency: frequency,
-                        name: name,
-                        transaction_date: transaction_date,
-                        description: description,
-                        user_id: user.id
-                }).select(`
-                    id,
-                    name,
-                    description,
-                    amount,
-                    frequency, 
-                    transaction_date, 
-                    categories!inner(
-                        name, 
-                        transaction_type
-                        )
-                        `)
-                if(error)
-                {
-                    console.error("Supabase insert error: ", error);
-                    throw error;
-                }
-                if(data)
-                {
-                    setTransactionsArr(prev => [...prev, (data[0] as Transaction)]) //updates the local copy of the transaction list.
-                }
+            const {data,  error} = await supabase
+            .from('transactions')
+            .insert(
+                { 
+                    amount: amount,
+                    category_id: category_id,
+                    frequency: frequency,
+                    name: name,
+                    transaction_date: transaction_date,
+                    description: description,
+                    user_id: user.id
+            }).select(`
+                id,
+                name,
+                description,
+                amount,
+                category_id,
+                frequency, 
+                transaction_date, 
+                categories!inner(
+                    name, 
+                    transaction_type
+                    )
+                    `);
+            if(error)
+            {
+                console.error("Supabase insert error: ", error);
+                throw error;
+            }
+            if(data)
+            {
+                setTransactionsArr(prev => [...prev, (data[0] as Transaction)]) //updates the local copy of the transaction list.
+            }
         }
     }
 }
@@ -335,16 +336,18 @@ export async function updateTransaction(formData: FormData, transactionID: numbe
                 })
             .eq("id", transactionID)
             .select(`
-                    id,
-                    name,
-                    description,
-                    amount,
-                    frequency, 
-                    transaction_date, 
-                    categories!inner(
-                        name, 
-                        transaction_type
-                        )`);
+                id,
+                name,
+                description,
+                amount,
+                category_id,
+                frequency, 
+                transaction_date, 
+                categories!inner(
+                    name, 
+                    transaction_type
+                    )
+                    `);
         if(error)
         {
             console.error("supabase update error", error)

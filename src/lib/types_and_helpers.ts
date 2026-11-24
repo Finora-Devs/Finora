@@ -111,7 +111,7 @@ export enum CATEGORY_NAME
   SUBSCRIPTIONS = "Subscriptions",
   OTHER = "Other",
   EMPLOYMENT = "Employment",
-  SCHOLARSHIPS = "Scholarships",
+  SCHOLARSHIPS = "Scholarship",
   FINANCIAL_AID = "Financial Aid",
   ALLOWANCE = "Allowance",
   SELF_EMPLOYMENT = "Self Employment",
@@ -128,24 +128,24 @@ export enum FREQUENCY
 }
 //can probably use [...incomeCategories, ...expenseCatgories] to create an array of all categories, then use a category id to easily access category name
 export const incomeCategories = [
- { name: "Employment", value: CATEGORY_NAME.EMPLOYMENT ,textColor: "text-[#16834b]", backgroundColor: "bg-[#e5f3ec]" },
- { name: "Scholarships", value: CATEGORY_NAME.SCHOLARSHIPS ,textColor: "text-[#ffce32]", backgroundColor: "bg-[#fff6da]" },
- { name: "Financial Aid", value: CATEGORY_NAME.FINANCIAL_AID ,textColor: "text-[#b36af5]", backgroundColor: "bg-[#fcf9ff]" },
- { name: "Allowance", value: CATEGORY_NAME.ALLOWANCE ,textColor: "text-[#ff7b96]", backgroundColor: "bg-[#ffbfcb]" },
- { name: "Self Employment", value: CATEGORY_NAME.SELF_EMPLOYMENT ,textColor: "text-[#48c4ac]", backgroundColor: "bg-[#dee6e5]" },
- { name: "Other Income", value: CATEGORY_NAME.OTHER_INCOME ,textColor: "text-[#7437ed]", backgroundColor: "bg-[#d5c6f0]" },
+{ name: "Employment", value: CATEGORY_NAME.EMPLOYMENT ,textColor: "#3aa561", backgroundColor: "#dfece4" },
+{ name: "Financial Aid", value: CATEGORY_NAME.FINANCIAL_AID ,textColor: "#5d9ad2", backgroundColor: "#e5f2fe" },
+{ name: "Scholarship", value: CATEGORY_NAME.SCHOLARSHIPS ,textColor: "#6380ff", backgroundColor: "#dbdde8" },
+{ name: "Allowance", value: CATEGORY_NAME.ALLOWANCE ,textColor: "#aa32ff", backgroundColor: "#e4beff" },
+{ name: "Self Employment", value: CATEGORY_NAME.SELF_EMPLOYMENT ,textColor: "#46c785", backgroundColor: "#e0eee7" },
+{ name: "Other Income", value: CATEGORY_NAME.OTHER_INCOME ,textColor: "#b978d9", backgroundColor: "#fbfafb" },
 ] as const;
 export const expenseCategories = [
- { name: "Food", value: CATEGORY_NAME.FOOD, textColor: "text-[#16834b]", backgroundColor: "bg-[#e5f3ec]" },
- { name: "Housing", value: CATEGORY_NAME.HOUSING, textColor: "text-[#8246c8]", backgroundColor: "bg-[#f0e7fc]" },
- { name: "Transportation", value: CATEGORY_NAME.TRANSPORTATION, textColor: "text-[#d94c5c]", backgroundColor: "bg-[#f4dadd]" },
- { name: "Tuition", value: CATEGORY_NAME.TUITION, textColor: "text-[#48c4ac]", backgroundColor: "bg-[#dee6e5]" },
- { name: "Entertainment", value: CATEGORY_NAME.ENTERTAINMENT, textColor: "text-[#c65be3]", backgroundColor: "bg-[#fbf7fc]" },
- { name: "Utilities", value: CATEGORY_NAME.UTILITIES, textColor: "text-[#7b6be8]", backgroundColor: "bg-[#f8f7fd]" },
- { name: "Subscriptions", value: CATEGORY_NAME.SUBSCRIPTIONS, textColor: "text-[#7437ed]", backgroundColor: "bg-[#d5c6f0]" },
- { name: "Other Expense", value: CATEGORY_NAME.OTHER, textColor: "text-[#3173c9]", backgroundColor: "bg-[#e8f1ff]" },
+{ name: "Food", value: CATEGORY_NAME.FOOD, textColor: "#ff8963", backgroundColor: "#fff0ec" },
+{ name: "Housing", value: CATEGORY_NAME.HOUSING, textColor: "#5794f6", backgroundColor: "#dae7fb" },
+{ name: "Transportation", value: CATEGORY_NAME.TRANSPORTATION, textColor: "#ffce32", backgroundColor: "#fff5d6" },
+{ name: "Tuition", value: CATEGORY_NAME.TUITION, textColor: "#9fc448", backgroundColor: "#dce6c5" },
+{ name: "Entertainment", value: CATEGORY_NAME.ENTERTAINMENT, textColor: "#ed3737", backgroundColor: "#ffd3d3" },
+{ name: "Utilities", value: CATEGORY_NAME.UTILITIES, textColor: "#9a5be3", backgroundColor: "#efe6fa" },
+{ name: "Subscriptions", value: CATEGORY_NAME.SUBSCRIPTIONS, textColor: "#7437ed", backgroundColor: "#c9b6ef" },
+{ name: "Other Expense", value: CATEGORY_NAME.OTHER, textColor: "#b978d9", backgroundColor: "#fbfafb" },
 ] as const;
- 
+
  export const frequencies = [
   { value: "once", label: "Just Once" },
   { value: "daily", label: "Daily" },

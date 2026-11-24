@@ -1,19 +1,23 @@
 import { useTransactionContext } from "@/app/(protected)/context";
 import { Transaction, formatMoney, categoryBreakdown } from "@/lib/types_and_helpers";
 
-type Props = {periodLabel: string };
+type Props = {searchDate: Date};
 export default function SpendingByCategory({
-  periodLabel,
+  searchDate,
 }: Props) {
   const {transactionsArr} = useTransactionContext();
-  const categories = categoryBreakdown(transactionsArr);
+  const categories = categoryBreakdown(transactionsArr.filter((t) => 
+    {
+      const tDate = new Date(`${t.transaction_date}T00:00:00`); 
+      return searchDate.getMonth() === tDate.getMonth() && searchDate.getFullYear() === tDate.getFullYear()
+    }));
   const total = categories.reduce((sum, category) => sum + category.amount, 0);
   let position = 0;
   const stops = categories
     .map((category) => {
       const start = position;
       position += total > 0 ? (category.amount / total) * 100 : 0;
-      return `${category.textColor.substring(category.textColor.indexOf("#"), category.textColor.indexOf("]"))} ${start}% ${position}%`;
+      return `${category.textColor} ${start}% ${position}%`;
     })
     .join(", ");
   return (
@@ -23,13 +27,13 @@ export default function SpendingByCategory({
           Spending by Category
         </h2>
         <span className="rounded-lg border border-[#dce7e2] px-3 py-2 text-xs text-[#607394]">
-          {periodLabel}
+          {Intl.DateTimeFormat("en-us", {month: "long", year: "numeric"}).format(searchDate)}
         </span>
       </div>
       <div className="my-7 flex justify-center">
         <div
           role="img"
-          aria-label={`Spending by category for ${periodLabel}. Total ${formatMoney(total)}. Amounts are listed below.`}
+          aria-label={`Spending by category for ${Intl.DateTimeFormat("en-us", {month: "long", year: "numeric"}).format(searchDate)}. Total ${formatMoney(total)}. Amounts are listed below.`}
           className="flex h-52 w-52 items-center justify-center rounded-full"
           style={{
             background: total > 0 ? `conic-gradient(${stops})` : "#e5ebe8",
@@ -57,7 +61,7 @@ export default function SpendingByCategory({
             <span
               aria-hidden="true"
               className="h-3 w-3 shrink-0 rounded-full"
-              style={{ backgroundColor: category.textColor.substring(category.textColor.indexOf("#"), category.textColor.indexOf("]")) }}
+              style={{ backgroundColor: category.textColor}}
             />
             <span className="min-w-0 flex-1">{category.name}</span>
             <span className="font-medium">{formatMoney(category.amount)}</span>

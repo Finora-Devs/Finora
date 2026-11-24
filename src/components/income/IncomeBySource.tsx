@@ -1,35 +1,39 @@
 import { useTransactionContext } from "@/app/(protected)/context";
-import { Transaction, formatMoney, categoryBreakdown, incomeCategoryBreakdown } from "@/lib/types_and_helpers";
+import { formatMoney, incomeCategoryBreakdown } from "@/lib/types_and_helpers";
 
-type Props = {periodLabel: string };
+type Props = {searchDate: Date };
 export default function SpendingByCategory({
-  periodLabel,
+  searchDate,
 }: Props) {
   const {transactionsArr} = useTransactionContext();
-  const categories = incomeCategoryBreakdown(transactionsArr);
+  const categories = incomeCategoryBreakdown(transactionsArr.filter((t) => 
+  {
+    const tDate = new Date(`${t.transaction_date}T00:00:00`);
+    return searchDate.getMonth() === tDate.getMonth() && searchDate.getFullYear() === tDate.getFullYear();
+  }));
   const total = categories.reduce((sum, category) => sum + category.amount, 0);
   let position = 0;
   const stops = categories
     .map((category) => {
       const start = position;
       position += total > 0 ? (category.amount / total) * 100 : 0;
-      return `${category.textColor.substring(category.textColor.indexOf("#"), category.textColor.indexOf("]"))} ${start}% ${position}%`;
+      return `${category.textColor} ${start}% ${position}%`;
     })
     .join(", ");
   return (
     <section className="self-start rounded-xl border border-[#dce7e2] bg-white p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-lg font-semibold text-[#17324d]">
-          Spending by Category
+          Income by Category
         </h2>
         <span className="rounded-lg border border-[#dce7e2] px-3 py-2 text-xs text-[#607394]">
-          {periodLabel}
+          {Intl.DateTimeFormat("en-us", {month: "long", year: "numeric"}).format(searchDate)}
         </span>
       </div>
       <div className="my-7 flex justify-center">
         <div
           role="img"
-          aria-label={`Spending by category for ${periodLabel}. Total ${formatMoney(total)}. Amounts are listed below.`}
+          aria-label={`Spending by category for ${Intl.DateTimeFormat("en-us", {month: "long", year: "numeric"}).format(searchDate)}. Total ${formatMoney(total)}. Amounts are listed below.`}
           className="flex h-52 w-52 items-center justify-center rounded-full"
           style={{
             background: total > 0 ? `conic-gradient(${stops})` : "#e5ebe8",
@@ -39,13 +43,13 @@ export default function SpendingByCategory({
             <strong className="text-xl text-[#17324d]">
               {formatMoney(total)}
             </strong>
-            <span className="mt-1 text-xs text-[#7185a1]">Total Spent</span>
+            <span className="mt-1 text-xs text-[#7185a1]">Total Income</span>
           </div>
         </div>
       </div>
       {total === 0 && (
         <p className="mb-5 text-center text-sm text-[#7185a1]">
-          No expenses recorded for this month.
+          No income recorded for this month.
         </p>
       )}
       <ul className="space-y-3 text-sm">
@@ -57,7 +61,7 @@ export default function SpendingByCategory({
             <span
               aria-hidden="true"
               className="h-3 w-3 shrink-0 rounded-full"
-              style={{ backgroundColor: category.textColor.substring(category.textColor.indexOf("#"), category.textColor.indexOf("]")) }}
+              style={{ backgroundColor: category.textColor}}
             />
             <span className="min-w-0 flex-1">{category.name}</span>
             <span className="font-medium">{formatMoney(category.amount)}</span>

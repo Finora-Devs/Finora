@@ -179,7 +179,7 @@ export default function ExpensesPage() {
           />
         </div>
         <SpendingByCategory
-          periodLabel={Intl.DateTimeFormat("en-us", {month: "long", year: "numeric"}).format(searchDate)}
+          searchDate={searchDate}
         />
       </div>
     </section>

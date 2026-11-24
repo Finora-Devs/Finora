@@ -19,65 +19,6 @@ import { isDueSoon } from "@/lib/RecurringHelpers";
 
 type PopupMode = "create" | "edit" | "remove";
 
-// Sample values for the UI. Dates and upcoming labels are not calculated.
-// const recurringExpenses: RecurringExpense[] = [
-//     {
-//         id: "internet",
-//         name: "Internet",
-//         amount: "50.00",
-//         amountLabel: "$50.00",
-//         category: "Utilities",
-//         frequency: "monthly",
-//         nextDate: "2026-11-15",
-//         nextDateLabel: "November 15, 2026",
-//         upcoming: true,
-//     },
-//     {
-//         id: "phone",
-//         name: "Phone Plan",
-//         amount: "30.00",
-//         amountLabel: "$30.00",
-//         category: "Utilities",
-//         frequency: "monthly",
-//         nextDate: "2026-11-18",
-//         nextDateLabel: "November 18, 2026",
-//         upcoming: true,
-//     },
-//     {
-//         id: "gym",
-//         name: "Gym Membership",
-//         amount: "40.00",
-//         amountLabel: "$40.00",
-//         category: "Subscriptions",
-//         frequency: "monthly",
-//         nextDate: "2026-11-22",
-//         nextDateLabel: "November 22, 2026",
-//         upcoming: false,
-//     },
-//     {
-//         id: "streaming",
-//         name: "Streaming Services",
-//         amount: "60.00",
-//         amountLabel: "$60.00",
-//         category: "Subscriptions",
-//         frequency: "monthly",
-//         nextDate: "2026-11-25",
-//         nextDateLabel: "November 25, 2026",
-//         upcoming: false,
-//     },
-//     {
-//         id: "rent",
-//         name: "Rent",
-//         amount: "1000.00",
-//         amountLabel: "$1,000.00",
-//         category: "Housing",
-//         frequency: "monthly",
-//         nextDate: "2026-12-01",
-//         nextDateLabel: "December 1, 2026",
-//         upcoming: false,
-//     },
-// ];
-
 export default function RecurringExpenseList() {
 
     const {recurringTransactions, setRecurringTransactions} = useRecurringTransactionContext();
@@ -96,10 +37,10 @@ export default function RecurringExpenseList() {
     const isRemoving = popupMode === "remove";
 
     const popupTitle = isRemoving
-        ? "Remove Recurring Expense"
+        ? "Remove Recurring Transaction"
         : isEditing
-            ? "Edit Recurring Expense"
-            : "Add Recurring Expense";
+            ? "Edit Recurring Transaction"
+            : "Add Recurring Transaction";
 
     // Reuse shared frequencies, excluding options that do not repeat.
     const recurringFrequencies = frequencies.filter(
@@ -182,7 +123,7 @@ export default function RecurringExpenseList() {
             <div className="flex flex-wrap items-center justify-between gap-4 p-5">
                 <div>
                     <h2 className="text-lg font-semibold text-[#17324d]">
-                        All Recurring Expenses
+                        All Recurring Transactions
                     </h2>
 
                     <p className="mt-1 text-sm text-[#4e7069]">
@@ -196,7 +137,7 @@ export default function RecurringExpenseList() {
                     className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[#008f73] px-4 py-2 text-sm font-semibold text-white hover:bg-[#007c64]"
                 >
                     <Plus aria-hidden="true" className="h-4 w-4" />
-                    Add Recurring Expense
+                    Add Recurring Transaction
                 </button>
             </div>
 
@@ -216,7 +157,7 @@ export default function RecurringExpenseList() {
                     <thead className="bg-[#f7faf8] text-[#4e7069]">
                         <tr>
                             <th scope="col" className="px-5 py-3 font-medium">
-                                Expense
+                                Transaction
                             </th>
                             <th scope="col" className="px-5 py-3 font-medium">
                                 Category
@@ -243,8 +184,11 @@ export default function RecurringExpenseList() {
                     </thead>
 
                     <tbody className="divide-y divide-[#dce7e2]">
-                        {recurringTransactions.map((transaction) => (
-                            <tr
+                        {recurringTransactions.map((transaction) => {
+                            
+                            const isIncome = transaction.category_id < 7;
+
+                            return <tr
                                 key={transaction.id}
                                 className="hover:bg-[#f7faf8]"
                             >
@@ -275,8 +219,10 @@ export default function RecurringExpenseList() {
                                     )}
                                 </td>
 
-                                <td className="whitespace-nowrap px-5 py-4 text-right font-semibold text-[#d94c5c]">
-                                    {formatMoney(transaction.amount)}
+                                <td className={`whitespace-nowrap px-5 py-4 text-right font-semibold ${isIncome ? 
+                                                                                                            "text-[#16834b]" : //is income
+                                                                                                            "text-[#d94c5c]"}`}> 
+                                    {`${isIncome ? "+" : "-"}${formatMoney(transaction.amount)}`}
                                 </td>
 
                                 <td className="px-5 py-4">
@@ -311,7 +257,7 @@ export default function RecurringExpenseList() {
                                     </div>
                                 </td>
                             </tr>
-                        ))}
+                        })}
                     </tbody>
                 </table>
             </div>
@@ -384,7 +330,7 @@ export default function RecurringExpenseList() {
                                         htmlFor={`${formId}-name`}
                                         className="mb-1 block text-sm font-medium text-[#4e7069]"
                                     >
-                                        Expense name *
+                                        Transaction name *
                                     </label>
 
                                     <input
@@ -549,10 +495,10 @@ export default function RecurringExpenseList() {
                                 disabled={saving}
                             >
                                 {isRemoving
-                                    ? saving ? "Removing..." : "Remove Expense"
+                                    ? saving ? "Removing..." : "Remove Transaction"
                                     : isEditing
                                         ? saving ? "Saving..." : "Save Changes"
-                                        : saving ? "Saving..." : "Add Recurring Expense"}
+                                        : saving ? "Saving..." : "Add Recurring Transaction"}
                             </button>
                         </div>
                     </form>
