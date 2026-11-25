@@ -62,11 +62,11 @@ const navigationItems: NavigationItem[] =
             href: "/recurring",
             icon: Repeat2,
         },
-        {
-            name: "Reports",
-            href: "/reports",
-            icon: BarChart3,
-        }
+        // {                    No time for this
+        //     name: "Reports",
+        //     href: "/reports",
+        //     icon: BarChart3,
+        // }
     ];
 type SideBarProps = {
     mobile?: boolean;
@@ -141,14 +141,14 @@ export default function Sidebar({
             </nav>
 
             <div className="mt-auto flex flex-col gap-2 pt-6">
-                <Link
+                {/* <Link               No time for this
                     href="/settings"
                     onClick={onNavigate}
                     className="flex items-center gap-4 rounded-xl px-4 py-3 text-sm font-medium text-[#17324d] hover:bg-[#e5efeb]"
                 >
                     <Settings className="h-5 w-5" strokeWidth={1.8} />
                     <span>Settings</span>
-                </Link>
+                </Link> */}
 
                 <button
                     type="button"

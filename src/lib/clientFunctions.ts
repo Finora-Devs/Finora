@@ -1192,6 +1192,8 @@ export async function editRecurringTransaction(recurringTransactionID: number, f
     const frequency = formData.get("frequency") as string;
     const nextDueDate =formData.get("date") as string;
 
+console.log(nextDueDate);
+
     const categoryID = getCategoryID(category);
 
     const {newNextDueDate, nextDueDates} = await findTransactionDates(nextDueDate, frequency);
@@ -1241,6 +1243,8 @@ export async function editRecurringTransaction(recurringTransactionID: number, f
         is_active: data.is_active
                                         
     } as recurringTransaction;
+
+    
 
     //update connected transactions category, frequency, name, and description.
     const {error: updateError} = await supabase

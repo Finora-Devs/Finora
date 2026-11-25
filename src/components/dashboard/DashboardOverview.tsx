@@ -315,17 +315,22 @@ function RecentTransactions() {
                     const isIncome = transaction.categories.transaction_type === "income";
                     const transactionDate = new Date(transaction.transaction_date);
 
+                    const bgColor = [...incomeCategories, ...expenseCategories][transaction.category_id-1]?.backgroundColor ?? "#3aa561";
+                    const textColor = [...incomeCategories, ...expenseCategories][transaction.category_id-1]?.textColor ?? "#3aa561";
+
                     return (
                         <li
                             key={transaction.id}
                             className="flex items-center gap-3 py-4"
                         >
                             <div
-                                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[${[...incomeCategories, ...expenseCategories][transaction.category_id-1]?.backgroundColor ?? "#3aa561"}]`}
+                                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full`}
+                                style={{backgroundColor: bgColor}}
                             >
                                 <Icon
                                     aria-hidden="true"
-                                    className={`h-5 w-5 text-[${[...incomeCategories, ...expenseCategories][transaction.category_id-1]?.textColor ?? "#3aa561"}]`}
+                                    className={`h-5 w-5`}
+                                    style={{color: textColor}}
                                 />
                             </div>
 

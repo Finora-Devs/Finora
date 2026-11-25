@@ -126,24 +126,25 @@ export enum FREQUENCY
   MONTHLY,
   YEARLY
 }
-//can probably use [...incomeCategories, ...expenseCatgories] to create an array of all categories, then use a category id to easily access category name
+
+//use [...incomeCategories, ...expenseCategories].at(categoryID - 1) to get category
 export const incomeCategories = [
-{ name: "Employment", value: CATEGORY_NAME.EMPLOYMENT ,textColor: "#3aa561", backgroundColor: "#dfece4" },
-{ name: "Financial Aid", value: CATEGORY_NAME.FINANCIAL_AID ,textColor: "#5d9ad2", backgroundColor: "#e5f2fe" },
-{ name: "Scholarship", value: CATEGORY_NAME.SCHOLARSHIPS ,textColor: "#6380ff", backgroundColor: "#dbdde8" },
-{ name: "Allowance", value: CATEGORY_NAME.ALLOWANCE ,textColor: "#aa32ff", backgroundColor: "#e4beff" },
-{ name: "Self Employment", value: CATEGORY_NAME.SELF_EMPLOYMENT ,textColor: "#46c785", backgroundColor: "#e0eee7" },
-{ name: "Other Income", value: CATEGORY_NAME.OTHER_INCOME ,textColor: "#b978d9", backgroundColor: "#fbfafb" },
+{ name: "Employment", value: CATEGORY_NAME.EMPLOYMENT ,textColor: "#3aa561", backgroundColor: "#dfece4", icon:  ArrowUpRight},
+{ name: "Financial Aid", value: CATEGORY_NAME.FINANCIAL_AID ,textColor: "#5d9ad2", backgroundColor: "#e5f2fe", icon: Award},
+{ name: "Scholarship", value: CATEGORY_NAME.SCHOLARSHIPS ,textColor: "#6380ff", backgroundColor: "#dbdde8", icon: GraduationCap},
+{ name: "Allowance", value: CATEGORY_NAME.ALLOWANCE ,textColor: "#aa32ff", backgroundColor: "#e4beff", icon: DollarSign},
+{ name: "Self Employment", value: CATEGORY_NAME.SELF_EMPLOYMENT ,textColor: "#46c785", backgroundColor: "#e0eee7", icon: BriefcaseBusiness},
+{ name: "Other Income", value: CATEGORY_NAME.OTHER_INCOME ,textColor: "#b978d9", backgroundColor: "#fbfafb", icon: ShoppingBag},
 ] as const;
 export const expenseCategories = [
-{ name: "Food", value: CATEGORY_NAME.FOOD, textColor: "#ff8963", backgroundColor: "#fff0ec" },
-{ name: "Housing", value: CATEGORY_NAME.HOUSING, textColor: "#5794f6", backgroundColor: "#dae7fb" },
-{ name: "Transportation", value: CATEGORY_NAME.TRANSPORTATION, textColor: "#ffce32", backgroundColor: "#fff5d6" },
-{ name: "Tuition", value: CATEGORY_NAME.TUITION, textColor: "#9fc448", backgroundColor: "#dce6c5" },
-{ name: "Entertainment", value: CATEGORY_NAME.ENTERTAINMENT, textColor: "#ed3737", backgroundColor: "#ffd3d3" },
-{ name: "Utilities", value: CATEGORY_NAME.UTILITIES, textColor: "#9a5be3", backgroundColor: "#efe6fa" },
-{ name: "Subscriptions", value: CATEGORY_NAME.SUBSCRIPTIONS, textColor: "#7437ed", backgroundColor: "#c9b6ef" },
-{ name: "Other Expense", value: CATEGORY_NAME.OTHER, textColor: "#b978d9", backgroundColor: "#fbfafb" },
+{ name: "Food", value: CATEGORY_NAME.FOOD, textColor: "#ff8963", backgroundColor: "#fff0ec", icon: Utensils},
+{ name: "Housing", value: CATEGORY_NAME.HOUSING, textColor: "#5794f6", backgroundColor: "#dae7fb", icon: House},
+{ name: "Transportation", value: CATEGORY_NAME.TRANSPORTATION, textColor: "#ffce32", backgroundColor: "#fff5d6", icon: Car},
+{ name: "Tuition", value: CATEGORY_NAME.TUITION, textColor: "#9fc448", backgroundColor: "#dce6c5", icon: University},
+{ name: "Entertainment", value: CATEGORY_NAME.ENTERTAINMENT, textColor: "#ed3737", backgroundColor: "#ffd3d3", icon: Gamepad2},
+{ name: "Utilities", value: CATEGORY_NAME.UTILITIES, textColor: "#9a5be3", backgroundColor: "#efe6fa", icon: Faucet},
+{ name: "Subscriptions", value: CATEGORY_NAME.SUBSCRIPTIONS, textColor: "#7437ed", backgroundColor: "#c9b6ef", icon: DollarSign},
+{ name: "Other Expense", value: CATEGORY_NAME.OTHER, textColor: "#b978d9", backgroundColor: "#fbfafb", icon: Utensils},
 ] as const;
 
  export const frequencies = [
@@ -551,59 +552,10 @@ export function formatDate(date: Date)
    const month = `${date.getMonth() + 1}`.padStart(2, "0");
    const year = `${date.getFullYear()}`.padStart(4, "0");
 
-   return `${month}/${day}/${year}`
+   return `${year}-${month}-${day}`
 }
 
 export function getIcon(categoryID: number)
 {
-   switch(categoryID)
-   {
-       case 1:
-           return ArrowUpRight;
-           break;
-       case 2:
-           return Award;
-           break;
-       case 3:
-           return GraduationCap;
-           break;
-       case 4:
-           return DollarSign;
-           break;
-       case 5:
-           return BriefcaseBusiness;
-           break;
-       case 6:
-           return ShoppingBag;
-           break;
-       case 7:
-           return Utensils;
-           break;
-       case 8:
-           return House;
-           break;
-       case 9:
-           return Car;
-           break;
-       case 10:
-           return University;
-           break;
-       case 11:
-           return Gamepad2;
-           break;
-       case 12:
-           return Faucet;
-           break;
-       case 13:
-           return DollarSign;
-           break;
-       case 14:
-           return ShoppingBag;
-           break;
-         default :
-            return Utensils;
-            break;
-   }
-
-
+   return [...incomeCategories, ...expenseCategories].at(categoryID-1)?.icon ?? Utensils;
 }

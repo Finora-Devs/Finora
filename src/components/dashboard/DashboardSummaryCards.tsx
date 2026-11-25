@@ -19,7 +19,7 @@ export default function DashboardSummaryCards() {
     const {transactionsArr} = useTransactionContext();
     const {recurringTransactions} = useRecurringTransactionContext();
     const {monthlyBudget} = useMonthlyBudgetContext();
-    const TMPBalance = 1_000;
+    const TMPBalance = 0;
 
     const currentDate = new Date();
 // Sample values for the UI
