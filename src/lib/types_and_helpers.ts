@@ -5,7 +5,12 @@
  * for functions that initialize data in the browser using the database, go to serverFunctions.ts
  */
 
-import { getBudgetStatus, getCategorySpending, getMonthlySpending } from "./budgetHelpers";
+import { useMonthlyBudgetContext, useSavingGoalsContext, useTransactionContext } from "@/app/(protected)/context";
+import { getBudgetStatus, getCategorySpending, getMonthlySpending, getRemainingBudget } from "./budgetHelpers";
+import { addContributionWithOutForm, deleteMonthlyBudget } from "./clientFunctions";
+import { Dispatch, SetStateAction } from "react";
+import { ArrowUpRight, Award, BanknoteArrowUp, BriefcaseBusiness, Car, DollarSign, Faucet, Gamepad2, GraduationCap, House, LucideIcon, ShoppingBag, University, Utensils } from "lucide-react";
+import { getTotalOfType } from "./transactionHelpers";
 
 export type Transaction =
 {
@@ -21,15 +26,15 @@ export type Transaction =
        transaction_type: string,
        };
 };
+
 export type recurringTransaction = 
 {
   id: number,
-  user_id: string,
   name: string,
   amount: number,
   category_id: number,
   frequency: string,
-  next_due_date: string,
+  next_due_date: Date,
   description: string | null,
   is_active: boolean,
 }
@@ -106,7 +111,7 @@ export enum CATEGORY_NAME
   SUBSCRIPTIONS = "Subscriptions",
   OTHER = "Other",
   EMPLOYMENT = "Employment",
-  SCHOLARSHIPS = "Scholarships",
+  SCHOLARSHIPS = "Scholarship",
   FINANCIAL_AID = "Financial Aid",
   ALLOWANCE = "Allowance",
   SELF_EMPLOYMENT = "Self Employment",
@@ -121,26 +126,27 @@ export enum FREQUENCY
   MONTHLY,
   YEARLY
 }
-//can probably use [...incomeCategories, ...expenseCatgories] to create an array of all categories, then use a category id to easily access category name
+
+//use [...incomeCategories, ...expenseCategories].at(categoryID - 1) to get category
 export const incomeCategories = [
- { name: "Employment", value: CATEGORY_NAME.EMPLOYMENT ,color: "#5794f6" },
- { name: "Scholarships", value: CATEGORY_NAME.SCHOLARSHIPS ,color: "#ffce32" },
- { name: "Financial Aid", value: CATEGORY_NAME.FINANCIAL_AID ,color: "#b36af5" },
- { name: "Allowance", value: CATEGORY_NAME.ALLOWANCE ,color: "#ff7b96" },
- { name: "Self Employment", value: CATEGORY_NAME.SELF_EMPLOYMENT ,color: "#48c4ac" },
- { name: "Other Income", value: CATEGORY_NAME.OTHER_INCOME ,color: "#7437ed" },
+{ name: "Employment", value: CATEGORY_NAME.EMPLOYMENT ,textColor: "#3aa561", backgroundColor: "#dfece4", icon:  ArrowUpRight},
+{ name: "Financial Aid", value: CATEGORY_NAME.FINANCIAL_AID ,textColor: "#5d9ad2", backgroundColor: "#e5f2fe", icon: Award},
+{ name: "Scholarship", value: CATEGORY_NAME.SCHOLARSHIPS ,textColor: "#6380ff", backgroundColor: "#dbdde8", icon: GraduationCap},
+{ name: "Allowance", value: CATEGORY_NAME.ALLOWANCE ,textColor: "#aa32ff", backgroundColor: "#e4beff", icon: DollarSign},
+{ name: "Self Employment", value: CATEGORY_NAME.SELF_EMPLOYMENT ,textColor: "#46c785", backgroundColor: "#e0eee7", icon: BriefcaseBusiness},
+{ name: "Other Income", value: CATEGORY_NAME.OTHER_INCOME ,textColor: "#b978d9", backgroundColor: "#fbfafb", icon: ShoppingBag},
 ] as const;
 export const expenseCategories = [
- { name: "Food", value: CATEGORY_NAME.FOOD, color: "#ff8963" },
- { name: "Housing", value: CATEGORY_NAME.HOUSING, color: "#5794f6" },
- { name: "Transportation", value: CATEGORY_NAME.TRANSPORTATION, color: "#ffce32" },
- { name: "Tuition", value: CATEGORY_NAME.TUITION, color: "#48c4ac" },
- { name: "Entertainment", value: CATEGORY_NAME.ENTERTAINMENT, color: "#c65be3" },
- { name: "Utilities", value: CATEGORY_NAME.UTILITIES, color: "#7b6be8" },
- { name: "Subscriptions", value: CATEGORY_NAME.SUBSCRIPTIONS, color: "#7437ed" },
- { name: "Other Expense", value: CATEGORY_NAME.OTHER, color: "#b978d9" },
+{ name: "Food", value: CATEGORY_NAME.FOOD, textColor: "#ff8963", backgroundColor: "#fff0ec", icon: Utensils},
+{ name: "Housing", value: CATEGORY_NAME.HOUSING, textColor: "#5794f6", backgroundColor: "#dae7fb", icon: House},
+{ name: "Transportation", value: CATEGORY_NAME.TRANSPORTATION, textColor: "#ffce32", backgroundColor: "#fff5d6", icon: Car},
+{ name: "Tuition", value: CATEGORY_NAME.TUITION, textColor: "#9fc448", backgroundColor: "#dce6c5", icon: University},
+{ name: "Entertainment", value: CATEGORY_NAME.ENTERTAINMENT, textColor: "#ed3737", backgroundColor: "#ffd3d3", icon: Gamepad2},
+{ name: "Utilities", value: CATEGORY_NAME.UTILITIES, textColor: "#9a5be3", backgroundColor: "#efe6fa", icon: Faucet},
+{ name: "Subscriptions", value: CATEGORY_NAME.SUBSCRIPTIONS, textColor: "#7437ed", backgroundColor: "#c9b6ef", icon: DollarSign},
+{ name: "Other Expense", value: CATEGORY_NAME.OTHER, textColor: "#b978d9", backgroundColor: "#fbfafb", icon: Utensils},
 ] as const;
- 
+
  export const frequencies = [
   { value: "once", label: "Just Once" },
   { value: "daily", label: "Daily" },
@@ -352,15 +358,40 @@ export function validateTransaction(draft: TransactionDraft, isIncomeForm: boole
   return errors;
 }
 
-export function categoryBreakdown(records: Transaction[]) { //Does this already exist somewhere?
-          return expenseCategories.map((category) => ({
-            ...category,
-            amount: records
-              .filter(
-                (record) => record.categories.name === category.value,
-              )
-              .reduce((sum, record) => sum + record.amount, 0),
-          }));
+export function categoryBreakdown(records: Transaction[]) 
+{
+   let position = 0;
+   const total = getTotalOfType("expense", records);
+   ;
+   return expenseCategories.map((category) => 
+   {
+      const amount = records
+         .filter(
+            (record) => record.categories.name === category.value,
+         )
+         .reduce((sum, record) => sum + record.amount, 0);
+
+      return {
+      ...category,
+      amount: amount,
+      percent: Math.max(0, amount / total * 100),
+      }
+});
+}
+export function incomeCategoryBreakdown(records: Transaction[]) {
+         return incomeCategories.map((category) => 
+   {
+      const amount = records
+         .filter(
+            (record) => record.categories.name === category.value,
+         )
+         .reduce((sum, record) => sum + record.amount, 0);
+      return {
+      ...category,
+      amount: amount,
+      percent: amount / getTotalOfType("expense", records)
+      }
+});
         }
 
 export const formatMoney = (value: number) => value.toLocaleString("en-US", { style: "currency", currency: "USD" });
@@ -448,3 +479,83 @@ return {
       } as categoryBudget
 }
 
+export async function checkContributions( monthlyBudget: monthlyBudget[] | null, 
+                                    setMonthlyBudget: Dispatch<SetStateAction<monthlyBudget[] | null>>,
+                                    transactionsArr: Transaction[],
+                                    savingGoals: SavingGoal[],
+                                    setSavingGoals: Dispatch<SetStateAction<SavingGoal[]>>  
+                                 )
+{
+   
+    const incompleteGoals = savingGoals.filter((goal) =>
+    {
+        return goal.currentAmount < goal.targetAmount;
+    })
+    .sort((a,b) => a.priority - b.priority);
+
+    //only update contributions if there are two budgets and at least one goal.
+    if(monthlyBudget && monthlyBudget.length > 1 && incompleteGoals.length > 0)
+    {
+        //should get the amount under budget, or -amount over budget.
+        let amount = getRemainingBudget(getMonthlySpending(transactionsArr, monthlyBudget[1].month.getMonth(), monthlyBudget[1].month.getFullYear()), monthlyBudget[1].amount)
+
+        const amountIsPositive: boolean = amount > 0
+        amount = Math.abs(amount)
+
+        //goes through all the incomplete goals and adds the amount until the goal is complete, then moves to the next goal. break when amount = 0;
+        for(let i = 0; i<incompleteGoals.length; i++)
+        {
+            //if amount is negative, subtract amount from goal
+            if(!amountIsPositive && amount >= incompleteGoals[i].currentAmount)
+            {
+                await addContributionWithOutForm(-incompleteGoals[i].currentAmount, incompleteGoals[i].id, savingGoals, setSavingGoals);
+                amount -= incompleteGoals[i].currentAmount;
+            }
+            else if(!amountIsPositive)
+            {
+                await addContributionWithOutForm(-amount, incompleteGoals[i].id, savingGoals, setSavingGoals);
+                break;
+            }
+
+            //if amount is positive, add amount to goal
+            const diff = incompleteGoals[i].targetAmount - incompleteGoals[i].currentAmount;
+            if(amountIsPositive && amount >= diff)
+            {
+                await addContributionWithOutForm(diff, incompleteGoals[i].id, savingGoals, setSavingGoals);
+                amount -= diff;
+            }
+            else if(amountIsPositive)
+            {
+                await addContributionWithOutForm(amount, incompleteGoals[i].id, savingGoals, setSavingGoals);
+                break;
+            }
+
+            if(amount === 0) break;
+        }
+
+        deleteMonthlyBudget(monthlyBudget[1].id, setMonthlyBudget);
+    }
+    //delete the extra budget regardless of whether or not there were any goals to update.
+    else if(monthlyBudget && monthlyBudget.length > 1)
+    {
+        deleteMonthlyBudget(monthlyBudget[1].id, setMonthlyBudget);
+    }
+    else
+    {
+        return;
+    }
+}
+
+export function formatDate(date: Date)
+{
+   const day = `${date.getDate()}`.padStart(2, "0");
+   const month = `${date.getMonth() + 1}`.padStart(2, "0");
+   const year = `${date.getFullYear()}`.padStart(4, "0");
+
+   return `${year}-${month}-${day}`
+}
+
+export function getIcon(categoryID: number)
+{
+   return [...incomeCategories, ...expenseCategories].at(categoryID-1)?.icon ?? Utensils;
+}

@@ -8,9 +8,7 @@ import Sidebar from "./Sidebar";
 import TopBar from "./TopBar";
 import {
     CategoryBudgetContextProvider,
-    MonthlyBudgetContextProvider,
-    SavingGoalsContextProvider,
-    TransactionContextProvider,
+    ContextProvider,
     UserContextProvider,
 } from "../../app/(protected)/context";
 
@@ -74,10 +72,9 @@ export default function AppShell({ children }: AppShellProps) {
 
     return (
         <UserContextProvider>
-            <SavingGoalsContextProvider>
+            <ContextProvider>
             <CategoryBudgetContextProvider>
-            <MonthlyBudgetContextProvider>
-            <TransactionContextProvider>
+
                 <div className="min-h-screen bg-[#f3f7f5]">
                     {/* Desktop sidebar */}
                     <Sidebar />
@@ -132,10 +129,9 @@ export default function AppShell({ children }: AppShellProps) {
                         </main>
                     </div>
                 </div>
-            </TransactionContextProvider>
-            </MonthlyBudgetContextProvider>
+            
             </CategoryBudgetContextProvider>
-            </SavingGoalsContextProvider>
+            </ContextProvider>
         </UserContextProvider>
     );
 }

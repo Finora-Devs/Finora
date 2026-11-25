@@ -44,7 +44,7 @@ export default function MonthlyBudget() {
     {
       if(monthlyBudget)
       {
-        await updateMonthlyBudget(formData, monthlyBudget.id, setMonthlyBudget);
+        await updateMonthlyBudget(formData, monthlyBudget[0].id, setMonthlyBudget);
       }
       else
       {
@@ -65,15 +65,15 @@ export default function MonthlyBudget() {
   const monthlySpending = monthlyBudget
     ? getMonthlySpending(
       transactionsArr,
-      monthlyBudget.month.getMonth(),
-      monthlyBudget.month.getFullYear()
+      monthlyBudget[0].month.getMonth(),
+      monthlyBudget[0].month.getFullYear()
     )
     : 0;
 
   const budgetPercentage = monthlyBudget
     ? getBudgetPercentage(
       monthlySpending,
-      monthlyBudget.amount)
+      monthlyBudget[0].amount)
     : 0;
 
   useEffect(() => {
@@ -145,13 +145,13 @@ export default function MonthlyBudget() {
             </p>
 
             <p className="mt-2 text-3xl font-bold text-[#17324d]">
-              {monthlyBudget ? formatMoney(monthlyBudget.amount) : ""}
+              {monthlyBudget ? formatMoney(monthlyBudget[0].amount) : ""}
             </p>
           </div>
 
           <span className="rounded-full bg-[#e5f3ec] px-3 py-1 text-xs font-semibold text-[#28664f]">
             {monthlyBudget ? 
-            getBudgetStatus(getMonthlySpending(transactionsArr, monthlyBudget.month.getMonth() + 1, monthlyBudget.month.getFullYear()), monthlyBudget.amount)
+            getBudgetStatus(getMonthlySpending(transactionsArr, monthlyBudget[0].month.getMonth() + 1, monthlyBudget[0].month.getFullYear()), monthlyBudget[0].amount)
             : 
             "No budget"}
           </span>
@@ -162,14 +162,14 @@ export default function MonthlyBudget() {
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2 text-sm">
             <p className="text-[#4e7069]">
               {monthlyBudget ? 
-              `${formatMoney(getMonthlySpending(transactionsArr, monthlyBudget.month.getMonth(), monthlyBudget.month.getFullYear()))} spent`
+              `${formatMoney(getMonthlySpending(transactionsArr, monthlyBudget[0].month.getMonth(), monthlyBudget[0].month.getFullYear()))} spent`
               :
               ""}
             </p>
 
             <p className="font-semibold text-[#17324d]">
               {monthlyBudget ? 
-              `${parseInt(String(getBudgetPercentage(getMonthlySpending(transactionsArr, monthlyBudget.month.getMonth(), monthlyBudget.month.getFullYear()), monthlyBudget.amount)))}% used`
+              `${parseInt(String(getBudgetPercentage(getMonthlySpending(transactionsArr, monthlyBudget[0].month.getMonth(), monthlyBudget[0].month.getFullYear()), monthlyBudget[0].amount)))}% used`
               :
               ""}
             </p>
@@ -192,7 +192,7 @@ export default function MonthlyBudget() {
           <p className="mt-2 text-sm text-[#4e7069]">
             <span className="font-semibold text-[#28664f]">
               {monthlyBudget ? 
-              formatMoney(getRemainingBudget(getMonthlySpending(transactionsArr, monthlyBudget.month.getMonth(), monthlyBudget.month.getFullYear()), monthlyBudget.amount))
+              formatMoney(getRemainingBudget(getMonthlySpending(transactionsArr, monthlyBudget[0].month.getMonth(), monthlyBudget[0].month.getFullYear()), monthlyBudget[0].amount))
               :
               ""}
             </span>{" "}
@@ -209,7 +209,7 @@ export default function MonthlyBudget() {
 
           <p className="text-sm text-[#4e7069]">
             {monthlyBudget ? 
-            monthlyBudget.emailsEnabled ? "Email notifications are enabled for this budget." : "Email notifications are not enabled for this budget."
+            monthlyBudget[0].emailsEnabled ? "Email notifications are enabled for this budget." : "Email notifications are not enabled for this budget."
             :
             ""}
           </p>
@@ -277,7 +277,7 @@ export default function MonthlyBudget() {
                 inputMode="decimal"
                 required
                 disabled={saving}
-                defaultValue={isEditing && monthlyBudget ? monthlyBudget.amount.toString() : ""}
+                defaultValue={isEditing && monthlyBudget ? monthlyBudget[0].amount.toString() : ""}
                 placeholder="Enter budget amount"
                 className="mt-2 w-full rounded-lg border border-[#dce7e2] bg-[#f7faf8] px-3 py-2.5 text-sm text-[#17324d] placeholder:text-[#7185a1] focus:border-[#3f8068] focus:outline-none"
               />
@@ -288,7 +288,7 @@ export default function MonthlyBudget() {
                 id={`${formId}-notifications`}
                 name="emailNotifications"
                 type="checkbox"
-                defaultChecked={isEditing && monthlyBudget ? monthlyBudget.emailsEnabled : false}
+                defaultChecked={isEditing && monthlyBudget ? monthlyBudget[0].emailsEnabled : false}
                 disabled={saving}
                 className="mt-1 h-4 w-4 shrink-0 accent-[#3f8068]"
               />

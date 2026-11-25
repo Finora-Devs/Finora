@@ -419,8 +419,8 @@ export default function CategoryBudgetList() {
                                     disabled={saving}
                                     required
                                     defaultValue={
-                                        isEditing
-                                            ? [...incomeCategories, ...expenseCategories][selectedBudget?.categoryId ?? 0].value //broken. Does not overwrite default value of "".
+                                        isEditing //always false when the tag renders. This only effects the select tag though. 
+                                            ? [...incomeCategories, ...expenseCategories][selectedBudget?.categoryId ?? 8].value //broken. Does not overwrite default value of "".
                                             : ""
                                     }
                                     className={fieldClass}
@@ -463,28 +463,6 @@ export default function CategoryBudgetList() {
                                     className={fieldClass}
                                 />
                             </div>
-
-                            {/* <div>   This input should not be needed unless i'm misunderstanding how this is going to work. I'll leave the code in case I'm wrong.
-                                <label
-                                    htmlFor={`${formId}-month`}
-                                    className="block text-sm font-medium text-[#4e7069]"
-                                >
-                                    Applicable month *
-                                </label>
-
-                                <input
-                                    id={`${formId}-month`}
-                                    name="month"
-                                    type="month"
-                                    required
-                                    defaultValue={
-                                        isEditing
-                                            ? new Intl.DateTimeFormat("sv-SE", {year: "numeric", month: "2-digit"}).format(selectedBudget?.month ?? new Date("1970-01"))
-                                            : ""
-                                    }
-                                    className={fieldClass}
-                                />
-                            </div> */}
 
                             <div className="flex items-start gap-3">
                                 <input

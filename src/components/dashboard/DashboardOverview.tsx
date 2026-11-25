@@ -3,16 +3,30 @@ import {
     ArrowDownRight,
     ArrowRight,
     ArrowUpRight,
+    Award,
+    BanknoteArrowUp,
     BookOpen,
+    Briefcase,
+    BriefcaseBusiness,
     Car,
+    Crosshair,
+    DollarSign,
+    Faucet,
     Gamepad2,
     House,
     Laptop,
+    LucideIcon,
     ShoppingBag,
+    Target,
+    University,
     Utensils,
 } from "lucide-react";
 
-import { expenseCategories } from "@/lib/types_and_helpers";
+import { expenseCategories, incomeCategories, formatMoney, getCategoryName, getIcon, sortBy, categoryBreakdown } from "@/lib/types_and_helpers";
+import { useCategoryBudgetContext, useMonthlyBudgetContext, useSavingGoalsContext, useTransactionContext } from "@/app/(protected)/context";
+import { getBudgetPercentage, getBudgetStatus, getCategorySpending, getMonthlySpending, getRemainingBudget } from "@/lib/budgetHelpers";
+import { isActive } from "@/lib/GoalHelpers";
+import { getTotalOfType } from "@/lib/transactionHelpers";
 
 
 const spendingFigures: Record<
@@ -105,8 +119,8 @@ const categoryBudgets = [
         amounts: "$266.45 / $350.00",
         percent: 76,
         status: "On track",
-        barColor: "bg-[#3f8068]",
-        textColor: "text-[#28664f]",
+        barColor: "bg-[#3f8068]",   //under color
+        textColor: "text-[#28664f]", // under color
         icon: Utensils,
     },
     {
@@ -114,8 +128,8 @@ const categoryBudgets = [
         amounts: "$177.63 / $200.00",
         percent: 89,
         status: "Near limit",
-        barColor: "bg-[#e5ab32]",
-        textColor: "text-[#9a6500]",
+        barColor: "bg-[#e5ab32]",   //aproaching color
+        textColor: "text-[#9a6500]", //aproaching color
         icon: Car,
     },
     {
@@ -150,6 +164,23 @@ const savingsGoals = [
 ];
 
 function SpendingBreakdown() {
+
+    const {transactionsArr} = useTransactionContext();
+    const lastMonth = new Date();
+    lastMonth.setMonth(lastMonth.getMonth()-1);
+
+    //all transactions in month.
+    const monthsTransactions = transactionsArr.filter((t) => 
+    {
+        const tDate = new Date(`${t.transaction_date}T00:00:00`);
+
+        return lastMonth.getMonth() === tDate.getMonth() && lastMonth.getFullYear() === tDate.getFullYear();
+    })
+
+    const categories = categoryBreakdown(monthsTransactions);
+    let cumulativePercent = 0;
+
+
     return (
         <section className="min-w-0 rounded-xl border border-[#dce7e2] bg-white p-5">
             {/* Panel heading and sample reporting period */}
@@ -159,12 +190,12 @@ function SpendingBreakdown() {
                 </h2>
 
                 <span className="rounded-lg bg-[#f3f7f5] px-3 py-1 text-xs text-[#4e7069]">
-                    October 2026
+                    {new Intl.DateTimeFormat("en-US", {month: "long", year: "numeric"}).format(lastMonth)}
                 </span>
             </div>
 
             <p className="mt-1 text-xs text-[#4e7069]">
-                Sample spending for the previous month.
+                Spending for previous month
             </p>
 
             <div className="mt-6 flex flex-col items-center gap-6 2xl:flex-row">
@@ -186,38 +217,42 @@ function SpendingBreakdown() {
                             strokeWidth="20"
                         />
 
-                        {spendingCategories.map((category) => (
-                            <circle
-                                key={category.value}
-                                cx="60"
-                                cy="60"
-                                r="45"
-                                fill="none"
-                                stroke={category.color}
-                                strokeWidth="20"
-                                pathLength={100}
-                                strokeDasharray={`${category.percent} ${100 - category.percent
-                                    }`}
-                                strokeDashoffset={-category.start}
-                            />
-                        ))}
+                        {categories.map((category) => 
+                        {
+                            const offset = cumulativePercent;
+                            cumulativePercent+= category.percent;
+                            return (
+                                <circle
+                                    key={category.value}
+                                    cx="60"
+                                    cy="60"
+                                    r="45"
+                                    fill="none"
+                                    stroke={category.textColor}
+                                    strokeWidth="20"
+                                    pathLength={100}
+                                    strokeDasharray={`${category.percent} ${100 - category.percent}`}
+                                    strokeDashoffset={`${-offset}`}
+                                 />
+                                )
+                        })}
                     </svg>
 
                     {/* Donut center label */}
                     <div className="absolute inset-0 flex flex-col items-center justify-center">
                         <span className="text-lg font-bold text-[#17324d]">
-                            $1,480.25
+                            {formatMoney(getTotalOfType("expense", monthsTransactions))}
                         </span>
 
                         <span className="mt-1 text-xs text-[#4e7069]">
-                            October spending
+                            {`${new Intl.DateTimeFormat("en-US", {month: "long"}).format(lastMonth)} spending`}
                         </span>
                     </div>
                 </div>
 
                 {/* Category legend */}
                 <ul className="w-full min-w-0 space-y-3">
-                    {spendingCategories.map((category) => (
+                    {categories.map((category) => (
                         <li
                             key={category.value}
                             className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 text-xs sm:text-sm"
@@ -226,7 +261,7 @@ function SpendingBreakdown() {
                                 <span
                                     aria-hidden="true"
                                     className="h-2.5 w-2.5 shrink-0 rounded-full"
-                                    style={{ backgroundColor: category.color }}
+                                    style={{ backgroundColor: category.textColor }}
                                 />
 
                                 <span className="break-words">
@@ -235,11 +270,11 @@ function SpendingBreakdown() {
                             </span>
 
                             <span className="text-right text-[#4e7069]">
-                                {category.percent}%
+                                {Math.round(category.percent)}%
                             </span>
 
                             <span className="text-right font-medium tabular-nums text-[#17324d]">
-                                {category.amount}
+                                {formatMoney(category.amount)}
                             </span>
                         </li>
                     ))}
@@ -250,6 +285,11 @@ function SpendingBreakdown() {
 }
 
 function RecentTransactions() {
+
+    const {transactionsArr} = useTransactionContext();
+
+    const visibleTransactions = sortBy(undefined, undefined, transactionsArr).slice(0,5);
+
     return (
         <section className="min-w-0 rounded-xl border border-[#dce7e2] bg-white p-5">
             {/* Panel heading and related page link */}
@@ -269,8 +309,14 @@ function RecentTransactions() {
 
             {/* Transaction previews */}
             <ul className="mt-2 divide-y divide-[#dce7e2]">
-                {recentTransactions.map((transaction) => {
-                    const Icon = transaction.icon;
+                {visibleTransactions.map((transaction) => {
+                    const Icon = getIcon(transaction.category_id);
+
+                    const isIncome = transaction.categories.transaction_type === "income";
+                    const transactionDate = new Date(transaction.transaction_date);
+
+                    const bgColor = [...incomeCategories, ...expenseCategories][transaction.category_id-1]?.backgroundColor ?? "#3aa561";
+                    const textColor = [...incomeCategories, ...expenseCategories][transaction.category_id-1]?.textColor ?? "#3aa561";
 
                     return (
                         <li
@@ -278,11 +324,13 @@ function RecentTransactions() {
                             className="flex items-center gap-3 py-4"
                         >
                             <div
-                                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${transaction.background}`}
+                                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full`}
+                                style={{backgroundColor: bgColor}}
                             >
                                 <Icon
                                     aria-hidden="true"
-                                    className={`h-5 w-5 ${transaction.color}`}
+                                    className={`h-5 w-5`}
+                                    style={{color: textColor}}
                                 />
                             </div>
 
@@ -292,26 +340,26 @@ function RecentTransactions() {
                                 </p>
 
                                 <p className="mt-1 text-xs text-[#4e7069]">
-                                    {transaction.category}
+                                    {transaction.categories.name}
                                 </p>
 
                                 <p className="mt-1 text-xs text-[#687b8e]">
-                                    {transaction.date}
+                                    {new Intl.DateTimeFormat("en-US", {month: "short", day: "numeric", year: "numeric"}).format(transactionDate)} {/* use new intl date time format */}
                                 </p>
                             </div>
 
                             <div className="shrink-0 text-right">
                                 <p
-                                    className={`text-sm font-semibold tabular-nums ${transaction.income
+                                    className={`text-sm font-semibold tabular-nums ${isIncome
                                             ? "text-[#16834b]"
-                                            : "text-[#17324d]"
+                                            : "text-[#e14b59]"
                                         }`}
                                 >
-                                    {transaction.amount}
+                                    {`${isIncome ? "+" : "-"}${formatMoney(transaction.amount)}`}
                                 </p>
 
                                 <span className="mt-1 inline-flex items-center gap-1 text-xs text-[#4e7069]">
-                                    {transaction.income ? (
+                                    {isIncome ? (
                                         <ArrowUpRight
                                             aria-hidden="true"
                                             className="h-3 w-3"
@@ -323,7 +371,7 @@ function RecentTransactions() {
                                         />
                                     )}
 
-                                    {transaction.income ? "Income" : "Expense"}
+                                    {isIncome ? "Income" : "Expense"}
                                 </span>
                             </div>
                         </li>
@@ -335,6 +383,14 @@ function RecentTransactions() {
 }
 
 function BudgetStatus() {
+
+    const {monthlyBudget} = useMonthlyBudgetContext();
+    const {categoryBudget} = useCategoryBudgetContext();
+    const {transactionsArr} = useTransactionContext();
+    const currentDate = new Date(0);
+
+    getMonthlySpending(transactionsArr, currentDate.getMonth(), currentDate.getFullYear());
+
     return (
         <section className="min-w-0 rounded-xl border border-[#dce7e2] bg-white p-5">
             {/* Panel heading and related page link */}
@@ -359,55 +415,70 @@ function BudgetStatus() {
                 </p>
 
                 <p className="mt-1 text-xl font-bold text-[#17324d]">
-                    $519.75
+                    {monthlyBudget ? formatMoney(getRemainingBudget(getMonthlySpending(transactionsArr, monthlyBudget[0].month.getMonth(), monthlyBudget[0].month.getFullYear()), monthlyBudget[0].amount)) : "Loading..."}
                 </p>
 
                 <p className="mt-1 text-xs leading-5 text-[#4e7069]">
-                    $1,480.25 spent of a $2,000.00 budget.
+                    {monthlyBudget ? `${formatMoney(getMonthlySpending(transactionsArr, monthlyBudget[0].month.getMonth(), monthlyBudget[0].month.getFullYear()))} spent of a ${formatMoney(monthlyBudget[0].amount)} budget.` : "Loading..."}
                 </p>
             </div>
 
             {/* Category budget previews */}
             <ul className="mt-5 space-y-5">
-                {categoryBudgets.map((budget) => {
-                    const Icon = budget.icon;
+                {categoryBudget?.map((budget) => {
+                    let Icon = getIcon(budget.categoryId); 
+
+                    const spending = getCategorySpending(transactionsArr,budget.categoryId, budget.month.getMonth(), budget.month.getFullYear());
+                    const percentage = getBudgetPercentage(spending, budget.amount);
+                    const budgetStatus = getBudgetStatus(spending, budget.amount);
+
+                    const barColor = budgetStatus === "under_budget" ? 
+                                        "bg-[#3f8068]" : //under budget green
+                                        budgetStatus === "approaching_budget" ?
+                                            "bg-[#e5ab32]" : //approaching budget yellow
+                                            "bg-[#d94c5c]"; //over budget red
+                    const statusColor = budgetStatus === "under_budget" ? 
+                                        "text-[#28664f]" : //under budget green
+                                        budgetStatus === "approaching_budget" ?
+                                            "text-[#9a6500]" : //approaching budget yellow
+                                            "text-[#b53648]"; //over budget red
 
                     return (
-                        <li key={budget.name}>
+                        <li key={budget.categoryId}>
                             <div className="flex flex-wrap items-center justify-between gap-2">
                                 <span className="inline-flex items-center gap-2 text-sm text-[#17324d]">
                                     <Icon
                                         aria-hidden="true"
                                         className="h-4 w-4 shrink-0"
                                     />
-                                    {budget.name}
+                                    {getCategoryName(budget.categoryId)}
                                 </span>
 
                                 <span className="text-xs tabular-nums text-[#4e7069]">
-                                    {budget.amounts}
+                                    {formatMoney(budget.amount)}
                                 </span>
                             </div>
 
                             <div
                                 role="progressbar"
-                                aria-label={`${budget.name} budget used`}
+                                aria-label={`${getCategoryName(budget.categoryId)} budget used`}
                                 aria-valuemin={0}
                                 aria-valuemax={100}
-                                aria-valuenow={budget.percent}
-                                aria-valuetext={`${budget.percent}% used; ${budget.status}`}
+                                aria-valuenow={percentage}
+                                aria-valuetext={`${percentage}% used; ${budgetStatus}`}
                                 className="mt-2 h-2.5 overflow-hidden rounded-full bg-[#e8eeeb]"
                             >
                                 <div
-                                    className={`h-full rounded-full ${budget.barColor}`}
-                                    style={{ width: `${budget.percent}%` }}
+                                    className={`h-full rounded-full ${barColor}`} //replace bg color
+                                    style={{ width: `${percentage}%` }}
                                 />
                             </div>
 
                             <div
-                                className={`mt-1 flex justify-between gap-2 text-xs ${budget.textColor}`}
+                                className={`mt-1 flex justify-between gap-2 text-xs ${statusColor}`} //text color
                             >
-                                <span>{budget.status}</span>
-                                <span>{budget.percent}% used</span>
+                                <span>{budgetStatus}</span>
+                                <span>{Math.round(percentage)}% used</span>
                             </div>
                         </li>
                     );
@@ -418,6 +489,12 @@ function BudgetStatus() {
 }
 
 function SavingsGoals() {
+
+    const {savingGoals} = useSavingGoalsContext();
+
+    //only show the top five incomeplete goals.
+    const visibleGoals = savingGoals.filter((goal) => isActive(goal)).sort((a,b) => a.priority - b.priority).slice(0,5);
+
     return (
         <section className="min-w-0 rounded-xl border border-[#dce7e2] bg-white p-5">
             {/* Panel heading and related page link */}
@@ -437,8 +514,9 @@ function SavingsGoals() {
 
             {/* Goal previews */}
             <ul className="mt-2 divide-y divide-[#dce7e2]">
-                {savingsGoals.map((goal) => {
-                    const Icon = goal.icon;
+                {visibleGoals.map((goal) => {
+                    const Icon = Crosshair;
+                    const percent = Math.min(100, (goal.currentAmount / goal.targetAmount) * 100)
 
                     return (
                         <li key={goal.id} className="flex gap-3 py-5">
@@ -454,14 +532,14 @@ function SavingsGoals() {
                                     {goal.name}
                                 </p>
 
-                                {goal.highestPriority && (
+                                {goal.priority === 1 && (
                                     <span className="mt-1 inline-block rounded-full bg-[#fff3dc] px-2 py-1 text-xs font-medium text-[#9a6500]">
                                         Highest priority
                                     </span>
                                 )}
 
                                 <p className="mt-2 text-xs tabular-nums text-[#4e7069]">
-                                    {goal.amounts}
+                                    {formatMoney(goal.currentAmount)}
                                 </p>
 
                                 <div
@@ -469,17 +547,17 @@ function SavingsGoals() {
                                     aria-label={`${goal.name} savings progress`}
                                     aria-valuemin={0}
                                     aria-valuemax={100}
-                                    aria-valuenow={goal.percent}
+                                    aria-valuenow={percent}
                                     className="mt-2 h-2.5 overflow-hidden rounded-full bg-[#e8eeeb]"
                                 >
                                     <div
                                         className="h-full rounded-full bg-[#3f8068]"
-                                        style={{ width: `${goal.percent}%` }}
+                                        style={{ width: `${percent}%` }}
                                     />
                                 </div>
 
                                 <p className="mt-1 text-right text-xs text-[#4e7069]">
-                                    {goal.percent}% saved
+                                    {Math.round(percent)}% saved
                                 </p>
                             </div>
                         </li>

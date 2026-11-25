@@ -144,7 +144,7 @@ export default function IncomePage() {
           <IncomeList 
             searchDate = {searchDate}
             setSearchDate={setSearchWrapper}/></div>
-          <IncomeBySource />
+          <IncomeBySource searchDate={searchDate}/>
         </div>
       </section>
   );

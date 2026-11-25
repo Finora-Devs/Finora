@@ -8,7 +8,7 @@
 import { Database } from "@/types/database.types";
 import {createClient} from "./server"
 import { SupabaseClient, User } from '@supabase/supabase-js'
-import {Transaction, monthlyBudget, categoryBudget, recurringTransaction, getAsMonthlyBudget, getAsCategoryBudgets, SavingGoal} from "./types_and_helpers";
+import {Transaction, monthlyBudget, recurringTransaction, getAsMonthlyBudget, getAsCategoryBudgets, SavingGoal} from "./types_and_helpers";
 
 /**
  * Gets all transactions for the current user.
@@ -16,12 +16,6 @@ import {Transaction, monthlyBudget, categoryBudget, recurringTransaction, getAsM
 export async function getTransactions(): Promise<Transaction[]>
 {
     const supabase = await createClient();
-
-    /*
-        inserts inserts transaction 1 day early and 2 days late. May be some confusion between my code and supabase
-        about UTC time and local, or my code might have a flaw.
-    */
-    await updateRecurringTransactions(supabase); //updates the transaction list and related recurring transactions.
 
     const transactionsQuery = await supabase
     .from("transactions")
@@ -50,8 +44,10 @@ export async function getTransactions(): Promise<Transaction[]>
  * current day.
  * @param supabase 
  */
-async function updateRecurringTransactions(supabase: SupabaseClient<Database>)
+export async function updateRecurringTransactions()
 {
+    const supabase = await createClient();
+
     const currentDate: Date = new Date()
     currentDate.setHours(0,0,0,0);
 
@@ -85,7 +81,17 @@ async function updateRecurringTransactions(supabase: SupabaseClient<Database>)
         }
         else
         {
-            for(const recurring of data as recurringTransaction[])
+            for(const recurring of data as {
+                                                id: number;
+                                                user_id: string;
+                                                name: string;
+                                                amount: number;
+                                                category_id: number;
+                                                frequency: string;
+                                                next_due_date: string;
+                                                description: string | null;
+                                                is_active: boolean;
+                                            }[])
             {
 
                 const nextDueDates: Date[] = [new Date(`${recurring.next_due_date}T00:00:00`)]; //create array to hold all dates where transactions need to be added.
@@ -126,7 +132,20 @@ async function updateRecurringTransactions(supabase: SupabaseClient<Database>)
 }
 
 //takes a recurring transaction and adds one billing cycle to the next_due_date.
-async function updateRecurringTransaction(recurring: recurringTransaction, next_due_date: string, user: any, supabase: SupabaseClient<Database>)//USER SHOULD NOT BE ANY. User should always be the User type, but I can't delcare that for some reason.
+async function updateRecurringTransaction(recurring: {
+                                                        id: number;
+                                                        user_id: string;
+                                                        name: string;
+                                                        amount: number;
+                                                        category_id: number;
+                                                        frequency: string;
+                                                        next_due_date: string;
+                                                        description: string | null;
+                                                        is_active: boolean;
+                                                    }, 
+                                                    next_due_date: string, 
+                                                    user: any, 
+                                                    supabase: SupabaseClient<Database>)//USER SHOULD NOT BE ANY. User should always be the User type, but I can't delcare that for some reason.
 {
     const {error} = await supabase
         .from("recurring_transactions")
@@ -140,7 +159,20 @@ async function updateRecurringTransaction(recurring: recurringTransaction, next_
     }
 }
 //takes a recurring transaction and inserts one bill into the transaction table.
-async function insertTransactions(recurring: recurringTransaction, dates: Date[], user: any, supabase: SupabaseClient<Database>)//USER SHOULD NOT BE ANY. User should always be the User type, but I can't delcare that for some reason.
+async function insertTransactions(recurring: {
+                                                    id: number;
+                                                    user_id: string;
+                                                    name: string;
+                                                    amount: number;
+                                                    category_id: number;
+                                                    frequency: string;
+                                                    next_due_date: string;
+                                                    description: string | null;
+                                                    is_active: boolean;
+                                                }, 
+                                                dates: Date[], 
+                                                user: any, 
+                                                supabase: SupabaseClient<Database>)//USER SHOULD NOT BE ANY. User should always be the User type, but I can't delcare that for some reason.
 {
 
     const newTransactions: {
@@ -182,7 +214,7 @@ async function insertTransactions(recurring: recurringTransaction, dates: Date[]
 
 //if this function returns a null, it means that the user has never made a budget.
 //needs to be updated to handle the circumstance where the budget retrieved is from a prior month
-export async function getMonthlyBudget()
+export async function getMonthlyBudget() : Promise<monthlyBudget[] | null>
 {
     const supabase = await createClient();
     
@@ -218,7 +250,7 @@ export async function getMonthlyBudget()
     const budgetDate = new Date(data.budget_month + "T00:00:00");//force interpret date as local
     if(currentDate.getMonth() === budgetDate.getMonth() && currentDate.getFullYear() === budgetDate.getFullYear()) //compare month and year of date, without the time.
     {
-        return getAsMonthlyBudget(data);
+        return [getAsMonthlyBudget(data)] as monthlyBudget[];
     }
     //otherwise, create a copy of the old data for the current month, insert it into the database, and return the result
     else
@@ -249,7 +281,7 @@ export async function getMonthlyBudget()
             last_approaching_email_at,
             last_exceeded_email_at
             `)
-        .limit(1)
+        .limit(2)
         .maybeSingle();
 
         if(insertErrorResult)
@@ -258,7 +290,7 @@ export async function getMonthlyBudget()
             throw insertErrorResult;
         }
         
-        return getAsMonthlyBudget(insertResult);
+        return [getAsMonthlyBudget(insertResult), getAsMonthlyBudget(data)] as monthlyBudget[];
     }
     
 }
@@ -318,7 +350,7 @@ export async function getCategoryBudgets()
     if(categoryBudgetsError)
     {
         //throw the error
-        console.log("Supabase select error (getCategoryBudgets)", categoryBudgetsError);
+        console.error("Supabase select error (getCategoryBudgets)", categoryBudgetsError);
         throw categoryBudgetsError;
     }
     //If the above code was able to find a result, there must be at least one object in the data, so no need to check if it is null or undefined.
@@ -401,37 +433,37 @@ export async function getUser(): Promise<{id: string, email: string}>
     return {id: user.id, email: user.email};
 }
 
-//will eventually replace getUser. Leaving original getUser for now so avoid errors until I am ready to test
-export async function getUser2()
-{
-    const supabase = await createClient();
+// //will eventually replace getUser. Leaving original getUser for now so avoid errors until I am ready to test
+// export async function getUser2()
+// {
+//     const supabase = await createClient();
 
-    const {data: { user }, error: userError} = await supabase.auth.getUser();
-        if(userError || user === null || user.email === undefined)
-        {
-            console.error("user authentication failed", userError);
-            throw userError;
-        }
-        console.log("user successfully retrieved from supabase.");
-    const {data, error} = await supabase
-    .from("profiles")
-    .select(`
-            first_name,
-            last_name
-            `);
-    //may need to filter by userId
+//     const {data: { user }, error: userError} = await supabase.auth.getUser();
+//         if(userError || user === null || user.email === undefined)
+//         {
+//             console.error("user authentication failed", userError);
+//             throw userError;
+//         }
+//         console.log("user successfully retrieved from supabase.");
+//     const {data, error} = await supabase
+//     .from("profiles")
+//     .select(`
+//             first_name,
+//             last_name
+//             `);
+//     //may need to filter by userId
 
-    if(error)
-    {
-        console.error("Error in getUser", error);
-        throw error;
-    }
-    if(user && data)
-    {
-        const userData = {...user, ...data};
-        return 
-    }
-}
+//     if(error)
+//     {
+//         console.error("Error in getUser", error);
+//         throw error;
+//     }
+//     if(user && data)
+//     {
+//         const userData = {...user, ...data};
+//         return 
+//     }
+// }
 
 /*
 Should retrieve user balance for storage in a context. That context can then be used to find current balance based
@@ -487,16 +519,66 @@ export async function getSavingGoals(): Promise<SavingGoal[]>
         console.error("Error retrieving saving goals", error);
         throw error;
     }
-    return data.map((goal) => 
+    if(data)
     {
-        return {
-            id: goal.id,
-            name: goal.name,
-            targetAmount: goal.target_amount,
-            currentAmount: goal.current_amount,
-            targetDate: goal.target_date ? new Date(`${goal.target_date}T00:00:00`) : null, //force use local time.
-            description: goal.description,
-            priority: goal.priority
-        } as SavingGoal;
-    }) as SavingGoal[];
+        return data.map((goal) => 
+        {
+            return {
+                id: goal.id,
+                name: goal.name,
+                targetAmount: goal.target_amount,
+                currentAmount: goal.current_amount,
+                targetDate: goal.target_date ? new Date(`${goal.target_date}T00:00:00`) : null, //force use local time.
+                description: goal.description,
+                priority: goal.priority
+            } as SavingGoal;
+        }) as SavingGoal[];
+    }
+    else
+        return [] as SavingGoal[];
+}
+
+export async function getRecurringTransactions()
+{
+    const supabase = await createClient();
+
+    const {data, error} = await supabase
+    .from("recurring_transactions")
+    .select(`
+            id,
+            name,
+            amount,
+            category_id,
+            frequency,
+            next_due_date,
+            description,
+            is_active
+            `);
+
+    if(error)
+    {
+        console.error("Supabase select error");
+        throw error;
+    }
+
+    if(data)
+    {
+        return data.map((rt) => 
+        {
+            return {
+                id: rt.id,
+                name: rt.name,
+                amount: rt.amount,
+                category_id: rt.category_id,
+                frequency: rt.frequency,
+                next_due_date: new Date(`${rt.next_due_date}T00:00:00`),
+                description: rt.description,
+                is_active: rt.is_active
+            } as recurringTransaction
+        })
+    }
+    else
+    {
+        return [] as recurringTransaction[];
+    }
 }

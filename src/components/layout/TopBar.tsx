@@ -28,8 +28,8 @@ export default function TopBar({
             >
                 <Menu aria-hidden="true" className="h-6 w-6" />
             </button>
-           {/*Search field*/}
-            <div className="min-w-0 flex-1 max-w-[540px]">
+           {/*Search field                                          No time for this    */}
+            {/* <div className="min-w-0 flex-1 max-w-[540px]">
                <label className="relative block">
                 <span className="sr-only">Search Finora</span>
 
@@ -43,10 +43,10 @@ export default function TopBar({
                     className="h-10 w-full rounded-lg border border-[#dce3e7] bg-[#f8fafb] pl-10 pr-4 text-sm text-[#17324d] outline-none 
                     placeholder:text-[#687b8e] focus:border-[#3f8068] focus:ring-2 focus:ring-[#3f8068]/20"/>
                 </label> 
-            </div>
+            </div> */}
             {/*Bell icon and profile area */}
             <div className="ml-auto flex shrink-0 items-center gap*5">
-                <button
+                {/* <button
                     type="button"
                     arial-label="Notification"
                     className="relative rounded-lg p-2 text-[#17324d] hover:bg-[#f3f7f5]">
@@ -56,11 +56,11 @@ export default function TopBar({
                 <span 
                 aria-hidden="true"
                 className="absolute right-1 top-1 h-2.5 w-2.5 rounder-full bg-[#e6346] ring-2 ring-white"/>
-                </button>
+                </button> */}
 
                 <button 
                 type="button"
-                className="flex items-center gap-3 rounded-lg px-2 py-1.5 text-left hover:bg-[#f3f2f5]">
+                className="flex items-center gap-3 rounded-lg px-2 py-1.5 text-left"> {/*hover:bg-[#f3f2f5]" */}
                 
                 <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#3f8068] text-sm font-semibold text-white">
                     {user.email.charAt(0).toUpperCase()}
@@ -75,9 +75,9 @@ export default function TopBar({
                     </span>
                 </span>
 
-                <ChevronDown
+                {/* <ChevronDown                                No time for this
                 aria-hidden="true"
-                className="hidden h-4 w-4 text=[#17324d] sm:block"/>
+                className="hidden h-4 w-4 text=[#17324d] sm:block"/> */}
                 </button>
             </div>
         </header>

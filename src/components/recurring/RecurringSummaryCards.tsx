@@ -1,3 +1,8 @@
+"use client";
+
+import { useRecurringTransactionContext } from "@/app/(protected)/context";
+import { getAmountDueNextWeek, getAmountDueThisMonth, getAmountNextPayment } from "@/lib/RecurringHelpers";
+import { formatMoney } from "@/lib/types_and_helpers";
 import {
     CalendarClock,
     CalendarDays,
@@ -5,11 +10,18 @@ import {
     Wallet,
 } from "lucide-react";
 
-// Sample values for the UI
+
+
+export default function RecurringSummaryCards() {
+
+    const {recurringTransactions} = useRecurringTransactionContext();
+    const nextTransaction = getAmountNextPayment(recurringTransactions);
+
+    // Sample values for the UI
 const summaryCards = [
     {
-        label: "Recurring Expenses",
-        value: "5",
+        label: "Recurring Transactions",
+        value: recurringTransactions.length,
         detail: "Repeating expense schedules",
         icon: Repeat2,
         color: "text-[#3f8068]",
@@ -17,7 +29,7 @@ const summaryCards = [
     },
     {
         label: "Expected This Month",
-        value: "$1,180.00",
+        value: formatMoney(getAmountDueThisMonth(recurringTransactions)),
         detail: "Scheduled recurring expenses",
         icon: Wallet,
         color: "text-[#d94c5c]",
@@ -25,7 +37,7 @@ const summaryCards = [
     },
     {
         label: "Due Next 7 Days",
-        value: "$80.00",
+        value: formatMoney(getAmountDueNextWeek(recurringTransactions)),
         detail: "Upcoming scheduled payments",
         icon: CalendarDays,
         color: "text-[#3173c9]",
@@ -33,15 +45,14 @@ const summaryCards = [
     },
     {
         label: "Next Payment",
-        value: "$50.00",
-        detail: "Internet · November 15, 2026",
+        value: nextTransaction ? formatMoney(nextTransaction.amount) : "$0",
+        detail: nextTransaction ? `${nextTransaction.name} · ${new Intl.DateTimeFormat("en-US", {month: "long", day: "numeric", year: "numeric"}).format(nextTransaction.next_due_date)}`: "",
         icon: CalendarClock,
         color: "text-[#8246c8]",
         background: "bg-[#f0e7fc]",
     },
 ];
 
-export default function RecurringSummaryCards() {
     return (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             {/* Summary cards */}

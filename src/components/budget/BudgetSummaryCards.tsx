@@ -24,28 +24,28 @@ const {transactionsArr} = useTransactionContext();
 const summaryCards = monthlyBudget ? [
     {
     label: "Monthly Budget",
-    value: formatMoney((monthlyBudget.amount)),
+    value: formatMoney((monthlyBudget[0].amount)),
     icon: Wallet,
     color: "text-[#3f8068]",
     background: "bg-[#e5f3ec]"
     },
     {
     label: "Amount Spent",
-    value: formatMoney(getMonthlySpending(transactionsArr, monthlyBudget.month.getMonth(), monthlyBudget.month.getFullYear())), //an issue in the way transaction dates are handled can cause transactions on the first of the month to be ignored due to timezones.
+    value: formatMoney(getMonthlySpending(transactionsArr, monthlyBudget[0].month.getMonth(), monthlyBudget[0].month.getFullYear())), //an issue in the way transaction dates are handled can cause transactions on the first of the month to be ignored due to timezones.
     icon: ArrowDownRight,
     color: "text-[#d94c5c]",
     background: "bg-[#fce8eb]",
     },
     {
     label: "Amount Remaining",
-    value: formatMoney(getRemainingBudget(getMonthlySpending(transactionsArr, monthlyBudget.month.getMonth(), monthlyBudget.month.getFullYear()), monthlyBudget.amount)),
+    value: formatMoney(getRemainingBudget(getMonthlySpending(transactionsArr, monthlyBudget[0].month.getMonth(), monthlyBudget[0].month.getFullYear()), monthlyBudget[0].amount)),
     icon: PiggyBank,
     color: "text-[#3173c9]",
     background: "bg-[#e8f1ff]",
     },
     {
     label: "Budget Used",
-    value: `${parseInt(String(getBudgetPercentage(getMonthlySpending(transactionsArr, monthlyBudget.month.getMonth(), monthlyBudget.month.getFullYear()), monthlyBudget.amount)), 10)}%`,
+    value: `${parseInt(String(getBudgetPercentage(getMonthlySpending(transactionsArr, monthlyBudget[0].month.getMonth(), monthlyBudget[0].month.getFullYear()), monthlyBudget[0].amount)), 10)}%`,
     icon: Percent,
     color: "text-[]",
     background: "bg-[#f0e7fc]",

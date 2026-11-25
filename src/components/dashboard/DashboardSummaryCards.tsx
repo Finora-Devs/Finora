@@ -1,3 +1,4 @@
+"use client";
 import Link from "next/link";
 import {
     ArrowDownRight,
@@ -6,13 +7,27 @@ import {
     Wallet,
     WalletCards,
 } from "lucide-react";
+import { useMonthlyBudgetContext, useRecurringTransactionContext, useTransactionContext } from "@/app/(protected)/context";
+import {getNetSpending, getTotalOfType} from "@/lib/transactionHelpers"
+import { getAmountDueThisMonth } from "@/lib/RecurringHelpers";
+import { formatMoney } from "@/lib/types_and_helpers";
+import { getMonthlySpending, getRemainingBudget } from "@/lib/budgetHelpers";
 
+
+
+export default function DashboardSummaryCards() {
+    const {transactionsArr} = useTransactionContext();
+    const {recurringTransactions} = useRecurringTransactionContext();
+    const {monthlyBudget} = useMonthlyBudgetContext();
+    const TMPBalance = 0;
+
+    const currentDate = new Date();
 // Sample values for the UI
-const summaryCards = [
+    const summaryCards = [
     {
         label: "Total Balance",
-        value: "$1,245.32",
-        detail: "Projected month-end balance: $1,395.32",
+        value: formatMoney(TMPBalance + getNetSpending(transactionsArr)), //gets the user balance + their net change
+        detail: `Projected month-end balance: ${formatMoney(TMPBalance + getNetSpending(transactionsArr) - getAmountDueThisMonth(recurringTransactions))}`, //get user balance + net change - the amount of money that will be spent on recurring transactions this month.
         href: "/transactions",
         linkLabel: "View transactions",
         icon: Wallet,
@@ -21,7 +36,11 @@ const summaryCards = [
     },
     {
         label: "Monthly Income",
-        value: "$2,000.00",
+        value: formatMoney(getTotalOfType("income", transactionsArr.filter((t) =>  //finds total income in current month and year.
+            {
+                const tDate = new Date (`${t.transaction_date}T00:00:00`);
+                return tDate.getMonth() === currentDate.getMonth() && tDate.getFullYear() === currentDate.getFullYear();
+            }))),
         detail: "Income recorded this month",
         href: "/income",
         linkLabel: "View income",
@@ -31,7 +50,11 @@ const summaryCards = [
     },
     {
         label: "Monthly Expenses",
-        value: "$1,480.25",
+        value: formatMoney(getTotalOfType("expense", transactionsArr.filter((t) =>  //finds total expenses in current month and year.
+            {
+                const tDate = new Date (`${t.transaction_date}T00:00:00`);
+                return tDate.getMonth() === currentDate.getMonth() && tDate.getFullYear() === currentDate.getFullYear();
+            }))),
         detail: "Expenses recorded this month",
         href: "/expenses",
         linkLabel: "View expenses",
@@ -41,7 +64,8 @@ const summaryCards = [
     },
     {
         label: "Available to Spend",
-        value: "$519.75",
+        value: formatMoney(getRemainingBudget(getMonthlySpending(transactionsArr, currentDate.getMonth(), currentDate.getFullYear()),
+                             monthlyBudget ? monthlyBudget[0].amount : 0) - getAmountDueThisMonth(recurringTransactions)),
         detail: "After reserving for upcoming expenses",
         href: "/recurring",
         linkLabel: "View upcoming expenses",
@@ -51,7 +75,6 @@ const summaryCards = [
     },
 ];
 
-export default function DashboardSummaryCards() {
     return (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             {/* Dashboard summary cards */}

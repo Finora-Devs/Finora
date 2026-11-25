@@ -29,21 +29,9 @@ import {
   labelClass
   } from "@/lib/types_and_helpers";
 
-import { useTransactionContext } from "@/app/(protected)/context";
+import { useRecurringTransactionContext, useTransactionContext } from "@/app/(protected)/context";
 import { useEffect, useId, useRef, useState } from "react";
 import { deleteTransaction, insertTransaction, updateTransaction } from "@/lib/clientFunctions";
-//Sort by option box: complete
-//search bar: complete
-//Ascending/Descending toggle: complete.
-//category option box: complete
-//include/exclude toggle: complete
-//add income button: complete
-//add expense button: complete
-//more options button: incomplete
-  //remove button: incomplete, complete in expense page.
-  //edit button: incomplete, complete in expense page.
-
-//still need summary cards and chart
 
 type TransactionType = "income" | "expense";
 
@@ -55,7 +43,7 @@ type Props =
 
 export default function TransactionList({searchDate, setSearchDate}: Props) {
   const { transactionsArr, setTransactionsArr } = useTransactionContext();
-
+  const {setRecurringTransactions} = useRecurringTransactionContext();
   const [searchTerm, setSearchTerm] = useState("");
   const [sortingOrder, setSortingOrder] = useState(SORTING_ORDER.DATE);
   const [descending, setDescending] = useState(true);
@@ -168,7 +156,6 @@ export default function TransactionList({searchDate, setSearchDate}: Props) {
       const nextErrors = validateTransaction(draft, isIncomeForm);
       setErrors(nextErrors);
       if (Object.keys(nextErrors).length) {
-        console.log("Object.keys(nextErrors).length = 0")
         requestAnimationFrame(() => errorRef.current?.focus());
         return;
       }
@@ -183,7 +170,7 @@ export default function TransactionList({searchDate, setSearchDate}: Props) {
         }
         else
         {
-          await insertTransaction(event, setTransactionsArr);
+          await insertTransaction(event, setRecurringTransactions, setTransactionsArr);
         }
         setPanel(null);
       } catch {
@@ -344,7 +331,7 @@ export default function TransactionList({searchDate, setSearchDate}: Props) {
       {/* Include and exclude controls */}
       <div className="flex flex-wrap items-center gap-3 px-5 pb-5">
         <label
-          htmlFor="transaction-category"
+          htmlFor={`${id}-filter`}
           className="text-sm text-[#607394]"
         >
           Category
@@ -416,13 +403,14 @@ export default function TransactionList({searchDate, setSearchDate}: Props) {
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[760px] text-left text-sm">
+        <table className="w-full min-w-[700px] text-left text-sm">
           <thead className="bg-[#f7faf8] text-[#4e7069]">
             <tr>
               {[
                 "Date",
                 "Name",
                 "Category",
+                "Type",
                 "Frequency",
                 "Amount",
                 "Actions",
@@ -442,6 +430,7 @@ export default function TransactionList({searchDate, setSearchDate}: Props) {
             {TransactionList.map((transaction) => {
               const isIncome =
                 transaction.categories.transaction_type === "income";
+              const transactionDate = new Date(`${transaction.transaction_date}T00:00:00`);
 
               return (
                 <tr
@@ -450,7 +439,7 @@ export default function TransactionList({searchDate, setSearchDate}: Props) {
                 >
                   {/* Date */}
                   <td className="whitespace-nowrap px-5 py-4 text-[#7185a1]">
-                    {transaction.transaction_date}
+                    {new Intl.DateTimeFormat("en-Us", {month: "long", day: "numeric", year: "numeric"}).format(transactionDate)}
                   </td>
 
                   {/* Name */}
@@ -518,7 +507,11 @@ export default function TransactionList({searchDate, setSearchDate}: Props) {
                     <button
                       type="button"
                       aria-label={`Edit ${transaction.name}`}
-                      onClick={() => open("edit", transaction)}
+                      onClick={() => 
+                        {
+                          isIncome ? setFormType("income") : setFormType("expense");
+                          open("edit", transaction);
+                        }}
                       className="rounded-lg p-2 text-[#4e7069] hover:bg-[#e5efeb]"
                     >
                       <Pencil aria-hidden="true" className="h-4 w-4" />
@@ -757,7 +750,7 @@ export default function TransactionList({searchDate, setSearchDate}: Props) {
                 </div>
               </div>
               <div>
-                <label htmlFor={`${id}-description`} className={labelClass}>
+                <label htmlFor={`${id}-notes`} className={labelClass}>
                   Description (optional)
                 </label>
                 <textarea

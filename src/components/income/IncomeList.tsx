@@ -28,7 +28,7 @@ import {
   labelClass
   } from "@/lib/types_and_helpers";
 
-import { useTransactionContext } from "@/app/(protected)/context";
+import { useRecurringTransactionContext, useTransactionContext } from "@/app/(protected)/context";
 import { useEffect, useId, useRef, useState } from "react";
 import { deleteTransaction, insertTransaction, updateTransaction } from "@/lib/clientFunctions";
 
@@ -40,7 +40,7 @@ type Props =
 
 export default function IncomeList({searchDate, setSearchDate}: Props) {
   const { transactionsArr, setTransactionsArr } = useTransactionContext();
-
+  const {setRecurringTransactions} = useRecurringTransactionContext();
   const [searchTerm, setSearchTerm] = useState("");
   const [sortingOrder, setSortingOrder] = useState(SORTING_ORDER.DATE);
   const [descending, setDescending] = useState(true);
@@ -119,7 +119,9 @@ export default function IncomeList({searchDate, setSearchDate}: Props) {
         setPanel(mode);
       }
       function update(field: keyof TransactionDraft, value: string) {
-        setDraft((current) => ({ ...current, [field]: value }));
+        setDraft((current) => {
+          return { ...current, [field]: value }
+        });
         setErrors((current) => ({ ...current, [field]: undefined }));
         setActionError("");
       }
@@ -139,13 +141,11 @@ export default function IncomeList({searchDate, setSearchDate}: Props) {
       async function submit(event: FormData) {
         if (busyRef.current) 
           {
-            console.log("busyRef.current false");
             return;
           }
         const nextErrors = validateTransaction(draft, true); //isIncomeForm = true;
         setErrors(nextErrors);
         if (Object.keys(nextErrors).length) {
-          console.log("Object.keys(nextErrors).length = 0")
           requestAnimationFrame(() => errorRef.current?.focus());
           return;
         }
@@ -160,7 +160,7 @@ export default function IncomeList({searchDate, setSearchDate}: Props) {
           }
           else
           {
-            await insertTransaction(event, setTransactionsArr);
+            await insertTransaction(event, setRecurringTransactions, setTransactionsArr);
           }
           setPanel(null);
         } catch {
@@ -302,7 +302,7 @@ export default function IncomeList({searchDate, setSearchDate}: Props) {
       {/* Include and exclude controls */}
       <div className="flex flex-wrap items-center gap-3 px-5 pb-5">
         <label
-          htmlFor="income-category"
+          htmlFor={`${id}-filter`}
           className="text-sm text-[#607394]"
         >
           Source
@@ -398,6 +398,9 @@ export default function IncomeList({searchDate, setSearchDate}: Props) {
 
           <tbody className="divide-y divide-[#e5ebe8]">
             {incomeList.map((transaction) => {
+
+              const transactionDate = new Date(`${transaction.transaction_date}T00:00:00`);
+
               return (
                 <tr
                   key={transaction.id}
@@ -405,7 +408,7 @@ export default function IncomeList({searchDate, setSearchDate}: Props) {
                 >
                   {/* Date */}
                   <td className="whitespace-nowrap px-5 py-4 text-[#7185a1]">
-                    {transaction.transaction_date}
+                    {new Intl.DateTimeFormat("en-Us", {month: "long", day: "numeric", year: "numeric"}).format(transactionDate)}
                   </td>
 
                   {/* Name */}
@@ -684,7 +687,7 @@ export default function IncomeList({searchDate, setSearchDate}: Props) {
                 </div>
               </div>
               <div>
-                <label htmlFor={`${id}-description`} className={labelClass}>
+                <label htmlFor={`${id}-notes`} className={labelClass}>
                   Description (optional)
                 </label>
                 <textarea

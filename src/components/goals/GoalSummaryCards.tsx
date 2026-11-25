@@ -1,3 +1,8 @@
+'use client';
+
+import { useSavingGoalsContext } from "@/app/(protected)/context";
+import { getNumActiveGoals, getNumCompletedGoals, getRemainingContributions, getTotalContributions } from "@/lib/GoalHelpers";
+import { formatMoney } from "@/lib/types_and_helpers";
 import {
     CheckCircle2,
     PiggyBank,
@@ -5,39 +10,43 @@ import {
     Wallet,
 } from "lucide-react";
 
-// Sample values
+
+
+export default function GoalSummaryCards() {
+    
+    const {savingGoals} = useSavingGoalsContext()
+    // Sample values
 const summaryCards = [
     {
         label: "Active Goals",
-        value: "3",
+        value: getNumActiveGoals(savingGoals),
         icon: Target,
         color: "text-[#3f8068]",
         background: "bg-[#e5f3ec]",
     },
     {
         label: "Total Saved",
-        value: "$1,200.00",
+        value: formatMoney(getTotalContributions(savingGoals)),
         icon: PiggyBank,
         color: "text-[#16834b]",
         background: "bg-[#e5f3ec]",
     },
     {
         label: "Amount Remaining",
-        value: "$1,800.00",
+        value: formatMoney(getRemainingContributions(savingGoals)),
         icon: Wallet,
         color: "text-[#3173c9]",
         background: "bg-[#e8f1ff]",
     },
     {
         label: "Completed Goals",
-        value: "1",
+        value: getNumCompletedGoals(savingGoals),
         icon: CheckCircle2,
         color: "text-[#8246c8]",
         background: "bg-[#f0e7fc]",
     },
 ];
 
-export default function GoalSummaryCards() {
     return (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             {/* Summary cards */}

@@ -111,17 +111,17 @@ export function checkForWarnings(/*monthlyBudget: monthlyBudget, categoryBudgets
 
     if(monthlyBudget)
     {
-        switch(getBudgetStatus(getMonthlySpending(transactionsArr, monthlyBudget.month.getMonth(), monthlyBudget.month.getFullYear()), monthlyBudget.amount))
+        switch(getBudgetStatus(getMonthlySpending(transactionsArr, monthlyBudget[0].month.getMonth(), monthlyBudget[0].month.getFullYear()), monthlyBudget[0].amount))
         {
             case "over_budget":
-                if((monthlyBudget.lastEmailForExceeding === null || monthlyBudget.lastEmailForExceeding.getTime() - currentDate.getTime() > twoWeeksInMilli) && monthlyBudget.emailsEnabled) //if the user has never recieved an email OR it has been two weeks since the last email AND emails are enabled
+                if((monthlyBudget[0].lastEmailForExceeding === null || monthlyBudget[0].lastEmailForExceeding.getTime() - currentDate.getTime() > twoWeeksInMilli) && monthlyBudget[0].emailsEnabled) //if the user has never recieved an email OR it has been two weeks since the last email AND emails are enabled
                 {
                     //send over budget email
                 }
                 //change warning state for monthly budget to over budget to trigger warning popup.
                 break;
             case "approaching_budget":
-                if((monthlyBudget.lastEmailForApproaching === null || monthlyBudget.lastEmailForApproaching.getTime() - currentDate.getTime() > twoWeeksInMilli) && monthlyBudget.emailsEnabled)
+                if((monthlyBudget[0].lastEmailForApproaching === null || monthlyBudget[0].lastEmailForApproaching.getTime() - currentDate.getTime() > twoWeeksInMilli) && monthlyBudget[0].emailsEnabled)
                 {
                     //send approaching budget email
                 }

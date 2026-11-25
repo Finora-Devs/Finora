@@ -12,20 +12,22 @@ import {
 } from "@/lib/budgetHelpers";
 import {
   useTransactionContext,
-  useMonthlyBudgetContext
+  useMonthlyBudgetContext,
+  useSavingGoalsContext
 } from "@/app/(protected)/context";
+import { checkContributions } from "@/lib/types_and_helpers";
 
 export default function BudgetPage(){
 
   const { transactionsArr } = useTransactionContext();
   const { monthlyBudget } = useMonthlyBudgetContext();
-
+  
   const currentDate = new Date();
   const month = currentDate.getMonth() + 1; // getMonth() returns 0-11, so we add 1
   const year = currentDate.getFullYear();
 
   const monthlySpending = getMonthlySpending(transactionsArr, month, year);
-  const budgetAmount = monthlyBudget?.amount ?? 0;
+  const budgetAmount = monthlyBudget?.at(0)?.amount ?? 0;
   const status = getBudgetStatus(monthlySpending, budgetAmount);
 
 

@@ -23,8 +23,14 @@ export default function TransactionsPage() {
     year: "numeric",
   });
 
-  const totalTransactions = transactionsArr.length;
-  const totalIncome = transactionsArr.reduce<number>(
+  const monthsTransactions = transactionsArr.filter((t) => 
+  {
+    const tDate = new Date(`${t.transaction_date}T00:00:00`);
+    return searchDate.getMonth() === tDate.getMonth() && searchDate.getFullYear() === tDate.getFullYear();
+  })
+
+  const totalTransactions = monthsTransactions.length;
+  const totalIncome = monthsTransactions.reduce<number>(
     (total, transaction) => {
       if (
         transaction.categories.transaction_type === "income"
@@ -37,7 +43,7 @@ export default function TransactionsPage() {
     0
   );
 
-  const totalExpenses = transactionsArr.reduce<number>(
+  const totalExpenses = monthsTransactions.reduce<number>(
     (total, transaction) => {
       if (
         transaction.categories.transaction_type === "expense"
